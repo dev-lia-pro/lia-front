@@ -61,6 +61,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// L-IA Custom Colors
+				gold: {
+					DEFAULT: 'hsl(var(--gold))',
+					muted: 'hsl(var(--gold-muted))'
+				},
+				navy: {
+					deep: 'hsl(var(--navy-deep))',
+					card: 'hsl(var(--navy-card))',
+					muted: 'hsl(var(--navy-muted))'
 				}
 			},
 			borderRadius: {
