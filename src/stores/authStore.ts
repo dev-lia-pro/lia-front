@@ -20,6 +20,7 @@ interface AuthState {
   login: (token: string, user: User) => void;
   logout: () => void;
   clearAuth: () => void;
+  initializeAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -32,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
 
       // Actions
       setToken: (token: string) => {
+        localStorage.setItem('access_token', token);
         set({ accessToken: token, isAuthenticated: true });
       },
 
@@ -40,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       login: (token: string, user: User) => {
+        localStorage.setItem('access_token', token);
         set({
           accessToken: token,
           user,
@@ -63,6 +66,13 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isAuthenticated: false,
         });
+      },
+
+      initializeAuth: () => {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          set({ accessToken: token, isAuthenticated: true });
+        }
       },
     }),
     {

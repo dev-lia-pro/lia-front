@@ -6,7 +6,7 @@ import { UpcomingMeetings } from './dashboard/UpcomingMeetings';
 import { ProjectsGrid } from './dashboard/ProjectsGrid';
 import { BottomNavigation } from './dashboard/BottomNavigation';
 
-export type NavigationTab = 'accueil' | 'projets' | 'boite' | 'taches' | 'parametres';
+export type NavigationTab = 'accueil' | 'projets' | 'boite' | 'agenda' | 'taches' | 'parametres';
 
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
@@ -18,9 +18,17 @@ export const Dashboard = () => {
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 space-y-6">
           <MainTitle />
-          <UrgentTasks />
+          
+          {/* Section des événements du jour et à venir */}
           <UpcomingMeetings />
-          <ProjectsGrid />
+          
+          {/* Section des tâches urgentes */}
+          <UrgentTasks />
+          
+          {/* Section des projets (aperçu) */}
+          <div className="mb-4">
+            <ProjectsGrid />
+          </div>
         </div>
       </div>
       

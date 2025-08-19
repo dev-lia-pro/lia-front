@@ -1,12 +1,14 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Briefcase, 
   Mail, 
+  Calendar,
   CheckSquare, 
   Settings 
 } from 'lucide-react';
-import { NavigationTab } from '../Dashboard';
+import type { NavigationTab } from '@/types/navigation';
 
 interface BottomNavigationProps {
   activeTab: NavigationTab;
@@ -14,25 +16,37 @@ interface BottomNavigationProps {
 }
 
 const navItems = [
-  { id: 'accueil' as NavigationTab, label: 'Accueil', icon: Home },
-  { id: 'projets' as NavigationTab, label: 'Projets', icon: Briefcase },
-  { id: 'boite' as NavigationTab, label: 'Boîte de réception', icon: Mail },
-  { id: 'taches' as NavigationTab, label: 'Tâches', icon: CheckSquare },
-  { id: 'parametres' as NavigationTab, label: 'Paramètres', icon: Settings }
+  { id: 'accueil' as NavigationTab, label: 'Accueil', icon: Home, path: '/' },
+  { id: 'projets' as NavigationTab, label: 'Projets', icon: Briefcase, path: '/projects' },
+  { id: 'boite' as NavigationTab, label: 'Boîte', icon: Mail, path: '/messages' },
+  { id: 'agenda' as NavigationTab, label: 'Agenda', icon: Calendar, path: '/events' },
+  { id: 'taches' as NavigationTab, label: 'Tâches', icon: CheckSquare, path: '/tasks' },
+  { id: 'parametres' as NavigationTab, label: 'Paramètres', icon: Settings, path: '/settings' }
 ];
 
 export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleTabClick = (tab: NavigationTab, path: string) => {
+    onTabChange(tab);
+    navigate(path);
+  };
+
+  // Déterminer l'onglet actif basé sur l'URL actuelle
+  const currentTab = navItems.find(item => item.path === location.pathname)?.id || 'accueil';
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-navy-card border-t border-border">
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-6 h-16">
         {navItems.map((item) => {
           const IconComponent = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = currentTab === item.id;
           
           return (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => handleTabClick(item.id, item.path)}
               className="flex flex-col items-center justify-center gap-1 transition-smooth animate-press"
             >
               <IconComponent 
@@ -43,7 +57,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                   isActive ? 'text-gold' : 'text-muted-foreground'
                 }`}
               >
-                {item.label === 'Boîte de réception' ? 'Boîte' : item.label}
+                {item.label}
               </span>
             </button>
           );

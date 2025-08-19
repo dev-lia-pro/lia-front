@@ -17,3 +17,6 @@ export function useIsMobile() {
 
   return !!isMobile
 }
+
+// Alias pour la compatibilité
+export const useMobile = useIsMobile;

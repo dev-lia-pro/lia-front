@@ -1,20 +1,30 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthStore } from "./stores/authStore";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginEmailPage1 from "./pages/LoginEmailPage1";
 import LoginEmailPage2 from "./pages/LoginEmailPage2";
 import UserProfile from "./pages/UserProfile";
+import ProjectsPage from "./pages/ProjectsPage";
+import TasksPage from "./pages/TasksPage";
+import EventsPage from "./pages/EventsPage";
+import MessagesPage from "./pages/MessagesPage";
+import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 
-const queryClient = new QueryClient();
+const App = () => {
+  const { initializeAuth } = useAuthStore();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return (
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -45,13 +55,43 @@ const App = () => (
               <LoginEmailPage2 />
             </PublicRoute>
           } />
+
+          <Route path="/projects" element={
+            <ProtectedRoute>
+              <ProjectsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/tasks" element={
+            <ProtectedRoute>
+              <TasksPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/events" element={
+            <ProtectedRoute>
+              <EventsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/messages" element={
+            <ProtectedRoute>
+              <MessagesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          } />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
-);
+  );
+  }
 
 export default App;
