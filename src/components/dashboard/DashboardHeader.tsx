@@ -44,7 +44,7 @@ export const DashboardHeader = () => {
       </button>
       
       {/* App Name */}
-      <h1 className="text-xl font-semibold text-foreground">L-IA</h1>
+      <h1 className="text-xl font-semibold text-foreground">LIA</h1>
       
       {/* Profile Menu */}
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

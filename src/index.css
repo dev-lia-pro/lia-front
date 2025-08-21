@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* L-IA Dark Theme - Deep Navy & Gold */
+    /* LIA Dark Theme - Deep Navy & Gold */
     --background: 216 52% 11%; /* #0B1B2B deep navy blue */
     --foreground: 0 0% 100%; /* white text */
 
@@ -39,7 +39,7 @@ All colors MUST be HSL.
 
     --radius: 0.75rem; /* more rounded for iOS feel */
     
-    /* Custom L-IA colors */
+    /* Custom LIA colors */
     --navy-deep: 216 52% 11%; /* #0B1B2B */
     --navy-card: 216 45% 15%;
     --navy-muted: 216 30% 20%;
@@ -127,7 +127,7 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  /* L-IA Custom Utilities */
+  /* LIA Custom Utilities */
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-glow { box-shadow: var(--shadow-glow); }

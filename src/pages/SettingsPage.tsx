@@ -8,7 +8,6 @@ import {
   Plus, 
   Trash2, 
   TestTube,
-  Eye,
   Power,
   PowerOff,
   RefreshCw,
@@ -32,6 +31,7 @@ const SettingsPage = () => {
   const [deletingProvider, setDeletingProvider] = useState<Provider | null>(null);
   const [previewProvider, setPreviewProvider] = useState<Provider | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [syncingProvider, setSyncingProvider] = useState<number | null>(null);
   const [previewData, setPreviewData] = useState<unknown>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   
@@ -189,30 +189,31 @@ const SettingsPage = () => {
   };
 
   const handleOpenPreview = async (provider: Provider) => {
-    setPreviewProvider(provider);
-    setPreviewLoading(true);
-    setPreviewData(null);
-    setPreviewError(null);
+    // Lance une synchronisation au clic (read-only)
+    setSyncingProvider(provider.id);
     try {
       let url = '';
       if (provider.provider_type === 'GMAIL') {
-        url = `/providers/${provider.id}/emails/`;
+        url = `/providers/${provider.id}/sync_emails/`;
       } else if (provider.provider_type === 'GOOGLE_CALENDAR') {
-        url = `/providers/${provider.id}/calendar_events/`;
+        url = `/providers/${provider.id}/sync_calendar/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE_SMS') {
-        url = `/providers/${provider.id}/sms/`;
+        url = `/providers/${provider.id}/sync_sms/`;
       }
-      const { data } = await axios.get(url);
-      setPreviewData(data);
+      const { data } = await axios.post(url, {});
+      toast({
+        title: 'Synchronisation lancée',
+        description: typeof data?.status === 'string' ? `Statut: ${data.status}` : 'Les données vont être synchronisées en arrière-plan.',
+      });
     } catch (e: unknown) {
-      let msg = 'Erreur lors de la lecture';
+      let msg = 'Erreur lors de la synchronisation';
       if (e && typeof e === 'object') {
         const err = e as { response?: { data?: { error?: string } }, message?: string };
         msg = err.response?.data?.error || err.message || msg;
       }
-      setPreviewError(msg);
+      toast({ title: 'Erreur', description: msg, variant: 'destructive' });
     } finally {
-      setPreviewLoading(false);
+      setSyncingProvider(null);
     }
   };
 
@@ -332,8 +333,13 @@ const SettingsPage = () => {
                         variant="outline"
                         onClick={() => handleOpenPreview(provider)}
                         className="border-border text-foreground hover:bg-navy-muted"
+                        aria-label="Synchroniser"
                       >
-                        <Eye className="w-4 h-4" />
+                        {syncingProvider === provider.id ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4" />
+                        )}
                       </Button>
                       
                       <Button
