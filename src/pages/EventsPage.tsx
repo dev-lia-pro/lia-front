@@ -4,6 +4,7 @@ import { UpcomingMeetings } from '@/components/dashboard/UpcomingMeetings';
 import { PageNavigation } from '@/components/dashboard/PageNavigation';
 import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
+import EventsCalendar from '@/components/calendar/EventsCalendar';
 
 const EventsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('agenda');
@@ -16,6 +17,12 @@ const EventsPage = () => {
         <div className="px-4 py-6">
           {/* Section des événements du jour et à venir */}
           <UpcomingMeetings />
+
+          {/* Agenda complet */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-3">Agenda</h2>
+            <EventsCalendar />
+          </div>
         </div>
       </div>
       

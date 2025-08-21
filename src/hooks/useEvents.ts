@@ -41,10 +41,12 @@ export interface UpdateEventData {
   project?: number;
 }
 
-interface EventsFilters {
+export interface EventsFilters {
   project?: number;
   date_from?: string;
   date_to?: string;
+  month?: string; // YYYY-MM
+  week?: string;  // YYYY-Www
 }
 
 export const useEvents = (filters: EventsFilters = {}) => {
@@ -55,6 +57,8 @@ export const useEvents = (filters: EventsFilters = {}) => {
   if (filters.project) queryParams.append('project', filters.project.toString());
   if (filters.date_from) queryParams.append('date_from', filters.date_from);
   if (filters.date_to) queryParams.append('date_to', filters.date_to);
+  if (filters.month) queryParams.append('month', filters.month);
+  if (filters.week) queryParams.append('week', filters.week);
 
   const queryString = queryParams.toString();
   const url = `/events/${queryString ? `?${queryString}` : ''}`;

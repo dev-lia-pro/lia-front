@@ -16,12 +16,10 @@ export const UpcomingMeetings = () => {
   
   // Utiliser un seul hook avec des filtres optimisés
   const filters = useMemo(() => {
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
-    
+    const now = new Date();
+    const endOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7, 23, 59, 59, 999);
     return {
-      date_from: startOfDay.toISOString(),
+      date_from: now.toISOString(),
       date_to: endOfWeek.toISOString(),
     };
   }, []);
@@ -31,18 +29,24 @@ export const UpcomingMeetings = () => {
 
   // Séparer les événements du jour et à venir
   const todayEvents = useMemo(() => {
-    const today = new Date();
+    const now = new Date();
     return events.filter(event => {
-      const eventDate = new Date(event.starts_at);
-      return eventDate.toDateString() === today.toDateString();
+      const start = new Date(event.starts_at);
+      const end = new Date(event.ends_at);
+      const isToday = start.toDateString() === now.toDateString() || end.toDateString() === now.toDateString();
+      const ongoingOrFuture = end >= now; // inclut les événements en cours
+      return isToday && ongoingOrFuture;
     });
   }, [events]);
 
   const upcomingEvents = useMemo(() => {
-    const today = new Date();
+    const now = new Date();
     return events.filter(event => {
-      const eventDate = new Date(event.starts_at);
-      return eventDate.toDateString() !== today.toDateString();
+      const start = new Date(event.starts_at);
+      const end = new Date(event.ends_at);
+      const isToday = start.toDateString() === now.toDateString() || end.toDateString() === now.toDateString();
+      const ongoingOrFuture = end >= now; // inclut les événements en cours
+      return !isToday && ongoingOrFuture;
     });
   }, [events]);
 
