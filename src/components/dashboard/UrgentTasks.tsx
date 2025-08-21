@@ -18,9 +18,9 @@ export const UrgentTasks = () => {
   const { projects } = useProjects();
   const { toast } = useToast();
   
-  // Filtrer pour inclure aussi les tâches URGENT
+  // Filtrer: urgentes/hautes et non terminées
   const allUrgentTasks = urgentTasks.filter(task => 
-    task.priority === 'URGENT' || task.priority === 'HIGH'
+    (task.priority === 'URGENT' || task.priority === 'HIGH') && task.status !== 'DONE'
   );
 
   const handleTaskClick = (task: Task) => {
@@ -68,6 +68,23 @@ export const UrgentTasks = () => {
         title: "Erreur",
         description: "Impossible de supprimer la tâche. Veuillez réessayer.",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkDone = async (task: Task) => {
+    try {
+      const payload: UpdateTaskData = { id: task.id, status: 'DONE' };
+      await updateTask.mutateAsync(payload);
+      toast({
+        title: 'Tâche terminée',
+        description: `La tâche "${task.title}" a été marquée comme faite.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de marquer la tâche comme faite. Veuillez réessayer.',
+        variant: 'destructive',
       });
     }
   };
@@ -185,6 +202,7 @@ export const UrgentTasks = () => {
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
             onClick={handleTaskClick}
+            onMarkDone={handleMarkDone}
           />
         ))}
       </div>

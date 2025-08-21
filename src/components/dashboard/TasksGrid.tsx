@@ -14,7 +14,16 @@ export const TasksGrid = () => {
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   
   const { projects } = useProjects();
-  const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [projectFilter, setProjectFilter] = useState<number | undefined>(undefined);
+
+  const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks({
+    status: statusFilter || undefined,
+    priority: priorityFilter || undefined,
+    project: projectFilter,
+    exclude_urgent: true,
+  });
   const { toast } = useToast();
 
   const handleCreateTask = async (data: CreateTaskData) => {
@@ -70,6 +79,22 @@ export const TasksGrid = () => {
     }
   };
 
+  const handleMarkDone = async (task: Task) => {
+    try {
+      await updateTask.mutateAsync({ id: task.id, status: 'DONE' });
+      toast({
+        title: 'Tâche terminée',
+        description: `La tâche "${task.title}" a été marquée comme faite.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de marquer la tâche comme faite. Veuillez réessayer.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleTaskClick = (task: Task) => {
     // Ouvrir la vue détaillée de la tâche
     console.log('Opening task:', task.title);
@@ -87,7 +112,7 @@ export const TasksGrid = () => {
     return (
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Tâches ({tasks.length})</h3>
+          <h3 className="text-lg font-semibold text-foreground">Autres tâches ({tasks.length})</h3>
           <Button
             size="sm"
             className="bg-gold hover:bg-gold/90 text-navy"
@@ -121,15 +146,39 @@ export const TasksGrid = () => {
     <section className="animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">
-          Tâches ({tasks.length})
+          Autres tâches ({tasks.length})
         </h3>
-        <Button
-          size="sm"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-gold hover:bg-gold/90 text-navy"
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Filtres */}
+          <select
+            className="bg-navy-card border border-border text-foreground text-sm rounded px-2 py-1"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">Tous statuts</option>
+            <option value="TODO">À faire</option>
+            <option value="IN_PROGRESS">En cours</option>
+            <option value="DONE">Terminé</option>
+          </select>
+          <select
+            className="bg-navy-card border border-border text-foreground text-sm rounded px-2 py-1"
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+          >
+            <option value="">Toutes priorités</option>
+            <option value="LOW">Basse</option>
+            <option value="MEDIUM">Moyenne</option>
+            <option value="HIGH">Haute</option>
+            <option value="URGENT">Urgente</option>
+          </select>
+          <Button
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-gold hover:bg-gold/90 text-navy"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
       
       {tasks.length === 0 ? (
@@ -153,6 +202,7 @@ export const TasksGrid = () => {
               onEdit={handleEditTask}
               onDelete={handleDeleteTaskClick}
               onClick={handleTaskClick}
+              onMarkDone={handleMarkDone}
             />
           ))}
         </div>

@@ -31,14 +31,21 @@ export interface CreateTaskData {
   project?: number;
 }
 
-export interface UpdateTaskData extends CreateTaskData {
+export interface UpdateTaskData {
   id: number;
+  title?: string;
+  description?: string;
+  status?: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  due_at?: string;
+  project?: number;
 }
 
 export interface TaskFilters {
   project?: number;
   status?: string;
   priority?: string;
+  exclude_urgent?: boolean;
 }
 
 const TASKS_QUERY_KEY = 'tasks';
@@ -53,6 +60,7 @@ export const useTasks = (filters?: TaskFilters) => {
       if (filters?.project) params.append('project', filters.project.toString());
       if (filters?.status) params.append('status', filters.status);
       if (filters?.priority) params.append('priority', filters.priority);
+      if (filters?.exclude_urgent) params.append('exclude_urgent', 'true');
       
       const response = await axios.get(`/tasks/?${params.toString()}`);
       return response.data;

@@ -1,13 +1,14 @@
 import React from 'react';
 import { Calendar, AlertTriangle, CheckCircle, Clock, Circle } from 'lucide-react';
 import { TaskActions } from './TaskActions';
-import { Task } from '../../hooks/useTasks';
+import { Task, UpdateTaskData } from '../../hooks/useTasks';
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
   onClick: (task: Task) => void;
+  onMarkDone?: (task: Task) => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
@@ -15,6 +16,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onEdit,
   onDelete,
   onClick,
+  onMarkDone,
 }) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -83,12 +85,37 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* En-tête avec statut et priorité */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          {getStatusIcon(task.status)}
-          <span className="text-xs text-foreground/70">
-            {getStatusText(task.status)}
-          </span>
-        </div>
+        {task.status !== 'DONE' ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onMarkDone) onMarkDone(task);
+            }}
+            onMouseEnter={(e) => void 0}
+            onMouseLeave={(e) => void 0}
+            className="flex items-center gap-2 text-left"
+            aria-label="Marquer comme terminé"
+            title="Marquer comme terminé"
+          >
+            {/* Icône hover: coche verte, sinon icône de statut */}
+            <span className="relative">
+              <span className="block group-hover:hidden">
+                {getStatusIcon(task.status)}
+              </span>
+              <CheckCircle className="w-4 h-4 text-green-500 hidden group-hover:block" />
+            </span>
+            <span className="text-xs text-foreground/70">
+              <span className="group-hover:hidden inline">{getStatusText(task.status)}</span>
+              <span className="hidden group-hover:inline">Marquer comme terminé</span>
+            </span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            {getStatusIcon(task.status)}
+            <span className="text-xs text-foreground/70">{getStatusText(task.status)}</span>
+          </div>
+        )}
         <div className="flex items-center gap-1">
           {getPriorityIcon(task.priority)}
           <span className="text-xs text-foreground/70">
@@ -127,6 +154,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {task.description && !task.due_at && (
         <div className="h-4"></div>
       )}
+
+      {/* Checkbox supprimée - l'action est sur le statut en haut à gauche */}
     </div>
   );
 };
