@@ -94,9 +94,18 @@ export const UrgentTasks = () => {
   if (isLoading) {
     return (
       <section className="animate-slide-up">
-        <h3 className="text-lg font-semibold text-foreground mb-4">
-          Tâches urgentes
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-foreground">
+            Tâches urgentes
+          </h3>
+          <Button
+            size="sm"
+            className="bg-gold hover:bg-gold/90 text-navy"
+            disabled
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(3)].map((_, index) => (
@@ -121,14 +130,34 @@ export const UrgentTasks = () => {
   if (allUrgentTasks.length === 0) {
     return (
       <section className="animate-slide-up">
-        <h3 className="text-lg font-semibold text-foreground mb-4">
-          Tâches urgentes
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-foreground">
+            Tâches urgentes
+          </h3>
+          <Button
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-gold hover:bg-gold/90 text-navy"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
         
         <div className="text-center py-6">
           <AlertTriangle className="w-8 h-8 text-foreground/30 mx-auto mb-2" />
-          <p className="text-foreground/50 text-sm">Aucune tâche urgente pour le moment</p>
+          <p className="text-foreground/70 mb-2">Aucune tâche urgente pour le moment</p>
         </div>
+
+        {/* Modale de création de tâche urgente */}
+        <TaskModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          task={null}
+          onSubmit={handleCreateTask}
+          isLoading={createTask.isPending}
+          projects={projects || []}
+          defaultPriority="URGENT"
+        />
       </section>
     );
   }
@@ -174,10 +203,10 @@ export const UrgentTasks = () => {
       <DeleteConfirmModal
         isOpen={!!deletingTask}
         onClose={() => setDeletingTask(null)}
-        projectName={deletingTask?.title || ''}
         onConfirm={handleDeleteTaskConfirm}
-        isLoading={deleteTask.isPending}
-        itemType="tâche"
+        title="Supprimer la tâche"
+        message={`Êtes-vous sûr de vouloir supprimer la tâche "${deletingTask?.title}" ? Cette action est irréversible.`}
+        loading={deleteTask.isPending}
       />
 
       {/* Modale de création de tâche urgente */}

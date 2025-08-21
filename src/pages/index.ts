@@ -7,3 +7,5 @@ export { default as TasksPage } from './TasksPage';
 export { default as EventsPage } from './EventsPage';
 export { default as MessagesPage } from './MessagesPage';
 export { default as SettingsPage } from './SettingsPage';
+export { default as OAuthSuccess } from './OAuthSuccess';
+export { default as OAuthError } from './OAuthError';

@@ -190,9 +190,10 @@ export const ProjectsGrid = () => {
       <DeleteConfirmModal
         isOpen={!!deletingProject}
         onClose={() => setDeletingProject(null)}
-        projectName={deletingProject?.title || ''}
         onConfirm={handleDeleteProject}
-        isLoading={deleteProject.isPending}
+        title="Supprimer le projet"
+        message={`Êtes-vous sûr de vouloir supprimer le projet "${deletingProject?.title}" ? Cette action est irréversible.`}
+        loading={deleteProject.isPending}
       />
     </section>
   );

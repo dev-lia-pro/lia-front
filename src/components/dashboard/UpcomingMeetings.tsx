@@ -293,9 +293,10 @@ export const UpcomingMeetings = () => {
       <DeleteConfirmModal
         isOpen={!!deletingEvent}
         onClose={() => setDeletingEvent(null)}
-        projectName={deletingEvent?.title || ''}
         onConfirm={handleDeleteEvent}
-        isLoading={deleteEvent.isPending}
+        title="Supprimer l'événement"
+        message={`Êtes-vous sûr de vouloir supprimer l'événement "${deletingEvent?.title}" ? Cette action est irréversible.`}
+        loading={deleteEvent.isPending}
       />
     </section>
   );

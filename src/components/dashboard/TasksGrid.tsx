@@ -175,10 +175,10 @@ export const TasksGrid = () => {
       <DeleteConfirmModal
         isOpen={!!deletingTask}
         onClose={() => setDeletingTask(null)}
-        projectName={deletingTask?.title || ''}
         onConfirm={handleDeleteTask}
-        isLoading={deleteTask.isPending}
-        itemType="tâche"
+        title="Supprimer la tâche"
+        message={`Êtes-vous sûr de vouloir supprimer la tâche "${deletingTask?.title}" ? Cette action est irréversible.`}
+        loading={deleteTask.isPending}
       />
     </section>
   );

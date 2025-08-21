@@ -16,6 +16,8 @@ import MessagesPage from "./pages/MessagesPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+import OAuthSuccess from "./pages/OAuthSuccess";
+import OAuthError from "./pages/OAuthError";
 
 const App = () => {
   const { initializeAuth } = useAuthStore();
@@ -85,6 +87,10 @@ const App = () => {
               <SettingsPage />
             </ProtectedRoute>
           } />
+
+          {/* Routes OAuth callback (redirigées par le backend) */}
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
+          <Route path="/oauth-error" element={<OAuthError />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

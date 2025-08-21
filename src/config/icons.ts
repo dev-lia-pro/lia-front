@@ -24,10 +24,6 @@ export const ICON_PACK: IconOption[] = [
   { name: 'Music', icon: '🎵', value: 'music' },
   { name: 'Camera', icon: '📷', value: 'camera' },
   { name: 'Book', icon: '📚', value: 'book' },
-  // Icônes de compatibilité pour l'ancien système
-  { name: 'Utensils', icon: '🍴', value: 'utensils' },
-  { name: 'Building', icon: '🏢', value: 'building' },
-  { name: 'Laptop', icon: '💻', value: 'laptop' },
 ];
 
 // Mapping des valeurs d'icônes vers les emojis (pour la compatibilité)
