@@ -38,7 +38,7 @@ export interface UpdateEventData {
   external_id?: string;
   attendees?: string[];
   source_message?: number;
-  project?: number;
+  project?: number | null;
 }
 
 export interface EventsFilters {

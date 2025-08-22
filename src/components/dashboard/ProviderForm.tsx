@@ -122,13 +122,13 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         if (event.origin !== window.location.origin) return;
         if (event.data?.type === 'OAUTH_PROVIDER_CREATED') {
           // Fermer le formulaire et laisser la liste se rafraîchir (au prochain fetch)
-          try { authWindow?.close(); } catch {}
+          try { authWindow?.close(); } catch (e) { /* noop */ }
           onCancel();
           window.removeEventListener('message', onMessage);
         }
         if (event.data?.type === 'OAUTH_ERROR') {
           setAuthError(event.data?.error || 'Erreur OAuth');
-          try { authWindow?.close(); } catch {}
+          try { authWindow?.close(); } catch (e) { /* noop */ }
           window.removeEventListener('message', onMessage);
         }
       };
@@ -190,7 +190,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
       <div className="space-y-6">
         <div>
           <Label htmlFor="name" className="text-sm text-foreground/70">
-            Nom du provider *
+            Nom du fournisseur *
           </Label>
           <input
             id="name"
@@ -204,7 +204,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
 
         <div>
           <Label htmlFor="provider_type" className="text-sm text-foreground/70">
-            Type de provider *
+            Type de fournisseur *
           </Label>
           <select
             id="provider_type"
@@ -238,7 +238,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             type="button"
             onClick={handleTypeSelection}
             disabled={!formData.name.trim() || isAuthenticating}
-            className="bg-gold hover:bg-gold/90 text-navy"
+            className="border border-border bg-navy-card hover:bg-navy-muted text-foreground/80"
           >
             {isAuthenticating ? (
               <>
@@ -299,11 +299,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="bg-gold hover:bg-gold/90 text-navy"
-        >
+        <Button type="submit" disabled={loading} className="border border-border bg-navy-card hover:bg-navy-muted text-foreground/80">
           <Check className="w-4 h-4 mr-2" />
           {loading ? 'Enregistrement...' : (isEditing ? 'Mettre à jour' : 'Créer')}
         </Button>

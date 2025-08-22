@@ -1,7 +1,10 @@
 import React from 'react';
 import { Calendar, AlertTriangle, CheckCircle, Clock, Circle } from 'lucide-react';
-import { TaskActions } from './TaskActions';
+// Actions supprimées: ouverture par clic global
 import { Task, UpdateTaskData } from '../../hooks/useTasks';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useProjects } from '@/hooks/useProjects';
+import { getIconByValue } from '@/config/icons';
 
 interface TaskCardProps {
   task: Task;
@@ -9,6 +12,7 @@ interface TaskCardProps {
   onDelete: (task: Task) => void;
   onClick: (task: Task) => void;
   onMarkDone?: (task: Task) => void;
+  onAssignProject?: (taskId: number, projectId: number | '') => void;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
@@ -17,7 +21,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onDelete,
   onClick,
   onMarkDone,
+  onAssignProject,
 }) => {
+  const { projects } = useProjects();
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'DONE':
@@ -76,51 +82,39 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       className="group relative flex flex-col gap-3 p-4 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98]"
       onClick={() => onClick(task)}
     >
-      {/* Actions de la tâche */}
-      <TaskActions
-        onEdit={() => onEdit(task)}
-        onDelete={() => onDelete(task)}
-        taskTitle={task.title}
-      />
 
-      {/* En-tête avec statut et priorité */}
+      {/* En-tête: projet (gauche) et priorité (droite) */}
       <div className="flex items-start justify-between">
-        {task.status !== 'DONE' ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onMarkDone) onMarkDone(task);
-            }}
-            onMouseEnter={(e) => void 0}
-            onMouseLeave={(e) => void 0}
-            className="flex items-center gap-2 text-left"
-            aria-label="Marquer comme terminé"
-            title="Marquer comme terminé"
-          >
-            {/* Icône hover: coche verte, sinon icône de statut */}
-            <span className="relative">
-              <span className="block group-hover:hidden">
-                {getStatusIcon(task.status)}
-              </span>
-              <CheckCircle className="w-4 h-4 text-green-500 hidden group-hover:block" />
-            </span>
-            <span className="text-xs text-foreground/70">
-              <span className="group-hover:hidden inline">{getStatusText(task.status)}</span>
-              <span className="hidden group-hover:inline">Marquer comme terminé</span>
-            </span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            {getStatusIcon(task.status)}
-            <span className="text-xs text-foreground/70">{getStatusText(task.status)}</span>
-          </div>
-        )}
+        <div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs" onClick={(e) => e.stopPropagation()}>
+                {task.project ? (
+                  <>
+                    <span>{getIconByValue((projects.find(p => p.id === task.project)?.icon) || '')}</span>
+                    <span className="truncate max-w-[120px]">{projects.find(p => p.id === task.project)?.title || `Projet #${task.project}`}</span>
+                  </>
+                ) : (
+                  <span className="text-foreground/60">Aucun projet</span>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={() => onAssignProject && onAssignProject(task.id, '')} className="cursor-pointer hover:bg-navy-muted">
+                Aucun projet
+              </DropdownMenuItem>
+              {projects.map((p) => (
+                <DropdownMenuItem key={p.id} onClick={() => onAssignProject && onAssignProject(task.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                  <span className="mr-2">{getIconByValue(p.icon)}</span>
+                  <span>{p.title}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <div className="flex items-center gap-1">
           {getPriorityIcon(task.priority)}
-          <span className="text-xs text-foreground/70">
-            {getPriorityText(task.priority)}
-          </span>
+          <span className="text-xs text-foreground/70">{getPriorityText(task.priority)}</span>
         </div>
       </div>
 
@@ -155,7 +149,30 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         <div className="h-4"></div>
       )}
 
-      {/* Checkbox supprimée - l'action est sur le statut en haut à gauche */}
+      {/* Statut en bas à droite */}
+      <div className="absolute bottom-2 right-2">
+        {task.status !== 'DONE' ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onMarkDone) onMarkDone(task);
+            }}
+            className="px-2 py-0.5 rounded bg-muted/10 border border-border text-xs text-foreground/80 hover:bg-muted/20 flex items-center gap-1 group/status"
+            aria-label="Marquer comme terminé"
+            title="Marquer comme terminé"
+          >
+            {getStatusIcon(task.status)}
+            <span className="group-hover/status:hidden inline">{getStatusText(task.status)}</span>
+            <span className="hidden group-hover/status:inline">Marquer comme terminé</span>
+          </button>
+        ) : (
+          <div className="px-2 py-0.5 rounded bg-green-500/10 border border-green-500/30 text-xs text-green-400 flex items-center gap-1">
+            {getStatusIcon(task.status)}
+            <span>{getStatusText(task.status)}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

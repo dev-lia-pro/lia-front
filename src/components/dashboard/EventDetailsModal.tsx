@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
 import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import type { Event } from '@/hooks/useEvents';
 
@@ -37,9 +38,23 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-navy-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-foreground">
-            {event.title}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle className="text-foreground truncate">
+              {event.title}
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              {showEdit && (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-border hover:bg-navy-muted" onClick={onEdit} aria-label="Modifier">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+              {showDelete && (
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-border hover:bg-navy-muted" onClick={onDelete} disabled={deleteLoading} aria-label="Supprimer">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -74,20 +89,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             </div>
           )}
 
-          {(showDelete || showEdit) && (
-            <div className="pt-2 border-t border-border flex justify-end gap-2">
-              {showEdit && (
-                <Button variant="secondary" onClick={onEdit}>
-                  Modifier
-                </Button>
-              )}
-              {showDelete && (
-                <Button variant="destructive" onClick={onDelete} disabled={deleteLoading}>
-                  {deleteLoading ? 'Suppression…' : 'Supprimer'}
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="pt-4 pb-0 border-t border-border flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>Fermer</Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -38,7 +38,7 @@ export interface UpdateTaskData {
   status?: 'TODO' | 'IN_PROGRESS' | 'DONE';
   priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   due_at?: string;
-  project?: number;
+  project?: number | null;
 }
 
 export interface TaskFilters {

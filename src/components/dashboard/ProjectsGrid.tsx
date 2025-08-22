@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ProjectModal } from './ProjectModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { ProjectActions } from './ProjectActions';
+import ProjectDetailsModal from './ProjectDetailsModal';
 import { ProjectIcon } from './ProjectIcon';
 import { useProjects, Project, CreateProjectData, UpdateProjectData } from '../../hooks/useProjects';
 import { useToast } from '../../hooks/use-toast';
@@ -12,6 +12,7 @@ export const ProjectsGrid = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
   const { projects, isLoading, createProject, updateProject, deleteProject } = useProjects();
   const { toast } = useToast();
@@ -70,8 +71,7 @@ export const ProjectsGrid = () => {
   };
 
   const handleProjectClick = (project: Project) => {
-    // Ouvrir le tableau de bord du projet
-    console.log('Opening project:', project.title);
+    setSelectedProject(project);
   };
 
   const handleEditProject = (project: Project) => {
@@ -87,11 +87,7 @@ export const ProjectsGrid = () => {
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">Projets ({projects?.length || 0})</h3>
-          <Button
-            size="sm"
-            className="bg-gold hover:bg-gold/90 text-navy"
-            disabled
-          >
+          <Button size="sm" className="h-9 w-9 p-0 border border-gold bg-gold text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
@@ -117,11 +113,7 @@ export const ProjectsGrid = () => {
         <h3 className="text-lg font-semibold text-foreground">
           Projets ({projects.length})
         </h3>
-        <Button
-          size="sm"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-gold hover:bg-gold/90 text-navy"
-        >
+        <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" aria-label="Créer un projet" title="Créer un projet">
           <Plus className="w-4 h-4" />
         </Button>
       </div>
@@ -130,10 +122,10 @@ export const ProjectsGrid = () => {
         <div className="text-center py-8">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-card border border-border hover:border-gold hover:bg-navy-card/80 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
+            className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold border border-gold hover:bg-gold/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
             type="button"
           >
-            <Plus className="w-8 h-8 text-foreground/50 group-hover:text-gold transition-all duration-200" />
+            <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
           </button>
           <p className="text-foreground/70 mb-2">Aucun projet pour le moment</p>
           <p className="text-sm text-foreground/50">Cliquez sur l'icône ci-dessus pour créer votre premier projet</p>
@@ -146,15 +138,8 @@ export const ProjectsGrid = () => {
               className="group relative flex flex-col items-center gap-3 p-4 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98]"
               onClick={() => handleProjectClick(project)}
             >
-              {/* Actions du projet */}
-              <ProjectActions
-                onEdit={() => handleEditProject(project)}
-                onDelete={() => handleDeleteProjectClick(project)}
-                projectName={project.title}
-              />
-
               {/* Icône du projet */}
-              <div className="w-12 h-12 rounded-full border-2 border-gold flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full border-2 border-gold flex items-center justify-center bg-navy-deep overflow-hidden">
                 <ProjectIcon icon={project.icon} size="sm" />
               </div>
 
@@ -174,7 +159,8 @@ export const ProjectsGrid = () => {
         </div>
       )}
 
-      {/* Modale de création/modification */}
+      {/* Modale de création/modification */
+      }
       <ProjectModal
         isOpen={isCreateModalOpen || !!editingProject}
         onClose={() => {
@@ -184,6 +170,27 @@ export const ProjectsGrid = () => {
         project={editingProject}
         onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
         isLoading={createProject.isPending || updateProject.isPending}
+      />
+
+      {/* Modale de détails */}
+      <ProjectDetailsModal
+        isOpen={!!selectedProject}
+        onClose={() => setSelectedProject(null)}
+        project={selectedProject}
+        showEdit={true}
+        showDelete={true}
+        onEdit={() => {
+          if (selectedProject) {
+            setEditingProject(selectedProject);
+            setSelectedProject(null);
+          }
+        }}
+        onDelete={() => {
+          if (selectedProject) {
+            setDeletingProject(selectedProject);
+            setSelectedProject(null);
+          }
+        }}
       />
 
       {/* Modale de confirmation de suppression */}

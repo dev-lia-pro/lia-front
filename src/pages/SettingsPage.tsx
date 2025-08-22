@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { ProviderCreate, ProviderUpdate } from '@/types/provider';
 import axios from '@/api/axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ProjectsGrid } from '@/components/dashboard/ProjectsGrid';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('parametres');
@@ -240,18 +241,21 @@ const SettingsPage = () => {
       
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 py-6">
+          {/* Section Projets */}
+          <Card className="bg-navy-card border-border mb-6">
+            <CardContent className="pt-6">
+              <ProjectsGrid />
+            </CardContent>
+          </Card>
+
           {/* Section des providers */}
           <Card className="bg-navy-card border-border mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-semibold text-foreground">
-                  Providers d'intégration
+                  Fournisseurs de données
                 </CardTitle>
-                <Button
-                  size="sm"
-                  onClick={() => setIsAddingProvider(true)}
-                  className="bg-gold hover:bg-gold/90 text-navy"
-                >
+                <Button size="sm" onClick={() => setIsAddingProvider(true)} className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" aria-label="Ajouter un fournisseur" title="Ajouter un fournisseur">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -263,7 +267,7 @@ const SettingsPage = () => {
               {(isAddingProvider || editingProvider) && (
                 <div className="mb-6 p-4 bg-navy-deep rounded-lg border border-border">
                   <h3 className="text-lg font-medium mb-4 text-foreground">
-                    {editingProvider ? 'Modifier le provider' : 'Nouveau provider'}
+                    {editingProvider ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
                   </h3>
                   <ProviderForm
                     provider={editingProvider}
@@ -307,7 +311,7 @@ const SettingsPage = () => {
                         </p>
                         {provider.last_sync_at && (
                           <p className="text-xs text-foreground/50">
-                            Dernière sync: {new Date(provider.last_sync_at).toLocaleDateString('fr-FR')}
+                            Dernière synchro: {new Date(provider.last_sync_at).toLocaleDateString('fr-FR')}
                           </p>
                         )}
                       </div>
@@ -377,10 +381,10 @@ const SettingsPage = () => {
                   <div className="text-center py-8">
                     <button
                       onClick={() => setIsAddingProvider(true)}
-                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-card border border-border hover:border-gold hover:bg-navy-card/80 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
+                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold border border-gold hover:bg-gold/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
                       type="button"
                     >
-                      <Plus className="w-8 h-8 text-foreground/50 group-hover:text-gold transition-all duration-200" />
+                      <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
                     </button>
                     <p className="text-foreground/70 mb-2">Aucun provider configuré</p>
                     <p className="text-sm text-foreground/50">

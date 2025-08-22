@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ModalActions } from './ModalActions';
 import { Event, CreateEventData, UpdateEventData } from '@/hooks/useEvents';
+import { useProjects } from '@/hooks/useProjects';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -13,9 +14,10 @@ interface EventModalProps {
   event?: Event | null;
   onSubmit: (data: CreateEventData | UpdateEventData) => Promise<void>;
   isLoading: boolean;
+  initialStart?: Date | string;
 }
 
-export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading }: EventModalProps) => {
+export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initialStart }: EventModalProps) => {
   const [formData, setFormData] = useState<CreateEventData>({
     title: '',
     location: '',
@@ -28,6 +30,18 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading }: Even
   });
 
   const [attendeesInput, setAttendeesInput] = useState('');
+  const { projects } = useProjects();
+  const [selectedProject, setSelectedProject] = useState<string>('none');
+
+  const formatLocalDateInput = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   // Initialiser le formulaire avec les données de l'événement existant
   useEffect(() => {
@@ -35,35 +49,50 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading }: Even
       setFormData({
         title: event.title,
         location: event.location || '',
-        starts_at: event.starts_at.slice(0, 16), // Format datetime-local
-        ends_at: event.ends_at.slice(0, 16),
+        starts_at: formatLocalDateInput(new Date(event.starts_at)),
+        ends_at: formatLocalDateInput(new Date(event.ends_at)),
         provider: event.provider,
         external_id: event.external_id || '',
         attendees: event.attendees || [],
         project: event.project,
       });
       setAttendeesInput(event.attendees?.join(', ') || '');
+      setSelectedProject(event.project ? String(event.project) : 'none');
     } else {
       // Réinitialiser le formulaire pour un nouvel événement
-      const now = new Date();
-      const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
-      
+      const base = initialStart ? new Date(initialStart) : new Date();
+      // Par défaut, proposer 09:00 locale
+      base.setHours(9, 0, 0, 0);
+      const end = new Date(base.getTime() + 60 * 60 * 1000);
+
       setFormData({
         title: '',
         location: '',
-        starts_at: now.toISOString().slice(0, 16),
-        ends_at: inOneHour.toISOString().slice(0, 16),
+        starts_at: formatLocalDateInput(base),
+        ends_at: formatLocalDateInput(end),
         provider: 'GOOGLE',
         external_id: '',
         attendees: [],
         project: undefined,
       });
       setAttendeesInput('');
+      setSelectedProject('none');
     }
-  }, [event, isOpen]);
+  }, [event, isOpen, initialStart]);
 
   const handleInputChange = (field: keyof CreateEventData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [field]: value } as CreateEventData;
+      if (field === 'starts_at') {
+        const start = new Date(value);
+        const end = new Date(next.ends_at);
+        if (isFinite(start.getTime()) && isFinite(end.getTime()) && end < start) {
+          // Forcer la fin à être au moins égale au début
+          next.ends_at = value;
+        }
+      }
+      return next;
+    });
   };
 
   const handleAttendeesChange = (value: string) => {
@@ -79,9 +108,24 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading }: Even
       return;
     }
 
+    // Convertir les dates locales (datetime-local) en ISO UTC pour l'API
+    const startsUtc = new Date(formData.starts_at).toISOString();
+    const endsUtc = new Date(formData.ends_at).toISOString();
+
     const submitData = event 
-      ? { ...formData, id: event.id } as UpdateEventData
-      : formData as CreateEventData;
+      ? ({
+          ...formData,
+          id: event.id,
+          starts_at: startsUtc,
+          ends_at: endsUtc,
+          project: selectedProject !== 'none' ? parseInt(selectedProject) : undefined,
+        } as UpdateEventData)
+      : ({
+          ...formData,
+          starts_at: startsUtc,
+          ends_at: endsUtc,
+          project: selectedProject !== 'none' ? parseInt(selectedProject) : undefined,
+        } as CreateEventData);
 
     await onSubmit(submitData);
   };
@@ -212,19 +256,42 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading }: Even
             </p>
           </div>
 
-          {/* ID externe */}
-          <div>
-            <label htmlFor="external_id" className="block text-sm font-medium text-foreground mb-2">
-              ID externe
-            </label>
-            <Input
-              id="external_id"
-              value={formData.external_id}
-              onChange={(e) => handleInputChange('external_id', e.target.value)}
-              placeholder="ID de l'événement externe"
-              className="bg-navy-muted border-border text-foreground placeholder-muted-foreground focus:border-gold focus:ring-gold"
-            />
-          </div>
+          {/* ID externe: visible uniquement en édition */}
+          {/* Projet associé */}
+          {projects.length > 0 && (
+            <div className="space-y-2">
+              <label htmlFor="project" className="text-sm font-medium text-foreground">
+                Projet associé
+              </label>
+              <Select value={selectedProject} onValueChange={setSelectedProject} disabled={isLoading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un projet (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun projet</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {isEditMode && (
+            <div>
+              <label htmlFor="external_id" className="block text-sm font-medium text-foreground mb-2">
+                ID externe
+              </label>
+              <Input
+                id="external_id"
+                value={formData.external_id}
+                onChange={(e) => handleInputChange('external_id', e.target.value)}
+                placeholder="ID de l'événement externe"
+                className="bg-navy-muted border-border text-foreground placeholder-muted-foreground focus:border-gold focus:ring-gold"
+              />
+            </div>
+          )}
 
           {/* Boutons d'action */}
           <ModalActions

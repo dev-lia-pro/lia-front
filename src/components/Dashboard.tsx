@@ -25,10 +25,7 @@ export const Dashboard = () => {
           {/* Section des tâches urgentes */}
           <UrgentTasks />
           
-          {/* Section des projets (aperçu) */}
-          <div className="mb-4">
-            <ProjectsGrid />
-          </div>
+          {/* Section des projets (aperçu) retirée */}
         </div>
       </div>
       

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -40,6 +40,14 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           
           <div className="flex gap-2">
             <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+              className="border-border text-foreground hover:bg-navy-muted flex-1"
+            >
+              Annuler
+            </Button>
+            <Button
               onClick={onConfirm}
               disabled={loading}
               className="bg-red-500 hover:bg-red-600 text-white flex-1"
@@ -50,20 +58,8 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
                   Suppression...
                 </>
               ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer
-                </>
+                <>Supprimer</>
               )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-              className="border-border text-foreground hover:bg-navy-muted flex-1"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Annuler
             </Button>
           </div>
         </CardContent>

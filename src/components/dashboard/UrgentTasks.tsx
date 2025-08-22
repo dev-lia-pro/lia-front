@@ -2,30 +2,34 @@ import React, { useState } from 'react';
 import { AlertTriangle, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useTasks, Task, CreateTaskData, UpdateTaskData } from '../../hooks/useTasks';
+import { useProjectStore } from '@/stores/projectStore';
 import { useProjects } from '../../hooks/useProjects';
 import { TaskCard } from './TaskCard';
+import TaskDetailsModal from './TaskDetailsModal';
 import { TaskModal } from './TaskModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useToast } from '../../hooks/use-toast';
+import { EmptyState } from './EmptyState';
 
 export const UrgentTasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
-  // Récupérer les tâches avec priorité URGENT ou HIGH
-  const { tasks: urgentTasks, isLoading, updateTask, deleteTask, createTask } = useTasks({ priority: 'URGENT' });
+  // Récupérer les tâches (filtrées par projet sélectionné)
+  const { selected } = useProjectStore();
+  const { tasks, isLoading, updateTask, deleteTask, createTask } = useTasks({ project: selected.id ?? undefined });
   const { projects } = useProjects();
   const { toast } = useToast();
   
   // Filtrer: urgentes/hautes et non terminées
-  const allUrgentTasks = urgentTasks.filter(task => 
+  const allUrgentTasks = tasks.filter(task => 
     (task.priority === 'URGENT' || task.priority === 'HIGH') && task.status !== 'DONE'
   );
 
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const handleTaskClick = (task: Task) => {
-    // Ouvrir la vue détaillée de la tâche
-    console.log('Opening urgent task:', task.title);
+    setSelectedTask(task);
   };
 
   const handleEditTask = (task: Task) => {
@@ -89,6 +93,14 @@ export const UrgentTasks = () => {
     }
   };
 
+  const handleAssignProject = async (taskId: number, projectId: number | '') => {
+    try {
+      await updateTask.mutateAsync({ id: taskId, project: projectId === '' ? null : (projectId as number) } as UpdateTaskData);
+    } catch (error) {
+      // silencieux
+    }
+  };
+
   const handleCreateTask = async (data: CreateTaskData) => {
     try {
       // S'assurer que la priorité est URGENT
@@ -115,11 +127,7 @@ export const UrgentTasks = () => {
           <h3 className="text-lg font-semibold text-foreground">
             Tâches urgentes
           </h3>
-          <Button
-            size="sm"
-            className="bg-gold hover:bg-gold/90 text-navy"
-            disabled
-          >
+          <Button size="sm" className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
@@ -151,19 +159,16 @@ export const UrgentTasks = () => {
           <h3 className="text-lg font-semibold text-foreground">
             Tâches urgentes
           </h3>
-          <Button
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-gold hover:bg-gold/90 text-navy"
-          >
+          <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        
-        <div className="text-center py-6">
-          <AlertTriangle className="w-8 h-8 text-foreground/30 mx-auto mb-2" />
-          <p className="text-foreground/70 mb-2">Aucune tâche urgente pour le moment</p>
-        </div>
+
+        <EmptyState
+          title="Aucune tâche urgente pour le moment"
+          description="Cliquez sur l'icône ci-dessus pour créer votre première tâche"
+          onCreateClick={() => setIsCreateModalOpen(true)}
+        />
 
         {/* Modale de création de tâche urgente */}
         <TaskModal
@@ -185,11 +190,7 @@ export const UrgentTasks = () => {
         <h3 className="text-lg font-semibold text-foreground">
           Tâches urgentes ({allUrgentTasks.length})
         </h3>
-        <Button
-          size="sm"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-gold hover:bg-gold/90 text-navy"
-        >
+        <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
           <Plus className="w-4 h-4" />
         </Button>
       </div>
@@ -203,6 +204,7 @@ export const UrgentTasks = () => {
             onDelete={handleDeleteTask}
             onClick={handleTaskClick}
             onMarkDone={handleMarkDone}
+            onAssignProject={handleAssignProject}
           />
         ))}
       </div>
@@ -215,6 +217,27 @@ export const UrgentTasks = () => {
         onSubmit={handleUpdateTask}
         isLoading={updateTask.isPending}
         projects={projects || []}
+      />
+
+      {/* Modale de détails */}
+      <TaskDetailsModal
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        task={selectedTask}
+        showEdit={true}
+        showDelete={true}
+        onEdit={() => {
+          if (selectedTask) {
+            setEditingTask(selectedTask);
+            setSelectedTask(null);
+          }
+        }}
+        onDelete={() => {
+          if (selectedTask) {
+            setDeletingTask(selectedTask);
+            setSelectedTask(null);
+          }
+        }}
       />
 
       {/* Modale de confirmation de suppression */}

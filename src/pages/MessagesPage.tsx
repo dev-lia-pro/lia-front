@@ -4,9 +4,9 @@ import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
 import { useProjects } from '@/hooks/useProjects';
+import { useProjectStore } from '@/stores/projectStore';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
-import { Pencil } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const MessagesPage = () => {
@@ -14,7 +14,8 @@ const MessagesPage = () => {
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
-  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ channel: channelFilter, tag: searchTag || undefined });
+  const { selected } = useProjectStore();
+  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined });
   const { projects } = useProjects();
 
   const handleAssignProject = async (messageId: number, projectId: number | '') => {
@@ -52,7 +53,7 @@ const MessagesPage = () => {
                 placeholder="Filtrer par tag"
                 className="bg-navy-card border border-border rounded px-2 py-1 text-sm"
               />
-              <button onClick={() => refetch()} className="bg-primary text-primary-foreground px-3 py-1 rounded text-sm">Rafraîchir</button>
+              <button onClick={() => refetch()} className="border border-border bg-navy-card hover:bg-navy-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
             </div>
           </div>
 
@@ -79,25 +80,29 @@ const MessagesPage = () => {
                         <span className="px-2 py-0.5 rounded bg-muted/10 border border-border">{msg.channel}</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20" aria-label="Changer le projet">
+                            <button
+                              className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs"
+                              aria-label="Changer le projet"
+                              title="Changer le projet"
+                            >
                               {msg.project ? (
                                 <>
                                   <span>{getIconByValue((projects.find(p => p.id === msg.project)?.icon) || '')}</span>
-                                  <span>{projects.find(p => p.id === msg.project)?.title || `Projet #${msg.project}`}</span>
-                                  <Pencil className="w-3 h-3 opacity-60 ml-1" />
+                                  <span className="truncate max-w-[160px]">
+                                    {projects.find(p => p.id === msg.project)?.title || `Projet #${msg.project}`}
+                                  </span>
                                 </>
                               ) : (
-                                <>
-                                  <span className="text-foreground/50">Aucun projet</span>
-                                  <Pencil className="w-3 h-3 opacity-60 ml-1" />
-                                </>
+                                <span className="text-foreground/60">Aucun projet</span>
                               )}
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')}>Aucun projet</DropdownMenuItem>
+                          <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground">
+                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')} className="cursor-pointer hover:bg-navy-muted">
+                              Aucun projet
+                            </DropdownMenuItem>
                             {projects.map((p) => (
-                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)}>
+                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
                                 <span className="mr-2">{getIconByValue(p.icon)}</span>
                                 <span>{p.title || `Projet #${p.id}`}</span>
                               </DropdownMenuItem>
@@ -111,7 +116,10 @@ const MessagesPage = () => {
                       </div>
 
                       {msg.channel === 'SMS' ? (
-                        <div className="truncate text-sm">{msg.body_text || '(SMS)'}</div>
+                        <div className="text-sm">
+                          <div className="text-foreground/70 truncate">{msg.sender}</div>
+                          <div className="truncate">{msg.body_text || '(SMS)'}</div>
+                        </div>
                       ) : (
                         <button
                           onClick={() => setSelectedMessage(selectedMessage?.id === msg.id ? null : msg)}

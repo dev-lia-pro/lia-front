@@ -4,9 +4,12 @@ import { Button } from '../ui/button';
 import { TaskModal } from './TaskModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskCard } from './TaskCard';
+import TaskDetailsModal from './TaskDetailsModal';
 import { useProjects } from '../../hooks/useProjects';
 import { useTasks, Task, CreateTaskData, UpdateTaskData } from '../../hooks/useTasks';
+import { useProjectStore } from '@/stores/projectStore';
 import { useToast } from '../../hooks/use-toast';
+import { EmptyState } from './EmptyState';
 
 export const TasksGrid = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -17,11 +20,12 @@ export const TasksGrid = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [projectFilter, setProjectFilter] = useState<number | undefined>(undefined);
+  const { selected } = useProjectStore();
 
   const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks({
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
-    project: projectFilter,
+    project: selected.id ?? projectFilter,
     exclude_urgent: true,
   });
   const { toast } = useToast();
@@ -96,8 +100,7 @@ export const TasksGrid = () => {
   };
 
   const handleTaskClick = (task: Task) => {
-    // Ouvrir la vue détaillée de la tâche
-    console.log('Opening task:', task.title);
+    setSelectedTask(task);
   };
 
   const handleEditTask = (task: Task) => {
@@ -107,17 +110,22 @@ export const TasksGrid = () => {
   const handleDeleteTaskClick = (task: Task) => {
     setDeletingTask(task);
   };
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const handleAssignProject = async (taskId: number, projectId: number | '') => {
+    try {
+      await updateTask.mutateAsync({ id: taskId, project: projectId === '' ? null : (projectId as number) });
+    } catch (error) {
+      // silencieux
+    }
+  };
 
   if (isLoading) {
     return (
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">Autres tâches ({tasks.length})</h3>
-          <Button
-            size="sm"
-            className="bg-gold hover:bg-gold/90 text-navy"
-            disabled
-          >
+          <Button size="sm" className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
@@ -171,28 +179,18 @@ export const TasksGrid = () => {
             <option value="HIGH">Haute</option>
             <option value="URGENT">Urgente</option>
           </select>
-          <Button
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-gold hover:bg-gold/90 text-navy"
-          >
+          <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
             <Plus className="w-4 h-4" />
           </Button>
         </div>
       </div>
       
       {tasks.length === 0 ? (
-        <div className="text-center py-8">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-card border border-border hover:border-gold hover:bg-navy-card/80 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
-            type="button"
-          >
-            <Plus className="w-8 h-8 text-foreground/50 group-hover:text-gold transition-all duration-200" />
-          </button>
-          <p className="text-foreground/70 mb-2">Aucune tâche pour le moment</p>
-          <p className="text-sm text-foreground/50">Cliquez sur l'icône ci-dessus pour créer votre première tâche</p>
-        </div>
+        <EmptyState
+          title="Aucune tâche pour le moment"
+          description="Cliquez sur l'icône ci-dessus pour créer votre première tâche"
+          onCreateClick={() => setIsCreateModalOpen(true)}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tasks.map((task) => (
@@ -203,6 +201,7 @@ export const TasksGrid = () => {
               onDelete={handleDeleteTaskClick}
               onClick={handleTaskClick}
               onMarkDone={handleMarkDone}
+              onAssignProject={handleAssignProject}
             />
           ))}
         </div>
@@ -219,6 +218,27 @@ export const TasksGrid = () => {
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
         isLoading={createTask.isPending || updateTask.isPending}
         projects={projects || []}
+      />
+
+      {/* Modale de détails */}
+      <TaskDetailsModal
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        task={selectedTask}
+        showEdit={true}
+        showDelete={true}
+        onEdit={() => {
+          if (selectedTask) {
+            setEditingTask(selectedTask);
+            setSelectedTask(null);
+          }
+        }}
+        onDelete={() => {
+          if (selectedTask) {
+            setDeletingTask(selectedTask);
+            setSelectedTask(null);
+          }
+        }}
       />
 
       {/* Modale de confirmation de suppression */}

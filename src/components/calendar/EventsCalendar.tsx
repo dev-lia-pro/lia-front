@@ -1,7 +1,11 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEvents, type Event, type EventsFilters, type UpdateEventData, type CreateEventData } from '@/hooks/useEvents';
+import { useProjectStore } from '@/stores/projectStore';
 import EventDetailsModal from '@/components/dashboard/EventDetailsModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useProjects } from '@/hooks/useProjects';
+import { getIconByValue } from '@/config/icons';
 import { EventModal } from '@/components/dashboard/EventModal';
 
 type CalendarView = 'month' | 'week' | 'list';
@@ -47,6 +51,12 @@ function formatTime(d: Date): string {
   return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatHourShort(d: Date): string {
+  const h = d.getHours();
+  const m = d.getMinutes();
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
+}
+
 function groupEventsByDay(events: Event[]): Record<string, Event[]> {
   return events.reduce<Record<string, Event[]>>((acc, ev) => {
     const key = new Date(ev.starts_at).toISOString().slice(0, 10);
@@ -61,6 +71,18 @@ function localDateKey(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function endOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
 }
 
 function capitalizeFirst(input: string): string {
@@ -84,6 +106,10 @@ export const EventsCalendar: React.FC = () => {
   const [currentDate, setCurrentDate] = React.useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = React.useState<Event | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
+  const [createStartDate, setCreateStartDate] = React.useState<Date | null>(null);
+  const [hoveredDayKey, setHoveredDayKey] = React.useState<string | null>(null);
+  const [hoveredEventId, setHoveredEventId] = React.useState<number | null>(null);
 
   const range = React.useMemo(() => {
     if (view === 'week') {
@@ -113,9 +139,10 @@ export const EventsCalendar: React.FC = () => {
     return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
   };
 
+  const { selected } = useProjectStore();
   const filters = React.useMemo(() => {
     if (view === 'week') {
-      return { week: getISOWeek(currentDate) } as const;
+      return { week: getISOWeek(currentDate), project: selected.id ?? undefined } as const;
     }
     if (view === 'month') {
       // Récupérer aussi les mois adjacents
@@ -125,13 +152,14 @@ export const EventsCalendar: React.FC = () => {
       const nextMonthDate = new Date(year, month + 1, 1);
       const from = startOfMonth(prevMonthDate);
       const to = endOfMonth(nextMonthDate);
-      return { date_from: toISODateString(from), date_to: toISODateString(to) } as const;
+      return { date_from: toISODateString(from), date_to: toISODateString(to), project: selected.id ?? undefined } as const;
     }
-    return { date_from: toISODateString(range.from), date_to: toISODateString(range.to) } as const;
-  }, [view, currentDate, range.from, range.to]);
+    return { date_from: toISODateString(range.from), date_to: toISODateString(range.to), project: selected.id ?? undefined } as const;
+  }, [view, currentDate, range.from, range.to, selected.id]);
 
-  const { events, isLoading, error, deleteEvent, updateEvent } = useEvents(filters as EventsFilters);
+  const { events, isLoading, error, deleteEvent, updateEvent, createEvent } = useEvents(filters as EventsFilters);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const { projects } = useProjects();
 
   const handleDeleteSelected = async () => {
     if (!selectedEvent) return;
@@ -166,6 +194,14 @@ export const EventsCalendar: React.FC = () => {
     return [...events].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   }, [events]);
 
+  const handleAssignEventProject = async (eventId: number, projectId: number | '') => {
+    try {
+      await updateEvent.mutateAsync({ id: eventId, project: projectId === '' ? null : (projectId as number) } as UpdateEventData);
+    } catch (e) {
+      // silencieux
+    }
+  };
+
   const renderWeekGrid = () => {
     const start = startOfWeek(currentDate);
     const days: Date[] = Array.from({ length: 7 }).map((_, i) => {
@@ -177,9 +213,22 @@ export const EventsCalendar: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
         {days.map((day) => {
           const dayKey = day.toISOString().slice(0, 10);
-          const dayEvents = sortedEvents.filter((ev) => new Date(ev.starts_at).toISOString().slice(0,10) === dayKey);
+          const dayStart = startOfDay(day);
+          const dayEnd = endOfDay(day);
+          const dayEvents = sortedEvents.filter((ev) => {
+            const s = new Date(ev.starts_at);
+            const e = new Date(ev.ends_at);
+            return e >= dayStart && s <= dayEnd;
+          });
+          const isDayHoverActive = hoveredDayKey === dayKey && hoveredEventId === null;
           return (
-            <div key={dayKey} className="rounded-lg border border-border p-3 bg-card">
+            <div
+              key={dayKey}
+              className={`rounded-lg border border-border p-3 bg-card transition-colors cursor-pointer ${isDayHoverActive ? 'bg-primary/10' : ''}`}
+              onClick={() => { setCreateStartDate(day); setIsCreateOpen(true); }}
+              onMouseEnter={() => setHoveredDayKey(dayKey)}
+              onMouseLeave={() => setHoveredDayKey((prev) => (prev === dayKey ? null : prev))}
+            >
               <div className="text-sm font-medium mb-2">{formatWeekdayDayMonth(day)}</div>
               <div className="space-y-2">
                 {dayEvents.length === 0 && (
@@ -188,11 +237,59 @@ export const EventsCalendar: React.FC = () => {
                 {dayEvents.map((ev) => {
                   const start = new Date(ev.starts_at);
                   const end = new Date(ev.ends_at);
+                  const isMultiDay = localDateKey(start) !== localDateKey(end);
+                  const isFirstDay = localDateKey(start) === localDateKey(day);
+                  const isLastDay = localDateKey(end) === localDateKey(day);
                   return (
-                    <div key={ev.id} className="text-sm rounded-md bg-primary/10 p-2 relative group hover:bg-primary/15 cursor-pointer" onClick={() => setSelectedEvent(ev)}>
+                    <div
+                      key={ev.id}
+                      className="text-sm rounded-md bg-primary/10 p-2 relative group hover:bg-primary/15 cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
+                      onMouseEnter={() => setHoveredEventId(ev.id)}
+                      onMouseLeave={() => setHoveredEventId((prev) => (prev === ev.id ? null : prev))}
+                    >
+                      {!selected.id && (
+                        <div className="absolute top-1 right-1">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="px-1.5 py-0.5 rounded bg-muted/10 border border-border text-[10px] hover:bg-muted/20" onClick={(e) => e.stopPropagation()}>
+                                {ev.project ? (
+                                  <>
+                                    <span className="mr-1">{getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '')}</span>
+                                    <span className="truncate max-w-[90px] align-middle">{projects.find(p => p.id === ev.project)?.title || `Projet #${ev.project}`}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-foreground/60">Aucun</span>
+                                )}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenuItem onClick={() => handleAssignEventProject(ev.id, '')} className="cursor-pointer hover:bg-navy-muted">Aucun projet</DropdownMenuItem>
+                              {projects.map((p) => (
+                                <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                                  <span className="mr-2">{getIconByValue(p.icon)}</span>
+                                  <span>{p.title}</span>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
                       <div className="font-semibold">{ev.title}</div>
                       <div className="text-xs text-muted-foreground">
-                        {formatTime(start)} - {formatTime(end)} {ev.location ? `· ${ev.location}` : ''}
+                        {isMultiDay ? (
+                          isFirstDay ? (
+                            <>À {formatHourShort(start)} {ev.location ? <>· {ev.location}</> : null}</>
+                          ) : isLastDay ? (
+                            <>Jusqu'à {formatHourShort(end)} {ev.location ? <>· {ev.location}</> : null}</>
+                          ) : (
+                            <>{ev.location ? ev.location : ''}</>
+                          )
+                        ) : (
+                          <>
+                            {formatTime(start)} - {formatTime(end)} {ev.location ? <>· {ev.location}</> : null}
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -238,10 +335,23 @@ export const EventsCalendar: React.FC = () => {
               {week.map((day) => {
                 const isCurrentMonth = day.getMonth() === monthIndex;
                 const dayKey = localDateKey(day);
-                const dayEvents = sortedEvents.filter((ev) => localDateKey(new Date(ev.starts_at)) === dayKey);
+                const dayStart = startOfDay(day);
+                const dayEnd = endOfDay(day);
+                const dayEvents = sortedEvents.filter((ev) => {
+                  const s = new Date(ev.starts_at);
+                  const e = new Date(ev.ends_at);
+                  return e >= dayStart && s <= dayEnd;
+                });
                 const isToday = localDateKey(new Date()) === dayKey;
+                const isDayHoverActive = hoveredDayKey === dayKey && hoveredEventId === null;
                 return (
-                  <div key={dayKey} className={`min-h-[120px] p-2 border-r last:border-r-0 ${isCurrentMonth ? '' : 'bg-muted/20'} ${isToday ? 'bg-primary/5' : ''}`}>
+                  <div
+                    key={dayKey}
+                    className={`min-h-[120px] p-2 border-r last:border-r-0 ${isCurrentMonth ? '' : 'bg-muted/20'} ${isToday ? 'bg-primary/5' : ''} transition-colors cursor-pointer ${isDayHoverActive ? 'bg-primary/10' : ''}`}
+                    onClick={() => { setCreateStartDate(day); setIsCreateOpen(true); }}
+                    onMouseEnter={() => setHoveredDayKey(dayKey)}
+                    onMouseLeave={() => setHoveredDayKey((prev) => (prev === dayKey ? null : prev))}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <div className={`text-sm font-medium ${isCurrentMonth ? '' : 'text-muted-foreground'}`}>{day.getDate()}</div>
                     </div>
@@ -252,11 +362,59 @@ export const EventsCalendar: React.FC = () => {
                       {dayEvents.map((ev) => {
                         const start = new Date(ev.starts_at);
                         const end = new Date(ev.ends_at);
+                        const isMultiDay = localDateKey(start) !== localDateKey(end);
+                        const isFirstDay = localDateKey(start) === dayKey;
+                        const isLastDay = localDateKey(end) === dayKey;
                         return (
-                          <div key={ev.id} className="text-xs rounded bg-primary/10 px-2 py-1 relative group hover:bg-primary/15 cursor-pointer" onClick={() => setSelectedEvent(ev)}>
+                          <div
+                            key={ev.id}
+                            className="text-xs rounded bg-primary/10 px-2 py-1 relative group hover:bg-primary/15 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
+                            onMouseEnter={() => setHoveredEventId(ev.id)}
+                            onMouseLeave={() => setHoveredEventId((prev) => (prev === ev.id ? null : prev))}
+                          >
+                            {!selected.id && (
+                              <div className="absolute top-1 right-1">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button className="px-1.5 py-0.5 rounded bg-muted/10 border border-border text-[10px] hover:bg-muted/20" onClick={(e) => e.stopPropagation()}>
+                                      {ev.project ? (
+                                        <>
+                                          <span className="mr-1">{getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '')}</span>
+                                          <span className="truncate max-w-[80px] align-middle">{projects.find(p => p.id === ev.project)?.title || `Projet #${ev.project}`}</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-foreground/60">Aucun</span>
+                                      )}
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem onClick={() => handleAssignEventProject(ev.id, '')} className="cursor-pointer hover:bg-navy-muted">Aucun projet</DropdownMenuItem>
+                                    {projects.map((p) => (
+                                      <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                                        <span className="mr-2">{getIconByValue(p.icon)}</span>
+                                        <span>{p.title}</span>
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            )}
                             <div className="font-semibold truncate" title={ev.title}>{ev.title}</div>
                             <div className="text-[10px] text-muted-foreground">
-                              {formatTime(start)} - {formatTime(end)} {ev.location ? `· ${ev.location}` : ''}
+                              {isMultiDay ? (
+                                isFirstDay ? (
+                                  <>À {formatHourShort(start)} {ev.location ? <>· {ev.location}</> : null}</>
+                                ) : isLastDay ? (
+                                  <>Jusqu'à {formatHourShort(end)} {ev.location ? <>· {ev.location}</> : null}</>
+                                ) : (
+                                  <>{ev.location ? ev.location : ''}</>
+                                )
+                              ) : (
+                                <>
+                                  {formatTime(start)} - {formatTime(end)} {ev.location ? <>· {ev.location}</> : null}
+                                </>
+                              )}
                             </div>
                           </div>
                         );
@@ -273,27 +431,96 @@ export const EventsCalendar: React.FC = () => {
   };
 
   const renderList = () => {
-    const byDay = groupEventsByDay(sortedEvents);
-    const dayKeys = Object.keys(byDay).sort();
+    // Générer chaque jour de la plage et lister les événements qui intersectent ce jour
+    const days: Date[] = [];
+    const start = startOfDay(range.from);
+    const end = endOfDay(range.to);
+    const d = new Date(start);
+    while (d <= end) {
+      days.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+
     return (
       <div className="space-y-4">
-        {dayKeys.length === 0 && (
-          <div className="text-sm text-muted-foreground">Aucun événement à afficher.</div>
-        )}
-        {dayKeys.map((key) => {
-          const day = new Date(key);
+        {days.map((day) => {
+          const dayKey = localDateKey(day);
+          const dayStart = startOfDay(day);
+          const dayEnd = endOfDay(day);
+          const dayEvents = sortedEvents.filter((ev) => {
+            const s = new Date(ev.starts_at);
+            const e = new Date(ev.ends_at);
+            return e >= dayStart && s <= dayEnd;
+          });
+
           return (
-            <div key={key} className="rounded-lg border border-border bg-card">
-              <div className="px-4 py-2 border-b text-sm font-medium">{formatDate(day)}</div>
+            <div key={dayKey} className="rounded-lg border border-border bg-card">
+              <div
+                className="px-4 py-2 border-b text-sm font-medium hover:bg-accent/20 transition-colors cursor-pointer"
+                onClick={() => { setCreateStartDate(day); setIsCreateOpen(true); }}
+              >
+                {formatDate(day)}
+              </div>
               <div className="divide-y">
-                {byDay[key].map((ev) => {
-                  const start = new Date(ev.starts_at);
-                  const end = new Date(ev.ends_at);
+                {dayEvents.length === 0 && (
+                  <div className="px-4 py-3 text-sm text-muted-foreground">Aucun événement</div>
+                )}
+                {dayEvents.map((ev) => {
+                  const startDt = new Date(ev.starts_at);
+                  const endDt = new Date(ev.ends_at);
+                  const isMultiDay = localDateKey(startDt) !== localDateKey(endDt);
+                  const realFirstDayKey = localDateKey(startOfDay(startDt));
+                  const realLastDayKey = localDateKey(startOfDay(endDt));
+                  const displayedFirstDayKey = localDateKey(startOfDay(startDt) < startOfDay(range.from) ? startOfDay(range.from) : startOfDay(startDt));
+                  const displayedLastDayKey = localDateKey(startOfDay(endDt) > startOfDay(range.to) ? startOfDay(range.to) : startOfDay(endDt));
+                  const isFirstDisplayedDay = dayKey === displayedFirstDayKey;
+                  const isLastDisplayedDay = dayKey === displayedLastDayKey;
                   return (
-                    <div key={ev.id} className="px-4 py-3 relative group hover:bg-primary/10 cursor-pointer" onClick={() => setSelectedEvent(ev)}>
-                      <div className="font-semibold">{ev.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatTime(start)} - {formatTime(end)} {ev.location ? `· ${ev.location}` : ''}
+                    <div key={`${ev.id}-${dayKey}`} className="px-4 py-3 relative group hover:bg-primary/10 cursor-pointer" onClick={() => setSelectedEvent(ev)}>
+                      {!selected.id && (
+                        <div className="mb-1">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="px-2 py-0.5 rounded bg-muted/10 border border-border text-xs hover:bg-muted/20 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                {ev.project ? (
+                                  <>
+                                    <span className="mr-1">{getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '')}</span>
+                                    <span className="truncate max-w-[160px] align-middle">{projects.find(p => p.id === ev.project)?.title || `Projet #${ev.project}`}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-foreground/60">Aucun projet</span>
+                                )}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenuItem onClick={() => handleAssignEventProject(ev.id, '')} className="cursor-pointer hover:bg-navy-muted">Aucun projet</DropdownMenuItem>
+                              {projects.map((p) => (
+                                <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                                  <span className="mr-2">{getIconByValue(p.icon)}</span>
+                                  <span>{p.title}</span>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-semibold">{ev.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {isMultiDay ? (
+                            isFirstDisplayedDay ? (
+                              <>À {formatHourShort(startDt)} {ev.location ? `· ${ev.location}` : ''}</>
+                            ) : isLastDisplayedDay ? (
+                              <>Jusqu'à {formatHourShort(endDt)} {ev.location ? `· ${ev.location}` : ''}</>
+                            ) : (
+                              <>{ev.location ? ev.location : ''}</>
+                            )
+                          ) : (
+                            <>
+                              {formatTime(startDt)} - {formatTime(endDt)} {ev.location ? `· ${ev.location}` : ''}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -381,6 +608,20 @@ export const EventsCalendar: React.FC = () => {
           setEditingEvent(null);
         }}
         isLoading={updateEvent?.isPending ?? false}
+      />
+
+      {/* Création d'événement (clic sur jour) */}
+      <EventModal
+        isOpen={isCreateOpen}
+        onClose={() => { setIsCreateOpen(false); setCreateStartDate(null); }}
+        event={null}
+        onSubmit={async (data) => {
+          await createEvent.mutateAsync(data as CreateEventData);
+          setIsCreateOpen(false);
+          setCreateStartDate(null);
+        }}
+        isLoading={createEvent?.isPending ?? false}
+        initialStart={createStartDate || currentDate}
       />
     </div>
   );

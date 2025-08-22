@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Edit3, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -81,10 +81,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isEditing ? (
-              <>
-                <Edit3 className="w-5 h-5 text-gold" />
-                Modifier le projet
-              </>
+              <>Modifier le projet</>
             ) : (
               <>
                 <Plus className="w-5 h-5 text-gold" />

@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
-  Briefcase, 
   Mail, 
   Calendar,
   CheckSquare, 
@@ -17,7 +16,6 @@ interface BottomNavigationProps {
 
 const navItems = [
   { id: 'accueil' as NavigationTab, label: 'Accueil', icon: Home, path: '/' },
-  { id: 'projets' as NavigationTab, label: 'Projets', icon: Briefcase, path: '/projects' },
   { id: 'boite' as NavigationTab, label: 'Boîte', icon: Mail, path: '/messages' },
   { id: 'agenda' as NavigationTab, label: 'Agenda', icon: Calendar, path: '/events' },
   { id: 'taches' as NavigationTab, label: 'Tâches', icon: CheckSquare, path: '/tasks' },
@@ -38,7 +36,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-navy-card border-t border-border">
-      <div className="grid grid-cols-6 h-16">
+      <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => {
           const IconComponent = item.icon;
           const isActive = currentTab === item.id;
