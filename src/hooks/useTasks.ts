@@ -50,7 +50,7 @@ export interface TaskFilters {
 
 const TASKS_QUERY_KEY = 'tasks';
 
-export const useTasks = (filters?: TaskFilters) => {
+export const useTasks = (filters?: TaskFilters, options?: { enabled?: boolean }) => {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -65,6 +65,7 @@ export const useTasks = (filters?: TaskFilters) => {
       const response = await axios.get(`/tasks/?${params.toString()}`);
       return response.data;
     },
+    enabled: options?.enabled ?? true,
   });
 
   // Extraire les tâches de la réponse paginée

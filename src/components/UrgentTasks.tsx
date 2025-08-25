@@ -15,6 +15,8 @@ export const UrgentTasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Statut de création par défaut (selon la colonne +)
+  const [createDefaultStatus, setCreateDefaultStatus] = useState<'TODO' | 'IN_PROGRESS'>('TODO');
   
   // Récupérer les tâches (filtrées par projet sélectionné)
   const { selected } = useProjectStore();
@@ -26,6 +28,8 @@ export const UrgentTasks = () => {
   const allUrgentTasks = tasks.filter(task => 
     (task.priority === 'URGENT' || task.priority === 'HIGH') && task.status !== 'DONE'
   );
+  const urgentTodo = allUrgentTasks.filter(t => t.status === 'TODO');
+  const urgentInProgress = allUrgentTasks.filter(t => t.status === 'IN_PROGRESS');
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const handleTaskClick = (task: Task) => {
@@ -101,6 +105,32 @@ export const UrgentTasks = () => {
     }
   };
 
+  // Drag & Drop
+  const [dragOverUrgent, setDragOverUrgent] = useState<Task['status'] | null>(null);
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ id: task.id, status: task.status, priority: task.priority }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: Task['status']) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverUrgent !== status) setDragOverUrgent(status);
+  };
+  const handleDragLeave = () => setDragOverUrgent(null);
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetStatus: Extract<Task['status'], 'TODO' | 'IN_PROGRESS'>) => {
+    e.preventDefault();
+    setDragOverUrgent(null);
+    try {
+      const payload = e.dataTransfer.getData('application/json');
+      if (!payload) return;
+      const { id } = JSON.parse(payload) as { id: number };
+      const updatePayload: UpdateTaskData = { id, status: targetStatus, priority: 'URGENT' };
+      await updateTask.mutateAsync(updatePayload);
+    } catch (error) {
+      // silencieux
+    }
+  };
+
   const handleCreateTask = async (data: CreateTaskData) => {
     try {
       // S'assurer que la priorité est URGENT
@@ -131,20 +161,21 @@ export const UrgentTasks = () => {
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, index) => (
-            <div
-              key={index}
-              className="p-4 bg-navy-card border border-border rounded-xl animate-pulse"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 bg-border rounded" />
-                <div className="w-8 h-8 bg-border rounded" />
-              </div>
-              <div className="w-full h-4 bg-border rounded mb-2" />
-              <div className="w-3/4 h-3 bg-border rounded mb-2" />
-              <div className="w-1/2 h-3 bg-border rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(2)].map((_, index) => (
+            <div key={index} className="p-4 bg-navy-card/30 border border-border rounded-xl animate-pulse">
+              <div className="h-5 w-24 bg-border rounded mb-4" />
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="p-4 bg-navy-card border border-border rounded-xl mb-3">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-16 h-3 bg-border rounded" />
+                    <div className="w-12 h-3 bg-border rounded" />
+                  </div>
+                  <div className="w-full h-4 bg-border rounded mb-2" />
+                  <div className="w-3/4 h-3 bg-border rounded mb-3" />
+                  <div className="w-20 h-3 bg-border rounded" />
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -152,37 +183,6 @@ export const UrgentTasks = () => {
     );
   }
 
-  if (allUrgentTasks.length === 0) {
-    return (
-      <section className="animate-slide-up">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">
-            Tâches urgentes
-          </h3>
-          <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-
-        <EmptyState
-          title="Aucune tâche urgente pour le moment"
-          description="Cliquez sur l'icône ci-dessus pour créer votre première tâche"
-          onCreateClick={() => setIsCreateModalOpen(true)}
-        />
-
-        {/* Modale de création de tâche urgente */}
-        <TaskModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          task={null}
-          onSubmit={handleCreateTask}
-          isLoading={createTask.isPending}
-          projects={projects || []}
-          defaultPriority="URGENT"
-        />
-      </section>
-    );
-  }
 
   return (
     <section className="animate-slide-up">
@@ -190,23 +190,75 @@ export const UrgentTasks = () => {
         <h3 className="text-lg font-semibold text-foreground">
           Tâches urgentes ({allUrgentTasks.length})
         </h3>
-        <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
-          <Plus className="w-4 h-4" />
-        </Button>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {allUrgentTasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onEdit={handleEditTask}
-            onDelete={handleDeleteTask}
-            onClick={handleTaskClick}
-            onMarkDone={handleMarkDone}
-            onAssignProject={handleAssignProject}
-          />
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Urgent - À faire */}
+        <div
+          className={`p-4 bg-navy-card/30 rounded-xl border ${dragOverUrgent === 'TODO' ? 'border-gold' : 'border-border'} transition-smooth`}
+          onDragOver={(e) => handleDragOver(e, 'TODO')}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, 'TODO')}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold">À faire ({urgentTodo.length})</h4>
+            <Button size="icon" onClick={() => { setCreateDefaultStatus('TODO'); setIsCreateModalOpen(true); }} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex flex-col gap-3 min-h-[60px]">
+            {urgentTodo.length === 0 && (
+              <div className="p-3 text-xs text-foreground/60 bg-navy-card rounded border border-border text-center">
+                Aucune tâche urgente pour le moment
+              </div>
+            )}
+            {urgentTodo.map((task) => (
+              <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
+                <TaskCard
+                  task={task}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                  onClick={handleTaskClick}
+                  onMarkDone={handleMarkDone}
+                  onAssignProject={handleAssignProject}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Urgent - En cours */}
+        <div
+          className={`p-4 bg-navy-card/30 rounded-xl border ${dragOverUrgent === 'IN_PROGRESS' ? 'border-gold' : 'border-border'} transition-smooth`}
+          onDragOver={(e) => handleDragOver(e, 'IN_PROGRESS')}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold">En cours ({urgentInProgress.length})</h4>
+            <Button size="icon" onClick={() => { setCreateDefaultStatus('IN_PROGRESS'); setIsCreateModalOpen(true); }} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex flex-col gap-3 min-h-[60px]">
+            {urgentInProgress.length === 0 && (
+              <div className="p-3 text-xs text-foreground/60 bg-navy-card rounded border border-border text-center">
+                Aucune tâche urgente pour le moment
+              </div>
+            )}
+            {urgentInProgress.map((task) => (
+              <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
+                <TaskCard
+                  task={task}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                  onClick={handleTaskClick}
+                  onMarkDone={handleMarkDone}
+                  onAssignProject={handleAssignProject}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Modale de modification */}
@@ -259,6 +311,7 @@ export const UrgentTasks = () => {
         isLoading={createTask.isPending}
         projects={projects || []}
         defaultPriority="URGENT"
+        defaultStatus={createDefaultStatus}
       />
     </section>
   );

@@ -17,6 +17,7 @@ interface TaskModalProps {
   isLoading?: boolean;
   projects?: Array<{ id: number; title: string }>;
   defaultPriority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  defaultStatus?: 'TODO' | 'IN_PROGRESS' | 'DONE';
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({
@@ -27,6 +28,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isLoading = false,
   projects = [],
   defaultPriority,
+  defaultStatus,
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -50,12 +52,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       // Mode création : champs vides ou avec priorité par défaut
       setTitle('');
       setDescription('');
-      setStatus('TODO');
+      setStatus(defaultStatus || 'TODO');
       setPriority(defaultPriority || 'MEDIUM');
       setDueDate('');
       setSelectedProject('');
     }
-  }, [task, isOpen, defaultPriority]);
+  }, [task, isOpen, defaultPriority, defaultStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +88,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       if (!task) {
         setTitle('');
         setDescription('');
-        setStatus('TODO');
+        setStatus(defaultStatus || 'TODO');
         setPriority(defaultPriority || 'MEDIUM');
         setDueDate('');
         setSelectedProject('none');
