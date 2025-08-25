@@ -1,7 +1,7 @@
 import React from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { ProjectsGrid } from '@/components/dashboard/ProjectsGrid';
-import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { ProjectsGrid } from '@/components/ProjectsGrid';
+import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 
 const ProjectsPage = () => {

@@ -6,8 +6,8 @@ import { FormField } from '@/components/FormField';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 
 const UserProfile = () => {

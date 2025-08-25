@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, Settings, LogOut, Plus } from 'lucide-react';
+  import React, { useState } from 'react';
+import { User, LogOut, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -13,8 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
-import { ProjectIcon } from '@/components/dashboard/ProjectIcon';
-import { ProjectModal } from '@/components/dashboard/ProjectModal';
+import { ProjectIcon } from '@/components/ProjectIcon';
+import { ProjectModal } from '@/components/ProjectModal';
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();

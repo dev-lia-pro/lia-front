@@ -1,10 +1,10 @@
 import React from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { UpcomingMeetings } from '@/components/dashboard/UpcomingMeetings';
-import { PageNavigation } from '@/components/dashboard/PageNavigation';
-import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { UpcomingMeetings } from '@/components/UpcomingMeetings';
+import { PageNavigation } from '@/components/PageNavigation';
+import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
-import EventsCalendar from '@/components/calendar/EventsCalendar';
+import EventsCalendar from '@/components/EventsCalendar';
 
 const EventsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('agenda');

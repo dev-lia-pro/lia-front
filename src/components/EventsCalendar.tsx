@@ -2,11 +2,11 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEvents, type Event, type EventsFilters, type UpdateEventData, type CreateEventData } from '@/hooks/useEvents';
 import { useProjectStore } from '@/stores/projectStore';
-import EventDetailsModal from '@/components/dashboard/EventDetailsModal';
+import EventDetailsModal from '@/components/EventDetailsModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useProjects } from '@/hooks/useProjects';
 import { getIconByValue } from '@/config/icons';
-import { EventModal } from '@/components/dashboard/EventModal';
+import { EventModal } from '@/components/EventModal';
 
 type CalendarView = 'month' | 'week' | 'list';
 

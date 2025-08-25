@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { TaskModal } from './TaskModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskCard } from './TaskCard';
 import TaskDetailsModal from './TaskDetailsModal';
-import { useProjects } from '../../hooks/useProjects';
-import { useTasks, Task, CreateTaskData, UpdateTaskData } from '../../hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
+import { useTasks, Task, CreateTaskData, UpdateTaskData } from '@/hooks/useTasks';
 import { useProjectStore } from '@/stores/projectStore';
-import { useToast } from '../../hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from './EmptyState';
 
 export const TasksGrid = () => {

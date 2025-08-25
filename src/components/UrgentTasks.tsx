@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Plus } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useTasks, Task, CreateTaskData, UpdateTaskData } from '../../hooks/useTasks';
+import { Button } from '@/components/ui/button';
+import { useTasks, Task, CreateTaskData, UpdateTaskData } from '@/hooks/useTasks';
 import { useProjectStore } from '@/stores/projectStore';
-import { useProjects } from '../../hooks/useProjects';
+import { useProjects } from '@/hooks/useProjects';
 import { TaskCard } from './TaskCard';
 import TaskDetailsModal from './TaskDetailsModal';
 import { TaskModal } from './TaskModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { useToast } from '../../hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from './EmptyState';
 
 export const UrgentTasks = () => {

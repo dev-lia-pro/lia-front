@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { ProjectModal } from './ProjectModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import ProjectDetailsModal from './ProjectDetailsModal';
 import { ProjectIcon } from './ProjectIcon';
-import { useProjects, Project, CreateProjectData, UpdateProjectData } from '../../hooks/useProjects';
-import { useToast } from '../../hooks/use-toast';
+import { useProjects, Project, CreateProjectData, UpdateProjectData } from '@/hooks/useProjects';
+import { useToast } from '@/hooks/use-toast';
 
 export const ProjectsGrid = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

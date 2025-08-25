@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, AlertTriangle, CheckCircle, Clock, Circle } from 'lucide-react';
 // Actions supprimées: ouverture par clic global
-import { Task, UpdateTaskData } from '../../hooks/useTasks';
+import { Task, UpdateTaskData } from '../hooks/useTasks';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useProjects } from '@/hooks/useProjects';
 import { getIconByValue } from '@/config/icons';

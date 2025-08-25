@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Edit3 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ModalActions } from './ModalActions';
-import { Task, CreateTaskData, UpdateTaskData } from '../../hooks/useTasks';
-import { useProjects } from '../../hooks/useProjects';
+import { Task, CreateTaskData, UpdateTaskData } from '@/hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
 
 interface TaskModalProps {
   isOpen: boolean;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Calendar, MapPin, Users, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/componen../button';
 import { EventModal } from './EventModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { EventActions } from './EventActions';

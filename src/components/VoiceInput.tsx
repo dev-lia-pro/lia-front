@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Mic, MicOff } from 'lucide-react';
-import { Button } from './ui/button';
-import { useToast } from '../hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface VoiceInputProps {
   onResult?: (text: string) => void;

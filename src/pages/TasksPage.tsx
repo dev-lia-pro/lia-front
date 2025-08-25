@@ -1,8 +1,8 @@
 import React from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { UrgentTasks } from '@/components/dashboard/UrgentTasks';
-import { TasksGrid } from '@/components/dashboard/TasksGrid';
-import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { UrgentTasks } from '@/components/UrgentTasks';
+import { TasksGrid } from '@/components/TasksGrid';
+import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 
 const TasksPage = () => {

@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { MoreVertical, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/componen../button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/componen../dropdown-menu';
 
-interface EventActionsProps {
+interface ProjectActionsProps {
   onEdit: () => void;
   onDelete: () => void;
-  eventTitle: string;
+  projectName: string;
 }
 
-export const EventActions = ({ onEdit, onDelete, eventTitle }: EventActionsProps) => {
+export const ProjectActions: React.FC<ProjectActionsProps> = ({
+  onEdit,
+  onDelete,
+  projectName,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -54,3 +58,4 @@ export const EventActions = ({ onEdit, onDelete, eventTitle }: EventActionsProps
     </DropdownMenu>
   );
 };
+

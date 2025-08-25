@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { PageNavigation } from '@/components/dashboard/PageNavigation';
-import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { BottomNavigation } from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -16,13 +15,13 @@ import {
 import type { NavigationTab } from '@/types/navigation';
 import type { Provider } from '@/types/provider';
 import { useProviders } from '@/hooks/useProviders';
-import { ProviderForm } from '@/components/dashboard/ProviderForm';
-import { DeleteConfirmModal } from '@/components/dashboard/DeleteConfirmModal';
+import { ProviderForm } from '@/components/ProviderForm';
+import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
 import { useToast } from '@/hooks/use-toast';
 import type { ProviderCreate, ProviderUpdate } from '@/types/provider';
 import axios from '@/api/axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ProjectsGrid } from '@/components/dashboard/ProjectsGrid';
+import { ProjectsGrid } from '@/components/ProjectsGrid';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('parametres');

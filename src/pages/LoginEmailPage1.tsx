@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import axios from '@/api/axios';
+import axios from '@/api/axios';  
 
 const LoginEmailPage1 = () => {
   const [email, setEmail] = useState('');

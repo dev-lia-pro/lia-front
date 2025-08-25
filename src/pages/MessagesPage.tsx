@@ -1,6 +1,6 @@
 import React from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { BottomNavigation } from '@/components/dashboard/BottomNavigation';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
 import { useProjects } from '@/hooks/useProjects';

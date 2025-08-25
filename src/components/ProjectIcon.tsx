@@ -1,5 +1,5 @@
 import React from 'react';
-import { getIconByValue } from '../../config/icons';
+import { getIconByValue } from '../config/icons';
 
 interface ProjectIconProps {
   icon: string;
