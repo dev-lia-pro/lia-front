@@ -20,23 +20,33 @@ export const UrgentTasks = () => {
   
   // Récupérer les tâches (filtrées par projet sélectionné)
   const { selected } = useProjectStore();
-  const { tasks, isLoading, updateTask, deleteTask, createTask } = useTasks({ project: selected.id ?? undefined });
+  
+  // Deux requêtes séparées pour les tâches urgentes
+  const { tasks: urgentTodo, isLoading: isLoadingTodo, updateTask, deleteTask, createTask } = useTasks({ 
+    project: selected.id ?? undefined, 
+    priority: 'URGENT', 
+    status: 'TODO' 
+  });
+  const { tasks: urgentInProgress, isLoading: isLoadingInProgress } = useTasks({ 
+    project: selected.id ?? undefined, 
+    priority: 'URGENT', 
+    status: 'IN_PROGRESS' 
+  });
+  
   const { projects } = useProjects();
   const { toast } = useToast();
   
-  // Filtrer: urgentes/hautes et non terminées
-  const allUrgentTasks = tasks.filter(task => 
-    (task.priority === 'URGENT' || task.priority === 'HIGH') && task.status !== 'DONE'
-  );
-  const urgentTodo = allUrgentTasks.filter(t => t.status === 'TODO');
-  const urgentInProgress = allUrgentTasks.filter(t => t.status === 'IN_PROGRESS');
+  // Calculer le total des tâches urgentes
+  const allUrgentTasks = [...urgentTodo, ...urgentInProgress];
+  
+  const isLoading = isLoadingTodo || isLoadingInProgress;
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = async (task: Task) => {
     setEditingTask(task);
   };
 
