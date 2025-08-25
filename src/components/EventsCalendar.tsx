@@ -110,6 +110,7 @@ export const EventsCalendar: React.FC = () => {
   const [createStartDate, setCreateStartDate] = React.useState<Date | null>(null);
   const [hoveredDayKey, setHoveredDayKey] = React.useState<string | null>(null);
   const [hoveredEventId, setHoveredEventId] = React.useState<number | null>(null);
+  const [dragOverDayKey, setDragOverDayKey] = React.useState<string | null>(null);
 
   const range = React.useMemo(() => {
     if (view === 'week') {
@@ -202,6 +203,70 @@ export const EventsCalendar: React.FC = () => {
     }
   };
 
+  // Drag & Drop pour déplacer les événements
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, event: Event) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ 
+      id: event.id, 
+      starts_at: event.starts_at, 
+      ends_at: event.ends_at 
+    }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, dayKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverDayKey(dayKey);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDayKey(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetDayKey: string) => {
+    e.preventDefault();
+    setDragOverDayKey(null);
+    
+    try {
+      const payload = e.dataTransfer.getData('application/json');
+      if (!payload) return;
+      
+      const { id, starts_at, ends_at } = JSON.parse(payload) as { 
+        id: number; 
+        starts_at: string; 
+        ends_at: string; 
+      };
+      
+      // Calculer la différence de jours entre la source et la cible
+      const sourceDate = new Date(starts_at);
+      const targetDate = new Date(targetDayKey + 'T00:00:00'); // Forcer l'heure à minuit
+      
+      // Calculer la différence en jours en utilisant la date locale
+      const sourceLocal = new Date(sourceDate.getFullYear(), sourceDate.getMonth(), sourceDate.getDate());
+      const targetLocal = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      const dayDiff = (targetLocal.getTime() - sourceLocal.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (dayDiff === 0) return; // Même jour, pas de changement
+      
+      // Calculer les nouvelles dates en préservant l'heure locale
+      const newStartsAt = new Date(sourceDate);
+      newStartsAt.setDate(sourceDate.getDate() + dayDiff);
+      
+      const newEndsAt = new Date(ends_at);
+      newEndsAt.setDate(newEndsAt.getDate() + dayDiff);
+      
+      // Mettre à jour l'événement
+      await updateEvent.mutateAsync({
+        id,
+        starts_at: newStartsAt.toISOString(),
+        ends_at: newEndsAt.toISOString()
+      } as UpdateEventData);
+      
+    } catch (error) {
+      console.error('Erreur lors du déplacement de l\'événement:', error);
+    }
+  };
+
   const renderWeekGrid = () => {
     const start = startOfWeek(currentDate);
     const days: Date[] = Array.from({ length: 7 }).map((_, i) => {
@@ -212,7 +277,7 @@ export const EventsCalendar: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
         {days.map((day) => {
-          const dayKey = day.toISOString().slice(0, 10);
+          const dayKey = localDateKey(day);
           const dayStart = startOfDay(day);
           const dayEnd = endOfDay(day);
           const dayEvents = sortedEvents.filter((ev) => {
@@ -224,10 +289,13 @@ export const EventsCalendar: React.FC = () => {
           return (
             <div
               key={dayKey}
-              className={`rounded-lg border border-border p-3 bg-card transition-colors cursor-pointer ${isDayHoverActive ? 'bg-primary/10' : ''}`}
+              className={`rounded-lg border border-border p-3 bg-card transition-colors cursor-pointer ${isDayHoverActive ? 'bg-primary/10' : ''} ${dragOverDayKey === dayKey ? 'ring-2 ring-gold bg-gold/10' : ''}`}
               onClick={() => { setCreateStartDate(day); setIsCreateOpen(true); }}
               onMouseEnter={() => setHoveredDayKey(dayKey)}
               onMouseLeave={() => setHoveredDayKey((prev) => (prev === dayKey ? null : prev))}
+              onDragOver={(e) => handleDragOver(e, dayKey)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, dayKey)}
             >
               <div className="text-sm font-medium mb-2">{formatWeekdayDayMonth(day)}</div>
               <div className="space-y-2">
@@ -247,6 +315,8 @@ export const EventsCalendar: React.FC = () => {
                       onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
                       onMouseEnter={() => setHoveredEventId(ev.id)}
                       onMouseLeave={() => setHoveredEventId((prev) => (prev === ev.id ? null : prev))}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, ev)}
                     >
                       {!selected.id && (
                         <div className="absolute top-1 right-1">
@@ -347,10 +417,13 @@ export const EventsCalendar: React.FC = () => {
                 return (
                   <div
                     key={dayKey}
-                    className={`min-h-[120px] p-2 border-r last:border-r-0 ${isCurrentMonth ? '' : 'bg-muted/20'} ${isToday ? 'bg-primary/5' : ''} transition-colors cursor-pointer ${isDayHoverActive ? 'bg-primary/10' : ''}`}
+                    className={`min-h-[120px] p-2 border-r last:border-r-0 ${isCurrentMonth ? '' : 'bg-muted/20'} ${isToday ? 'bg-primary/5' : ''} transition-colors cursor-pointer ${isDayHoverActive ? 'bg-primary/10' : ''} ${dragOverDayKey === dayKey ? 'ring-2 ring-gold bg-gold/10' : ''}`}
                     onClick={() => { setCreateStartDate(day); setIsCreateOpen(true); }}
                     onMouseEnter={() => setHoveredDayKey(dayKey)}
                     onMouseLeave={() => setHoveredDayKey((prev) => (prev === dayKey ? null : prev))}
+                    onDragOver={(e) => handleDragOver(e, dayKey)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, dayKey)}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className={`text-sm font-medium ${isCurrentMonth ? '' : 'text-muted-foreground'}`}>{day.getDate()}</div>
@@ -372,6 +445,8 @@ export const EventsCalendar: React.FC = () => {
                             onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
                             onMouseEnter={() => setHoveredEventId(ev.id)}
                             onMouseLeave={() => setHoveredEventId((prev) => (prev === ev.id ? null : prev))}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, ev)}
                           >
                             {!selected.id && (
                               <div className="absolute top-1 right-1">
@@ -441,9 +516,21 @@ export const EventsCalendar: React.FC = () => {
       d.setDate(d.getDate() + 1);
     }
 
+    // Filtrer les jours qui ont des événements
+    const daysWithEvents = days.filter((day) => {
+      const dayStart = startOfDay(day);
+      const dayEnd = endOfDay(day);
+      const dayEvents = sortedEvents.filter((ev) => {
+        const s = new Date(ev.starts_at);
+        const e = new Date(ev.ends_at);
+        return e >= dayStart && s <= dayEnd;
+      });
+      return dayEvents.length > 0;
+    });
+
     return (
       <div className="space-y-4">
-        {days.map((day) => {
+        {daysWithEvents.map((day) => {
           const dayKey = localDateKey(day);
           const dayStart = startOfDay(day);
           const dayEnd = endOfDay(day);
@@ -456,15 +543,15 @@ export const EventsCalendar: React.FC = () => {
           return (
             <div key={dayKey} className="rounded-lg border border-border bg-card">
               <div
-                className="px-4 py-2 border-b text-sm font-medium hover:bg-accent/20 transition-colors cursor-pointer"
+                className={`px-4 py-2 border-b text-sm font-medium hover:bg-accent/20 transition-colors cursor-pointer ${dragOverDayKey === dayKey ? 'ring-2 ring-gold bg-gold/10' : ''}`}
                 onClick={() => { setCreateStartDate(day); setIsCreateOpen(true); }}
+                onDragOver={(e) => handleDragOver(e, dayKey)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, dayKey)}
               >
                 {formatDate(day)}
               </div>
               <div className="divide-y">
-                {dayEvents.length === 0 && (
-                  <div className="px-4 py-3 text-sm text-muted-foreground">Aucun événement</div>
-                )}
                 {dayEvents.map((ev) => {
                   const startDt = new Date(ev.starts_at);
                   const endDt = new Date(ev.ends_at);
@@ -476,7 +563,12 @@ export const EventsCalendar: React.FC = () => {
                   const isFirstDisplayedDay = dayKey === displayedFirstDayKey;
                   const isLastDisplayedDay = dayKey === displayedLastDayKey;
                   return (
-                    <div key={`${ev.id}-${dayKey}`} className="px-4 py-3 relative group hover:bg-primary/10 cursor-pointer" onClick={() => setSelectedEvent(ev)}>
+                    <div key={`${ev.id}-${dayKey}`} 
+                         className="px-4 py-3 relative group hover:bg-primary/10 cursor-pointer" 
+                         onClick={() => setSelectedEvent(ev)}
+                         draggable
+                         onDragStart={(e) => handleDragStart(e, ev)}
+                    >
                       {!selected.id && (
                         <div className="mb-1">
                           <DropdownMenu>
