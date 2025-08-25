@@ -227,8 +227,9 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
             <Select
               value={formData.provider}
               onValueChange={(value) => handleInputChange('provider', value)}
+              disabled={true}
             >
-              <SelectTrigger className="bg-navy-muted border-border text-foreground focus:border-gold focus:ring-gold">
+              <SelectTrigger className="bg-navy-muted border-border text-foreground focus:border-gold focus:ring-gold disabled:opacity-50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-navy-card border-border text-foreground">
@@ -256,7 +257,6 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
             </p>
           </div>
 
-          {/* ID externe: visible uniquement en édition */}
           {/* Projet associé */}
           {projects.length > 0 && (
             <div className="space-y-2">
@@ -276,20 +276,6 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          )}
-          {isEditMode && (
-            <div>
-              <label htmlFor="external_id" className="block text-sm font-medium text-foreground mb-2">
-                ID externe
-              </label>
-              <Input
-                id="external_id"
-                value={formData.external_id}
-                onChange={(e) => handleInputChange('external_id', e.target.value)}
-                placeholder="ID de l'événement externe"
-                className="bg-navy-muted border-border text-foreground placeholder-muted-foreground focus:border-gold focus:ring-gold"
-              />
             </div>
           )}
 
