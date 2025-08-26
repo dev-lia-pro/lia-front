@@ -10,6 +10,7 @@ interface ProviderFormProps {
   types: ProviderTypeInfo[];
   onSubmit: (data: ProviderCreate | ProviderUpdate) => Promise<boolean>;
   onCancel: () => void;
+  onSuccess?: () => void; // Nouvelle prop pour notifier le succès
   loading?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
   types,
   onSubmit,
   onCancel,
+  onSuccess,
   loading = false
 }) => {
   const [step, setStep] = useState<'type' | 'config'>('type');
@@ -87,19 +89,6 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
     }
   };
 
-  const getProviderTypeColor = (type: string) => {
-    switch (type) {
-      case 'GMAIL':
-        return 'text-blue-400';
-      case 'GOOGLE_CALENDAR':
-        return 'text-purple-400';
-      case 'GOOGLE_DRIVE_SMS':
-        return 'text-green-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
-
   const handleOAuthAuth = async () => {
     setIsAuthenticating(true);
     setAuthError(null);
@@ -118,20 +107,88 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
 
       // Écoute le retour du backend via les pages /oauth-success ou /oauth-error
       const onMessage = (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
+        console.log('Message reçu dans ProviderForm:', event.data); // Debug
+        
+        if (event.origin !== window.location.origin) {
+          console.log('Origin différente, ignoré:', event.origin); // Debug
+          return;
+        }
+        
         if (event.data?.type === 'OAUTH_PROVIDER_CREATED') {
-          // Fermer le formulaire et laisser la liste se rafraîchir (au prochain fetch)
+          console.log('Provider OAuth créé avec succès!'); // Debug
+          
+          // Fermer la fenêtre OAuth
           try { authWindow?.close(); } catch (e) { /* noop */ }
-          onCancel();
+          
+          // Notifier le composant parent du succès pour rafraîchir la liste et fermer le formulaire
+          if (onSuccess) {
+            console.log('Appel de onSuccess...'); // Debug
+            onSuccess();
+          } else {
+            console.log('onSuccess non défini!'); // Debug
+          }
+          
+          // Nettoyer l'écouteur d'événements
           window.removeEventListener('message', onMessage);
         }
         if (event.data?.type === 'OAUTH_ERROR') {
+          console.log('Erreur OAuth reçue:', event.data?.error); // Debug
           setAuthError(event.data?.error || 'Erreur OAuth');
           try { authWindow?.close(); } catch (e) { /* noop */ }
           window.removeEventListener('message', onMessage);
         }
       };
+      
+      console.log('Ajout de l\'écouteur d\'événements OAuth'); // Debug
       window.addEventListener('message', onMessage);
+
+      // Vérification périodique pour détecter la création de providers
+      // (fallback au cas où le message OAuth ne fonctionnerait pas)
+      const checkProviderCreation = async () => {
+        try {
+          // Vérifier si un provider avec ce nom et type a été créé
+          const response = await axios.get('/providers/', {
+            params: {
+              type: formData.provider_type
+            }
+          });
+          
+          const providers = Array.isArray(response.data) ? response.data : response.data.results || [];
+          const newProvider = providers.find(p => 
+            p.name === formData.name && 
+            p.provider_type === formData.provider_type
+          );
+          
+          if (newProvider) {
+            console.log('Provider détecté via polling:', newProvider); // Debug
+            
+            // Fermer la fenêtre OAuth si elle est encore ouverte
+            try { authWindow?.close(); } catch (e) { /* noop */ }
+            
+            // Nettoyer l'écouteur d'événements
+            window.removeEventListener('message', onMessage);
+            
+            // Notifier le succès
+            if (onSuccess) {
+              onSuccess();
+            }
+            
+            // Arrêter le polling
+            clearInterval(pollingInterval);
+          }
+        } catch (error) {
+          console.log('Erreur lors de la vérification polling:', error); // Debug
+        }
+      };
+
+      // Démarrer le polling toutes les 2 secondes
+      const pollingInterval = setInterval(checkProviderCreation, 2000);
+      
+      // Arrêter le polling après 5 minutes (timeout de sécurité)
+      setTimeout(() => {
+        clearInterval(pollingInterval);
+        console.log('Polling OAuth arrêté (timeout)'); // Debug
+      }, 5 * 60 * 1000);
       
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue.";
@@ -183,8 +240,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
     }
   };
 
-  // Étape 1: Sélection du type et nom
-  if (step === 'type') {
+  // Étape 1: Sélection du type et nom (pour la création)
+  if (step === 'type' && !isEditing) {
     return (
       <div className="space-y-6">
         <div>
@@ -261,19 +318,53 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
     );
   }
 
-  // Étape 2: Configuration et soumission
+  // Étape 2: Configuration et soumission (pour la création) ou édition
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center mb-4">
         <h4 className="text-lg font-medium text-foreground">
-          Configuration finale
+          {isEditing ? 'Modifier le provider' : 'Configuration finale'}
         </h4>
         <p className="text-sm text-foreground/70">
           {getProviderTypeIcon(formData.provider_type)} {formData.name}
         </p>
       </div>
 
-      {/* Configuration spécifique supprimée */}
+      {/* Nom du provider */}
+      <div>
+        <Label htmlFor="name" className="text-sm text-foreground/70">
+          Nom du fournisseur *
+        </Label>
+        <input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Ex: Mon Gmail, Calendrier perso..."
+          className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground"
+        />
+        {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+      </div>
+
+      {/* Type de provider (lecture seule en édition) */}
+      {!isEditing && (
+        <div>
+          <Label htmlFor="provider_type" className="text-sm text-foreground/70">
+            Type de fournisseur *
+          </Label>
+          <select
+            id="provider_type"
+            value={formData.provider_type}
+            onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as ProviderTypeInfo['value'] })}
+            className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground"
+          >
+            {types.map((type) => (
+              <option key={type.value} value={type.value}>
+                {getProviderTypeIcon(type.value)} {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Statut actif */}
       <div className="flex items-center space-x-2">
@@ -285,7 +376,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           className="rounded border-border"
         />
         <Label htmlFor="is_active" className="text-sm text-foreground/70">
-          Activer ce provider immédiatement
+          {isEditing ? 'Activer ce provider' : 'Activer ce provider immédiatement'}
         </Label>
       </div>
 
@@ -302,14 +393,16 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           <Check className="w-4 h-4 mr-2" />
           {loading ? 'Enregistrement...' : (isEditing ? 'Mettre à jour' : 'Créer')}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setStep('type')}
-          className="border-border text-foreground hover:bg-navy-muted"
-        >
-          Retour
-        </Button>
+        {!isEditing && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setStep('type')}
+            className="border-border text-foreground hover:bg-navy-muted"
+          >
+            Retour
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"

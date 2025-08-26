@@ -39,17 +39,16 @@ const SettingsPage = () => {
   const {
     providers,
     types,
-    // stats supprimées
     loading,
     error,
     createProvider,
     updateProvider,
     deleteProvider,
     testConnection,
-    toggleProviderActive,
     clearError,
     fetchProviders,
-    fetchTypes
+    fetchTypes,
+    refreshProviders
   } = useProviders();
 
   const getProviderIcon = (type: string) => {
@@ -105,7 +104,7 @@ const SettingsPage = () => {
           fetchProviders();
           return true;
         }
-      } else {
+      } else if (isAddingProvider) {
         const success = await createProvider(data as ProviderCreate);
         if (success) {
           toast({
@@ -178,13 +177,22 @@ const SettingsPage = () => {
   };
 
   const handleToggleActive = async (providerId: number) => {
-    const success = await toggleProviderActive(providerId);
+    const provider = providers.find(p => p.id === providerId);
+    if (!provider) {
+      toast({
+        title: "Erreur",
+        description: "Provider non trouvé",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await updateProvider(providerId, { is_active: !provider.is_active });
     if (success) {
       toast({
         title: "Statut modifié",
         description: "Le statut du provider a été modifié.",
       });
-      // plus de stats à rafraîchir
     }
   };
 
@@ -221,6 +229,52 @@ const SettingsPage = () => {
     setIsAddingProvider(false);
     setEditingProvider(null);
     clearError();
+  };
+
+  // Fonction spécifique pour gérer le succès OAuth
+  const handleOAuthSuccess = async () => {
+    console.log('handleOAuthSuccess appelé!'); // Debug
+    
+    // Rafraîchir la liste des providers avec TanStack Query
+    console.log('Rafraîchissement de la liste des providers...'); // Debug
+    const updatedProviders = await refreshProviders();
+    console.log('Liste des providers après rafraîchissement:', updatedProviders); // Debug
+    
+    // Identifier le nouveau provider (probablement le plus récemment créé)
+    // On peut utiliser l'ID le plus élevé comme approximation
+    const latestProvider = updatedProviders.length > 0 
+      ? updatedProviders.reduce((latest, current) => 
+          (current.id > latest.id) ? current : latest
+        )
+      : null;
+      
+    if (latestProvider) {
+      console.log('Lancement de la synchronisation pour le nouveau provider:', latestProvider.name);
+      
+      // Lancer la synchronisation selon le type de provider
+      if (latestProvider.provider_type === 'GMAIL') {
+        axios.post(`/providers/${latestProvider.id}/sync_emails/`, { max: 50 });
+      } else if (latestProvider.provider_type === 'GOOGLE_CALENDAR') {
+        axios.post(`/providers/${latestProvider.id}/sync_calendar/`, { days_back: 30, days_ahead: 30 });
+      } else if (latestProvider.provider_type === 'GOOGLE_DRIVE_SMS') {
+        axios.post(`/providers/${latestProvider.id}/sync_sms/`);
+      }
+      
+      // Afficher un toast de confirmation
+      toast({
+        title: "Provider créé et synchronisation lancée",
+        description: `Le provider ${latestProvider.name} a été créé et sa synchronisation est en cours.`,
+      });
+    }
+  
+    // Fermer le formulaire de création
+    console.log('Fermeture du formulaire de création...'); // Debug
+    setIsAddingProvider(false);
+    
+    // Nettoyer les erreurs
+    clearError();
+    
+    console.log('handleOAuthSuccess terminé!'); // Debug
   };
 
   // Afficher les erreurs du hook
@@ -273,6 +327,7 @@ const SettingsPage = () => {
                     types={types}
                     onSubmit={handleSubmitProvider}
                     onCancel={handleCancel}
+                    onSuccess={handleOAuthSuccess}
                     loading={loading}
                   />
                 </div>
@@ -379,7 +434,7 @@ const SettingsPage = () => {
                 {(!Array.isArray(providers) || providers.length === 0) && !loading && (
                   <div className="text-center py-8">
                     <button
-                      onClick={() => setIsAddingProvider(true)}
+
                       className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold border border-gold hover:bg-gold/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
                       type="button"
                     >
@@ -472,3 +527,4 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+
