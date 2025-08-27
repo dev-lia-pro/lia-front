@@ -9,6 +9,8 @@ export interface Attachment {
   url?: string | null;
   metadata?: Record<string, unknown>;
   created_at: string;
+  google_drive_file_id?: string | null;
+  google_drive_backup?: boolean;
 }
 
 export type Channel = 'EMAIL' | 'SMS' | 'WHATSAPP';

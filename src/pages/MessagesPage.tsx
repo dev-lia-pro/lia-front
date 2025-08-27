@@ -8,15 +8,31 @@ import { useProjectStore } from '@/stores/projectStore';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Cloud, CloudOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const MessagesPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
+  const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
+  const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const { selected } = useProjectStore();
   const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined });
   const { projects } = useProjects();
+  const { toast } = useToast();
+
+  // Initialiser l'état des attachments quand les messages sont chargés
+  React.useEffect(() => {
+    const newAttachmentStates: Record<number, boolean> = {};
+    messages.forEach(msg => {
+      msg.attachments?.forEach(att => {
+        newAttachmentStates[att.id] = att.google_drive_backup || false;
+      });
+    });
+    setAttachmentStates(newAttachmentStates);
+  }, [messages]);
 
   const handleAssignProject = async (messageId: number, projectId: number | '') => {
     try {
@@ -24,6 +40,48 @@ const MessagesPage = () => {
       refetch();
     } catch (e) {
       // ignore
+    }
+  };
+
+  const handleSaveInDrive = async (attachmentId: number, messageId: number, isCurrentlyInDrive: boolean) => {
+    // Mettre à jour l'état local immédiatement pour un feedback visuel instantané
+    setAttachmentStates(prev => ({
+      ...prev,
+      [attachmentId]: !isCurrentlyInDrive
+    }));
+
+    try {
+      const response = await axios.post(`/messages/${messageId}/attachments/${attachmentId}/save_in_drive/`, {
+        google_drive_backup: !isCurrentlyInDrive
+      });
+      
+      if (response.data.success) {
+        toast({
+          title: isCurrentlyInDrive ? "Fichier supprimé de Google Drive" : "Fichier stocké dans Google Drive",
+          description: response.data.message,
+        });
+        // Rafraîchir la liste des messages pour synchroniser avec le backend
+        refetch();
+      } else {
+        // En cas d'échec, remettre l'état précédent
+        setAttachmentStates(prev => ({
+          ...prev,
+          [attachmentId]: isCurrentlyInDrive
+        }));
+      }
+    } catch (error: any) {
+      // En cas d'erreur, remettre l'état précédent
+      setAttachmentStates(prev => ({
+        ...prev,
+        [attachmentId]: isCurrentlyInDrive
+      }));
+      
+      const errorMessage = error.response?.data?.error || "Une erreur est survenue";
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -132,30 +190,54 @@ const MessagesPage = () => {
 
                       {/* Pièces jointes */}
                       {msg.attachments_count > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          <span className="text-foreground/60">Pièces jointes: {msg.attachments_count}</span>
-                          {msg.attachments?.map((att) => (
-                            att.url ? (
-                              <a
-                                key={att.id}
-                                href={att.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-2 py-0.5 rounded border border-border hover:bg-muted/10"
-                                title={`Ouvrir ${att.filename}`}
-                              >
-                                {att.filename}
-                              </a>
-                            ) : (
-                              <span
-                                key={att.id}
-                                className="px-2 py-0.5 rounded border border-border text-foreground/50"
-                                title={`${att.filename} (URL indisponible)`}
-                              >
-                                {att.filename}
-                              </span>
-                            )
-                          ))}
+                        <div className="mt-2 text-xs">
+                          <div className="text-foreground/60 mb-2">Pièces jointes: {msg.attachments_count}</div>
+                          <div className="flex flex-wrap gap-2">
+                            {msg.attachments?.map((att) => {
+                              const isInDrive = attachmentStates[att.id] ?? att.google_drive_backup ?? false;
+                              return (
+                                <div key={att.id} className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleSaveInDrive(att.id, msg.id, !!isInDrive)}
+                                    onMouseEnter={() => setHoveredAttachment(att.id)}
+                                    onMouseLeave={() => setHoveredAttachment(null)}
+                                    className={`p-1 rounded hover:bg-muted/20 transition-colors ${
+                                      isInDrive ? 'text-blue-400' : 'text-gray-400'
+                                    }`}
+                                    title={isInDrive ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive'}
+                                  >
+                                    {(() => {
+                                      if (isInDrive) {
+                                        // Fichier stocké : afficher Cloud, au hover afficher CloudOff
+                                        return hoveredAttachment === att.id ? <CloudOff className="w-3 h-3" /> : <Cloud className="w-3 h-3" />;
+                                      } else {
+                                        // Fichier non stocké : afficher CloudOff, au hover afficher Cloud
+                                        return hoveredAttachment === att.id ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />;
+                                      }
+                                    })()}
+                                  </button>
+                                  {att.url ? (
+                                    <a
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="px-2 py-0.5 rounded border border-border hover:bg-muted/10"
+                                      title={`Ouvrir ${att.filename}`}
+                                    >
+                                      {att.filename}
+                                    </a>
+                                  ) : (
+                                    <span
+                                      className="px-2 py-0.5 rounded border border-border text-foreground/50"
+                                      title={`${att.filename} (URL indisponible)`}
+                                    >
+                                      {att.filename}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                       

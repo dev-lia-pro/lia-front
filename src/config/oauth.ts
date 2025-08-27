@@ -15,6 +15,7 @@ export const OAUTH_CONFIG = {
     GMAIL: ['https://www.googleapis.com/auth/gmail.readonly'],
     GOOGLE_CALENDAR: ['https://www.googleapis.com/auth/calendar.readonly'],
     GOOGLE_DRIVE_SMS: ['https://www.googleapis.com/auth/drive.readonly'],
+    GOOGLE_DRIVE: ['https://www.googleapis.com/auth/drive.file'],
   }
 };
 
@@ -26,6 +27,8 @@ export const getOAuthClientId = (providerType: string): string => {
     case 'GOOGLE_CALENDAR':
       return OAUTH_CONFIG.CALENDAR_CLIENT_ID;
     case 'GOOGLE_DRIVE_SMS':
+      return OAUTH_CONFIG.DRIVE_CLIENT_ID;
+    case 'GOOGLE_DRIVE':
       return OAUTH_CONFIG.DRIVE_CLIENT_ID;
     default:
       return '';
@@ -41,6 +44,8 @@ export const getOAuthScopes = (providerType: string): string[] => {
       return OAUTH_CONFIG.SCOPES.GOOGLE_CALENDAR;
     case 'GOOGLE_DRIVE_SMS':
       return OAUTH_CONFIG.SCOPES.GOOGLE_DRIVE_SMS;
+    case 'GOOGLE_DRIVE':
+      return OAUTH_CONFIG.SCOPES.GOOGLE_DRIVE;
     default:
       return [];
   }

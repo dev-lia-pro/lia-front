@@ -1,4 +1,4 @@
-export type ProviderType = 'GMAIL' | 'GOOGLE_CALENDAR' | 'GOOGLE_DRIVE_SMS';
+export type ProviderType = 'GMAIL' | 'GOOGLE_CALENDAR' | 'GOOGLE_DRIVE_SMS' | 'GOOGLE_DRIVE';
 
 export interface Provider {
   id: number;

@@ -71,6 +71,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return '📅';
       case 'GOOGLE_DRIVE_SMS':
         return '💬';
+      case 'GOOGLE_DRIVE':
+        return '☁️';
       default:
         return '🔗';
     }
@@ -84,6 +86,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return 'Google Calendar';
       case 'GOOGLE_DRIVE_SMS':
         return 'Google Drive SMS';
+      case 'GOOGLE_DRIVE':
+        return 'Google Drive';
       default:
         return type;
     }

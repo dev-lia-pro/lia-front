@@ -59,6 +59,8 @@ const SettingsPage = () => {
         return '📅';
       case 'GOOGLE_DRIVE_SMS':
         return '💬';
+      case 'GOOGLE_DRIVE':
+        return '☁️';
       default:
         return '🔗';
     }
@@ -72,6 +74,8 @@ const SettingsPage = () => {
         return 'Google Calendar';
       case 'GOOGLE_DRIVE_SMS':
         return 'Google Drive SMS';
+      case 'GOOGLE_DRIVE':
+        return 'Google Drive';
       default:
         return type;
     }
@@ -85,6 +89,8 @@ const SettingsPage = () => {
         return 'text-purple-400';
       case 'GOOGLE_DRIVE_SMS':
         return 'text-green-400';
+      case 'GOOGLE_DRIVE':
+        return 'text-orange-400';
       default:
         return 'text-gray-400';
     }
@@ -207,6 +213,14 @@ const SettingsPage = () => {
         url = `/providers/${provider.id}/sync_calendar/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE_SMS') {
         url = `/providers/${provider.id}/sync_sms/`;
+      } else if (provider.provider_type === 'GOOGLE_DRIVE') {
+        // Pour Google Drive, on ne lance pas de synchronisation automatique
+        // car c'est principalement pour le stockage de fichiers
+        toast({
+          title: 'Google Drive configuré',
+          description: 'Google Drive est maintenant configuré pour le stockage de fichiers.',
+        });
+        return;
       }
       const { data } = await axios.post(url, {});
       toast({
@@ -258,6 +272,14 @@ const SettingsPage = () => {
         axios.post(`/providers/${latestProvider.id}/sync_calendar/`, { days_back: 30, days_ahead: 30 });
       } else if (latestProvider.provider_type === 'GOOGLE_DRIVE_SMS') {
         axios.post(`/providers/${latestProvider.id}/sync_sms/`);
+      } else if (latestProvider.provider_type === 'GOOGLE_DRIVE') {
+        // Pour Google Drive, on ne lance pas de synchronisation automatique
+        // car c'est principalement pour le stockage de fichiers
+        toast({
+          title: "Provider Google Drive créé",
+          description: "Google Drive est maintenant configuré pour le stockage de fichiers.",
+        });
+        return;
       }
       
       // Afficher un toast de confirmation
@@ -363,7 +385,12 @@ const SettingsPage = () => {
                         <p className="text-sm text-foreground/70">
                           Créé le {new Date(provider.created_at).toLocaleDateString('fr-FR')}
                         </p>
-                        {provider.last_sync_at && (
+                        {provider.provider_type === 'GOOGLE_DRIVE' && (
+                          <p className="text-xs text-gray-400">
+                            Stockage de fichiers
+                          </p>
+                        )}
+                        {provider.last_sync_at && provider.provider_type !== 'GOOGLE_DRIVE' && (
                           <p className="text-xs text-foreground/50">
                             Dernière synchro: {new Date(provider.last_sync_at).toLocaleDateString('fr-FR')}
                           </p>
@@ -392,6 +419,8 @@ const SettingsPage = () => {
                         onClick={() => handleOpenPreview(provider)}
                         className="border-border text-foreground hover:bg-navy-muted"
                         aria-label="Synchroniser"
+                        disabled={provider.provider_type === 'GOOGLE_DRIVE'}
+                        title={provider.provider_type === 'GOOGLE_DRIVE' ? 'Pas de synchronisation pour Google Drive' : 'Synchroniser'}
                       >
                         {syncingProvider === provider.id ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
