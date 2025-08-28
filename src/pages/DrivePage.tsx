@@ -189,22 +189,6 @@ const DrivePage = () => {
                 </div>
               </div>
 
-              {/* Filtre par projet */}
-              <div className="min-w-[200px]">
-                <select
-                  value={projectFilter}
-                  onChange={(e) => setProjectFilter(e.target.value as number | '')}
-                  className="w-full px-3 py-2 bg-navy-deep border border-border rounded-md text-foreground"
-                >
-                  <option value="">Tous les projets</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title || `Projet #${project.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Filtre par statut Drive */}
               <div className="min-w-[200px]">
                 <select
