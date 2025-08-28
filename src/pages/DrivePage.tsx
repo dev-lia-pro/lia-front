@@ -55,6 +55,11 @@ const DrivePage = () => {
         params.append('search', searchTerm);
       }
       
+      // Toujours filtrer par le projet courant
+      if (selected.id) {
+        params.append('project', selected.id.toString());
+      }
+      
       if (projectFilter) {
         params.append('project', projectFilter.toString());
       }
@@ -89,7 +94,7 @@ const DrivePage = () => {
 
   useEffect(() => {
     fetchAttachments();
-  }, [searchTerm, projectFilter, driveFilter]);
+  }, [searchTerm, projectFilter, driveFilter, selected.id]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
