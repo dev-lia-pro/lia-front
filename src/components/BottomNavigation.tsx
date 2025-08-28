@@ -4,7 +4,8 @@ import {
   Home, 
   Mail, 
   Calendar,
-  CheckSquare, 
+  CheckSquare,
+  Cloud,
   Settings 
 } from 'lucide-react';
 import type { NavigationTab } from '@/types/navigation';
@@ -19,6 +20,7 @@ const navItems = [
   { id: 'boite' as NavigationTab, label: 'Boîte', icon: Mail, path: '/messages' },
   { id: 'agenda' as NavigationTab, label: 'Agenda', icon: Calendar, path: '/events' },
   { id: 'taches' as NavigationTab, label: 'Tâches', icon: CheckSquare, path: '/tasks' },
+  { id: 'drive' as NavigationTab, label: 'Fichiers', icon: Cloud, path: '/drive' },
   { id: 'parametres' as NavigationTab, label: 'Paramètres', icon: Settings, path: '/settings' }
 ];
 
@@ -36,7 +38,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-navy-card border-t border-border">
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-6 h-16">
         {navItems.map((item) => {
           const IconComponent = item.icon;
           const isActive = currentTab === item.id;

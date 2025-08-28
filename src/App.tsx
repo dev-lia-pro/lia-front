@@ -13,6 +13,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import TasksPage from "./pages/TasksPage";
 import EventsPage from "./pages/EventsPage";
 import MessagesPage from "./pages/MessagesPage";
+import DrivePage from "./pages/DrivePage";
 import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
@@ -79,6 +80,12 @@ const App = () => {
           <Route path="/messages" element={
             <ProtectedRoute>
               <MessagesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/drive" element={
+            <ProtectedRoute>
+              <DrivePage />
             </ProtectedRoute>
           } />
 
