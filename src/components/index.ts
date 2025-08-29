@@ -22,4 +22,5 @@ export { UrgentTasks } from './UrgentTasks';
 export { EmptyState } from './EmptyState';
 export { ProviderForm } from './ProviderForm';
 export { DeleteConfirmModal } from './DeleteConfirmModal';
+export { VoiceInput } from './VoiceInput';
 

@@ -4,8 +4,7 @@ import { MainTitle } from './MainTitle';
 import { UrgentTasks } from './UrgentTasks';
 import { UpcomingMeetings } from './UpcomingMeetings';
 import { BottomNavigation } from './BottomNavigation';
-
-export type NavigationTab = 'accueil' | 'projets' | 'boite' | 'agenda' | 'taches' | 'parametres';
+import type { NavigationTab } from '@/types/navigation';
 
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');

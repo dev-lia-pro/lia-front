@@ -1,21 +1,32 @@
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { VoiceInput } from './VoiceInput';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
+
+  const handleVoiceResult = (text: string) => {
+    console.log('Résultat vocal:', text);
+    // Ici vous pouvez traiter le résultat vocal
+  };
 
   if (!isAuthenticated) {
     return <Navigate to="/auth/step1" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {/* Assistant vocal visible sur toutes les pages protégées */}
+      <VoiceInput onResult={handleVoiceResult} />
+    </>
+  );
 };
-
-export default ProtectedRoute;
 
 
 

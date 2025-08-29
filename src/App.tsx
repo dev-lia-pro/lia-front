@@ -15,7 +15,7 @@ import EventsPage from "./pages/EventsPage";
 import MessagesPage from "./pages/MessagesPage";
 import DrivePage from "./pages/DrivePage";
 import SettingsPage from "./pages/SettingsPage";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import OAuthSuccess from "./pages/OAuthSuccess";
 import OAuthError from "./pages/OAuthError";
