@@ -22,6 +22,7 @@ import type { ProviderCreate, ProviderUpdate } from '@/types/provider';
 import axios from '@/api/axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ProjectsGrid } from '@/components/ProjectsGrid';
+import { AssistantHistory } from '@/components/AssistantHistory';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('parametres');
@@ -483,6 +484,13 @@ const SettingsPage = () => {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Section Historique de l'assistant */}
+          <Card className="bg-navy-card border-border mb-6 pt-6">
+            <CardContent>
+              <AssistantHistory />
             </CardContent>
           </Card>
 
