@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import axios from '@/api/axios';
+import RecordRTC, { StereoAudioRecorder } from 'recordrtc';
 
 interface UseAudioRecordingReturn {
   isRecording: boolean;
   isLoading: boolean;
-  startRecording: () => Promise<void>;
+  audioLevel: number;
+  recordingMode: 'tap' | 'hold' | null;
+  startRecording: (mode?: 'tap' | 'hold') => Promise<void>;
   stopRecording: () => void;
   resetAudio: () => void;
   sendRecordedAudio: () => Promise<void>;
@@ -14,21 +17,25 @@ interface UseAudioRecordingReturn {
 export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRecordingReturn => {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [recordingMode, setRecordingMode] = useState<'tap' | 'hold' | null>(null);
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recorderRef = useRef<RecordRTC | null>(null);
   const recordedAudioBlobRef = useRef<Blob | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
-  const lastActivityTimeRef = useRef<number>(0);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const isAutoStopRef = useRef<boolean>(false); // Flag pour distinguer arrêt auto vs manuel
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const silenceStartRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const silenceCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const { toast } = useToast();
 
   // Constantes pour la détection de silence
-  const SILENCE_DURATION = 1500; // 1.5 secondes (standard mobile)
-  const ACTIVITY_CHECK_INTERVAL = 200; // Vérifier toutes les 200ms
+  const SILENCE_DURATION = 2000; // 2 secondes de silence avant arrêt automatique
+  const SILENCE_THRESHOLD = 0.02; // Seuil de détection du silence (ajusté pour être moins sensible)
+  const SILENCE_CHECK_INTERVAL = 100; // Vérifier toutes les 100ms
 
   const sendRecordedAudio = useCallback(async () => {
     if (!recordedAudioBlobRef.current) {
@@ -42,8 +49,7 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
 
     console.log('Sending audio blob:', {
       size: recordedAudioBlobRef.current.size,
-      type: recordedAudioBlobRef.current.type,
-      chunks: audioChunksRef.current.length
+      type: recordedAudioBlobRef.current.type
     });
 
     if (recordedAudioBlobRef.current.size === 0) {
@@ -121,116 +127,256 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
     }
   }, [toast, onResult]);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      // L'audio sera envoyé automatiquement dans l'événement onstop
+  // Fonction pour analyser le niveau audio
+  const setupAudioAnalyser = useCallback((stream: MediaStream) => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const microphone = audioContext.createMediaStreamSource(stream);
+    
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.8;
+    
+    microphone.connect(analyser);
+    
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+  }, []);
+
+  // Fonction pour monitorer le niveau audio
+  const monitorAudioLevel = useCallback(() => {
+    if (!analyserRef.current || !isRecording) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
     }
+
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    const checkAudioLevel = () => {
+      if (!analyserRef.current || !isRecording) {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        return;
+      }
+      
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      // Calculer le niveau moyen
+      const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+      const normalizedLevel = average / 255;
+      
+      setAudioLevel(normalizedLevel);
+      
+      // Continuer le monitoring
+      animationFrameRef.current = requestAnimationFrame(checkAudioLevel);
+    };
+    
+    checkAudioLevel();
   }, [isRecording]);
 
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+  // Fonction pour vérifier le silence sera définie après stopRecording
+  // pour éviter la dépendance circulaire
+
+  const stopRecording = useCallback(() => {
+    if (!recorderRef.current || !isRecording) {
+      console.log('No recording to stop');
+      return;
+    }
+    
+    console.log(`Stopping recording in ${recordingMode} mode...`);
+    
+    // Arrêter le monitoring du silence immédiatement
+    if (silenceCheckIntervalRef.current) {
+      clearInterval(silenceCheckIntervalRef.current);
+      silenceCheckIntervalRef.current = null;
+    }
+    
+    // Arrêter le monitoring du niveau audio
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    
+    // Vérifier la durée d'enregistrement
+    const recordingDuration = Date.now() - recordingStartTimeRef.current;
+    console.log(`Recording duration: ${recordingDuration}ms`);
+    
+    if (recordingDuration < 500) {
+      console.log('Recording too short, cancelling');
       
-      // Créer le MediaRecorder avec une configuration simple
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+      // Nettoyer sans envoyer
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      
+      recorderRef.current?.destroy();
+      recorderRef.current = null;
+      
+      setIsRecording(false);
+      setRecordingMode(null);
+      setAudioLevel(0);
+      silenceStartRef.current = null;
+      
+      toast({
+        title: "Enregistrement trop court",
+        description: "Maintenez le bouton plus longtemps ou parlez plus longtemps.",
+        variant: "destructive",
       });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      recordingStartTimeRef.current = Date.now();
-      lastActivityTimeRef.current = Date.now();
-      isAutoStopRef.current = false; // Reset du flag
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-          lastActivityTimeRef.current = Date.now(); // Mettre à jour le temps de dernière activité
-          console.log('Audio chunk received:', event.data.size, 'bytes');
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        // Nettoyer le timer de silence
-        if (silenceTimerRef.current) {
-          clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = null;
-        }
-
-        const recordingDuration = Date.now() - recordingStartTimeRef.current;
-        console.log('Recording duration:', recordingDuration, 'ms');
+      return;
+    }
+    
+    recorderRef.current.stopRecording(() => {
+      const blob = recorderRef.current?.getBlob();
+      if (blob && blob.size > 0) {
+        recordedAudioBlobRef.current = blob;
+        console.log(`Recording stopped successfully, blob size: ${blob.size} bytes`);
         
-        if (recordingDuration < 500) {
-          toast({
-            title: "Enregistrement trop court",
-            description: "L'enregistrement doit durer au moins 500ms. Veuillez réessayer.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        console.log('Recording stopped. Total chunks:', audioChunksRef.current.length);
-        console.log('Audio blob size:', audioBlob.size, 'bytes');
-        console.log('Audio chunks sizes:', audioChunksRef.current.map(chunk => chunk.size));
-        
-        if (audioBlob.size === 0) {
-          toast({
-            title: "Erreur d'enregistrement",
-            description: "L'enregistrement audio est vide. Veuillez réessayer.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        // Sauvegarder l'audio enregistré
-        recordedAudioBlobRef.current = audioBlob;
-        
-        // Clean up
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-        
-        // Envoyer automatiquement l'audio dans tous les cas
-        console.log('Envoi automatique de l\'audio après arrêt d\'enregistrement');
+        // Envoyer automatiquement après un court délai
         setTimeout(() => {
           sendRecordedAudio();
         }, 100);
-      };
+      } else {
+        console.error('No audio data captured');
+        toast({
+          title: "Erreur d'enregistrement",
+          description: "Aucune donnée audio capturée.",
+          variant: "destructive",
+        });
+      }
+      
+      // Nettoyer les ressources
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      
+      // Détruire le recorder
+      recorderRef.current?.destroy();
+      recorderRef.current = null;
+    });
+    
+    setIsRecording(false);
+    setRecordingMode(null);
+    setAudioLevel(0);
+    silenceStartRef.current = null;
+  }, [isRecording, recordingMode, sendRecordedAudio, toast]);
 
-      // Démarrer l'enregistrement avec des chunks plus fréquents
-      mediaRecorder.start(100); // Chunks toutes les 100ms
-      setIsRecording(true);
-      console.log('Recording started with 100ms chunks and 1.5s silence detection');
+  // Fonction pour vérifier le silence (mode tap uniquement)
+  const checkForSilence = useCallback(() => {
+    if (!analyserRef.current || !isRecording || recordingMode !== 'tap') {
+      return;
+    }
 
-      // Démarrer la détection de silence basée sur l'activité des chunks
-      const silenceDetectionInterval = setInterval(() => {
-        if (!isRecording || !mediaRecorderRef.current) return;
-        
-        const timeSinceLastActivity = Date.now() - lastActivityTimeRef.current;
-        console.log('Time since last audio activity:', timeSinceLastActivity, 'ms');
-        
-        if (timeSinceLastActivity >= SILENCE_DURATION) {
-          console.log('Silence de 1.5s détecté, arrêt automatique de l\'enregistrement');
-          clearInterval(silenceDetectionInterval);
-          isAutoStopRef.current = true; // Marquer comme arrêt automatique
+    const bufferLength = analyserRef.current.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyserRef.current.getByteFrequencyData(dataArray);
+    
+    // Calculer le niveau moyen du signal
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      sum += dataArray[i];
+    }
+    const average = sum / bufferLength;
+    const normalizedLevel = average / 255;
+    
+    // Vérifier si c'est du silence
+    if (normalizedLevel < SILENCE_THRESHOLD) {
+      if (!silenceStartRef.current) {
+        silenceStartRef.current = Date.now();
+        console.log(`Silence detected (level: ${normalizedLevel.toFixed(3)}), starting timer`);
+      } else {
+        const silenceDuration = Date.now() - silenceStartRef.current;
+        if (silenceDuration >= SILENCE_DURATION) {
+          console.log(`${SILENCE_DURATION}ms de silence détecté, arrêt automatique`);
+          // Nettoyer l'intervalle avant d'arrêter
+          if (silenceCheckIntervalRef.current) {
+            clearInterval(silenceCheckIntervalRef.current);
+            silenceCheckIntervalRef.current = null;
+          }
           stopRecording();
         }
-      }, ACTIVITY_CHECK_INTERVAL);
+      }
+    } else {
+      if (silenceStartRef.current) {
+        const silenceDuration = Date.now() - silenceStartRef.current;
+        console.log(`Sound detected (level: ${normalizedLevel.toFixed(3)}), was silent for ${silenceDuration}ms`);
+        silenceStartRef.current = null;
+      }
+    }
+  }, [isRecording, recordingMode, stopRecording]);
 
-      // Nettoyer l'intervalle quand l'enregistrement s'arrête
-      const originalOnStop = mediaRecorder.onstop;
-      mediaRecorder.onstop = () => {
-        clearInterval(silenceDetectionInterval);
-        if (originalOnStop) {
-          originalOnStop.call(mediaRecorder);
-        }
+  const startRecording = useCallback(async (mode: 'tap' | 'hold' = 'tap') => {
+    try {
+      console.log(`Starting recording in ${mode} mode`);
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 44100
+        } 
+      });
+      streamRef.current = stream;
+      
+      // Configurer l'analyseur audio
+      setupAudioAnalyser(stream);
+      
+      // Configuration RecordRTC
+      const options: RecordRTC.Options = {
+        type: 'audio',
+        mimeType: 'audio/webm',
+        recorderType: StereoAudioRecorder,
+        numberOfAudioChannels: 1,
+        desiredSampRate: 16000,
+        bufferSize: 16384,
+        timeSlice: 100, // Chunks toutes les 100ms
       };
-
+      
+      const recorder = new RecordRTC(stream, options);
+      recorderRef.current = recorder;
+      recordingStartTimeRef.current = Date.now();
+      silenceStartRef.current = null;
+      
+      // Démarrer l'enregistrement
+      recorder.startRecording();
+      setIsRecording(true);
+      setRecordingMode(mode);
+      
+      // Démarrer le monitoring du niveau audio
+      setTimeout(() => {
+        monitorAudioLevel();
+      }, 100);
+      
+      // Si mode tap, démarrer la détection de silence après un délai
+      if (mode === 'tap') {
+        console.log('Starting silence detection for tap mode');
+        // Attendre 500ms avant de commencer à détecter le silence
+        setTimeout(() => {
+          if (isRecording && recordingMode === 'tap') {
+            silenceCheckIntervalRef.current = setInterval(() => {
+              checkForSilence();
+            }, SILENCE_CHECK_INTERVAL);
+          }
+        }, 500);
+      }
+      
     } catch (error) {
       console.error('Error starting recording:', error);
       toast({
@@ -238,8 +384,10 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
         description: "Impossible d'accéder au microphone. Vérifiez les permissions.",
         variant: "destructive",
       });
+      setIsRecording(false);
+      setRecordingMode(null);
     }
-  }, [toast, sendRecordedAudio, stopRecording]);
+  }, [toast, setupAudioAnalyser, monitorAudioLevel, checkForSilence]);
 
   const resetAudio = useCallback(() => {
     recordedAudioBlobRef.current = null;
@@ -248,18 +396,33 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
   // Nettoyer les ressources au démontage
   useEffect(() => {
     return () => {
-      if (silenceTimerRef.current) {
-        clearTimeout(silenceTimerRef.current);
+      if (silenceCheckIntervalRef.current) {
+        clearInterval(silenceCheckIntervalRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, []);
+
+  // Redémarrer le monitoring quand isRecording change
+  useEffect(() => {
+    if (isRecording) {
+      monitorAudioLevel();
+    }
+  }, [isRecording, monitorAudioLevel]);
 
   return {
     isRecording,
     isLoading,
+    audioLevel,
+    recordingMode,
     startRecording,
     stopRecording,
     resetAudio,
