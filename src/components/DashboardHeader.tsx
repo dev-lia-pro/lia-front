@@ -132,7 +132,7 @@ export const DashboardHeader = () => {
             className="hover:bg-navy-muted focus:bg-navy-muted cursor-pointer"
             onSelect={(e) => e.preventDefault()}
           >
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full" onClick={toggleTheme}>
               <div className="flex items-center">
                 {theme === 'dark' ? (
                   <Moon className="mr-2 h-4 w-4" />
