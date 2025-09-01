@@ -271,11 +271,11 @@ export const UpcomingMeetings = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="bg-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={() => handleAssignEventProject(event.id, '')} className="cursor-pointer hover:bg-muted">
+                          <DropdownMenuItem onClick={() => handleAssignEventProject(event.id, '')} className="cursor-pointer hover:bg-foreground/10">
                             Aucun projet
                           </DropdownMenuItem>
                           {projects.map((p) => (
-                            <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(event.id, p.id)} className="cursor-pointer hover:bg-muted">
+                            <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(event.id, p.id)} className="cursor-pointer hover:bg-foreground/10">
                               <span className="mr-2">{getIconByValue(p.icon)}</span>
                               <span>{p.title}</span>
                             </DropdownMenuItem>

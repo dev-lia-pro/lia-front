@@ -100,11 +100,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => onAssignProject && onAssignProject(task.id, '')} className="cursor-pointer hover:bg-navy-muted">
+              <DropdownMenuItem onClick={() => onAssignProject && onAssignProject(task.id, '')} className="cursor-pointer hover:bg-foreground/10">
                 Aucun projet
               </DropdownMenuItem>
               {projects.map((p) => (
-                <DropdownMenuItem key={p.id} onClick={() => onAssignProject && onAssignProject(task.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                <DropdownMenuItem key={p.id} onClick={() => onAssignProject && onAssignProject(task.id, p.id)} className="cursor-pointer hover:bg-foreground/10">
                   <span className="mr-2">{getIconByValue(p.icon)}</span>
                   <span>{p.title}</span>
                 </DropdownMenuItem>

@@ -74,7 +74,7 @@ export const DashboardHeader = () => {
             <DropdownMenuContent className="bg-navy-card border-border text-foreground min-w-[220px]">
               <DropdownMenuItem
                 onClick={() => setSelected({ id: null, title: 'Tous les projets' })}
-                className="cursor-pointer hover:bg-muted items-center"
+                className="cursor-pointer hover:bg-foreground/10 items-center"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full border border-border flex items-center justify-center bg-navy-deep">
@@ -87,7 +87,7 @@ export const DashboardHeader = () => {
                 <DropdownMenuItem
                   key={p.id}
                   onClick={() => setSelected({ id: p.id, title: p.title })}
-                  className="cursor-pointer hover:bg-muted items-center"
+                  className="cursor-pointer hover:bg-foreground/10 items-center"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-full border border-border flex items-center justify-center bg-navy-deep overflow-hidden">
@@ -122,14 +122,14 @@ export const DashboardHeader = () => {
         >
           <DropdownMenuItem
             onClick={handleProfileClick}
-            className="hover:bg-navy-muted focus:bg-navy-muted cursor-pointer"
+            className="hover:bg-foreground/10 focus:bg-foreground/10 cursor-pointer"
           >
             <User className="mr-2 h-4 w-4" />
             Mon profil
           </DropdownMenuItem>
           
           <DropdownMenuItem
-            className="hover:bg-navy-muted focus:bg-navy-muted cursor-pointer"
+            className="hover:bg-foreground/10 focus:bg-foreground/10 cursor-pointer"
             onSelect={(e) => e.preventDefault()}
           >
             <div className="flex items-center justify-between w-full" onClick={toggleTheme}>
