@@ -18,13 +18,15 @@ export const UrgentTasks = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   // Statut de création par défaut (selon la colonne +)
   const [createDefaultStatus, setCreateDefaultStatus] = useState<'TODO' | 'IN_PROGRESS'>('TODO');
+  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<{ column: string; index: number } | null>(null);
   const isMobile = useIsMobile();
   
   // Récupérer les tâches (filtrées par projet sélectionné)
   const { selected } = useProjectStore();
   
   // Deux requêtes séparées pour les tâches urgentes
-  const { tasks: urgentTodo, isLoading: isLoadingTodo, updateTask, deleteTask, createTask } = useTasks({ 
+  const { tasks: urgentTodo, isLoading: isLoadingTodo, updateTask, deleteTask, createTask, reorderTask } = useTasks({ 
     project: selected.id ?? undefined, 
     priority: 'URGENT', 
     status: 'TODO' 
@@ -120,7 +122,13 @@ export const UrgentTasks = () => {
   // Drag & Drop
   const [dragOverUrgent, setDragOverUrgent] = useState<Task['status'] | null>(null);
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ id: task.id, status: task.status, priority: task.priority }));
+    setDraggedTaskId(task.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({ 
+      id: task.id, 
+      status: task.status, 
+      priority: task.priority,
+      position: task.position 
+    }));
     e.dataTransfer.effectAllowed = 'move';
   };
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: Task['status']) => {
@@ -128,18 +136,90 @@ export const UrgentTasks = () => {
     e.dataTransfer.dropEffect = 'move';
     if (dragOverUrgent !== status) setDragOverUrgent(status);
   };
+  
+  const handleDragOverVertical = (e: React.DragEvent<HTMLDivElement>, index: number, column: string, tasks: Task[]) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const height = rect.height;
+    
+    // Déterminer si on est dans la moitié haute ou basse
+    const visualIndex = y < height / 2 ? index : index + 1;
+    
+    setDropIndicatorIndex({ column, index: visualIndex });
+  };
+  
   const handleDragLeave = () => setDragOverUrgent(null);
+  
+  const handleDragEnd = () => {
+    setDraggedTaskId(null);
+    setDropIndicatorIndex(null);
+  };
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetStatus: Extract<Task['status'], 'TODO' | 'IN_PROGRESS'>) => {
     e.preventDefault();
     setDragOverUrgent(null);
+    setDropIndicatorIndex(null);
     try {
       const payload = e.dataTransfer.getData('application/json');
       if (!payload) return;
-      const { id } = JSON.parse(payload) as { id: number };
+      const { id, status: sourceStatus, priority } = JSON.parse(payload) as { id: number; status: Task['status']; priority: Task['priority'] };
+      
+      // Si c'est déjà une tâche urgente avec le même statut, ne rien faire
+      if (sourceStatus === targetStatus && priority === 'URGENT') return;
+      
       const updatePayload: UpdateTaskData = { id, status: targetStatus, priority: 'URGENT' };
+      
+      // D'abord mettre à jour le statut et la priorité
       await updateTask.mutateAsync(updatePayload);
+      
+      // Puis placer en première position (index 0)
+      await reorderTask.mutateAsync({
+        id: id,
+        target_index: 0
+      });
+      
+      const statusLabel = targetStatus === 'TODO' ? 'À faire' : 'En cours';
+      toast({ title: 'Tâche urgente déplacée', description: `La tâche a été déplacée en haut de la colonne urgente "${statusLabel}".` });
     } catch (error) {
-      // silencieux
+      toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
+    }
+  };
+  
+  const handleDropVertical = async (e: React.DragEvent<HTMLDivElement>, columnTasks: Task[], columnStatus: Task['status']) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropIndicatorIndex(null);
+    setDragOverUrgent(null);
+    
+    if (!dropIndicatorIndex) return;
+    
+    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+    
+    // Position cible dans la colonne urgente
+    const targetPosition = dropIndicatorIndex.index;
+    
+    try {
+      // Appeler le nouvel endpoint reorder avec les paramètres pour colonne urgente
+      await reorderTask.mutateAsync({
+        id: data.id,
+        target_position: targetPosition,
+        target_status: columnStatus,
+        target_is_urgent: true // Toujours urgent dans UrgentTasks
+      });
+      
+      // Message de succès
+      const statusLabel = columnStatus === 'TODO' ? 'À faire' : 'En cours';
+      const oldIsUrgent = data.priority === 'URGENT';
+      
+      if (data.status !== columnStatus || !oldIsUrgent) {
+        const priorityMessage = !oldIsUrgent ? ' (priorité augmentée à urgente)' : '';
+        toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée vers la section urgente "${statusLabel}"${priorityMessage}.` });
+      } else {
+        toast({ title: 'Tâche réordonnée', description: 'La position de la tâche a été mise à jour.' });
+      }
+    } catch {
+      toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
     }
   };
 
@@ -207,9 +287,9 @@ export const UrgentTasks = () => {
         {/* Urgent - À faire */}
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverUrgent === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
-          onDragOver={(e) => handleDragOver(e, 'TODO')}
+          onDragOver={(e) => urgentTodo.length === 0 ? handleDragOver(e, 'TODO') : e.preventDefault()}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, 'TODO')}
+          onDrop={(e) => urgentTodo.length === 0 ? handleDrop(e, 'TODO') : e.preventDefault()}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">À faire ({urgentTodo.length})</h4>
@@ -223,27 +303,42 @@ export const UrgentTasks = () => {
                 Aucune tâche urgente pour le moment
               </div>
             )}
-            {urgentTodo.map((task) => (
-              <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
-                <TaskCard
-                  task={task}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                  onClick={handleTaskClick}
-                  onMarkDone={handleMarkDone}
-                  onAssignProject={handleAssignProject}
-                />
+            {urgentTodo.map((task, index) => (
+              <div key={task.id} className="relative">
+                {dropIndicatorIndex?.column === 'URGENT_TODO' && dropIndicatorIndex.index === index && (
+                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+                )}
+                <div 
+                  draggable 
+                  onDragStart={(e) => handleDragStart(e, task)}
+                  onDragOver={(e) => handleDragOverVertical(e, index, 'URGENT_TODO', urgentTodo)}
+                  onDrop={(e) => handleDropVertical(e, urgentTodo, 'TODO')}
+                  onDragEnd={handleDragEnd}
+                  className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                >
+                  <TaskCard
+                    task={task}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
+                    onClick={handleTaskClick}
+                    onMarkDone={handleMarkDone}
+                    onAssignProject={handleAssignProject}
+                  />
+                </div>
               </div>
             ))}
+            {dropIndicatorIndex?.column === 'URGENT_TODO' && dropIndicatorIndex.index === urgentTodo.length && (
+              <div className="h-0.5 bg-primary rounded" />
+            )}
           </div>
         </div>
 
         {/* Urgent - En cours */}
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverUrgent === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
-          onDragOver={(e) => handleDragOver(e, 'IN_PROGRESS')}
+          onDragOver={(e) => urgentInProgress.length === 0 ? handleDragOver(e, 'IN_PROGRESS') : e.preventDefault()}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
+          onDrop={(e) => urgentInProgress.length === 0 ? handleDrop(e, 'IN_PROGRESS') : e.preventDefault()}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">En cours ({urgentInProgress.length})</h4>
@@ -257,18 +352,33 @@ export const UrgentTasks = () => {
                 Aucune tâche urgente pour le moment
               </div>
             )}
-            {urgentInProgress.map((task) => (
-              <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
-                <TaskCard
-                  task={task}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                  onClick={handleTaskClick}
-                  onMarkDone={handleMarkDone}
-                  onAssignProject={handleAssignProject}
-                />
+            {urgentInProgress.map((task, index) => (
+              <div key={task.id} className="relative">
+                {dropIndicatorIndex?.column === 'URGENT_IN_PROGRESS' && dropIndicatorIndex.index === index && (
+                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+                )}
+                <div 
+                  draggable 
+                  onDragStart={(e) => handleDragStart(e, task)}
+                  onDragOver={(e) => handleDragOverVertical(e, index, 'URGENT_IN_PROGRESS', urgentInProgress)}
+                  onDrop={(e) => handleDropVertical(e, urgentInProgress, 'IN_PROGRESS')}
+                  onDragEnd={handleDragEnd}
+                  className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                >
+                  <TaskCard
+                    task={task}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
+                    onClick={handleTaskClick}
+                    onMarkDone={handleMarkDone}
+                    onAssignProject={handleAssignProject}
+                  />
+                </div>
               </div>
             ))}
+            {dropIndicatorIndex?.column === 'URGENT_IN_PROGRESS' && dropIndicatorIndex.index === urgentInProgress.length && (
+              <div className="h-0.5 bg-primary rounded" />
+            )}
           </div>
         </div>
       </div>

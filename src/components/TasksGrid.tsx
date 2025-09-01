@@ -17,6 +17,8 @@ export const TasksGrid = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [createDefaultStatus, setCreateDefaultStatus] = useState<Task['status']>('TODO');
+  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<{ column: string; index: number } | null>(null);
   
   const { projects } = useProjects();
   const { selected } = useProjectStore();
@@ -40,12 +42,19 @@ export const TasksGrid = () => {
   const createTask = todo.createTask;
   const updateTask = todo.updateTask;
   const deleteTask = todo.deleteTask;
+  const reorderTask = todo.reorderTask;
   const { toast } = useToast();
 
   // Drag & Drop
   const [dragOverStatus, setDragOverStatus] = useState<Task['status'] | null>(null);
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ id: task.id, status: task.status, priority: task.priority }));
+    setDraggedTaskId(task.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({ 
+      id: task.id, 
+      status: task.status, 
+      priority: task.priority,
+      position: task.position 
+    }));
     e.dataTransfer.effectAllowed = 'move';
   };
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: Task['status']) => {
@@ -53,25 +62,98 @@ export const TasksGrid = () => {
     e.dataTransfer.dropEffect = 'move';
     if (dragOverStatus !== status) setDragOverStatus(status);
   };
+  
+  const handleDragOverVertical = (e: React.DragEvent<HTMLDivElement>, index: number, column: string, tasks: Task[]) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const height = rect.height;
+    
+    // Déterminer si on est dans la moitié haute ou basse
+    const visualIndex = y < height / 2 ? index : index + 1;
+    
+    setDropIndicatorIndex({ column, index: visualIndex });
+  };
   const handleDragLeave = () => {
     setDragOverStatus(null);
+  };
+  
+  const handleDragEnd = () => {
+    setDraggedTaskId(null);
+    setDropIndicatorIndex(null);
   };
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetStatus: Task['status']) => {
     e.preventDefault();
     setDragOverStatus(null);
+    setDropIndicatorIndex(null);
     try {
       const payload = e.dataTransfer.getData('application/json');
       if (!payload) return;
-      const { id, priority } = JSON.parse(payload) as { id: number; priority?: Task['priority'] };
+      const { id, priority, status: sourceStatus } = JSON.parse(payload) as { id: number; priority?: Task['priority']; status: Task['status'] };
+      
+      // Si c'est le même statut et pas de changement de priorité, ne rien faire
+      const isFromUrgent = priority === 'URGENT' || priority === 'HIGH';
+      if (sourceStatus === targetStatus && !isFromUrgent) return;
+      
       // Si la tâche provient de la section urgente (priority URGENT ou HIGH) et est déposée ici,
       // on rétrograde la priorité à MEDIUM.
       const updatePayload: UpdateTaskData = { id, status: targetStatus };
-      if (priority === 'URGENT' || priority === 'HIGH') {
+      if (isFromUrgent && targetStatus !== 'DONE') {
         updatePayload.priority = 'MEDIUM';
       }
+      
+      // D'abord mettre à jour le statut
       await updateTask.mutateAsync(updatePayload);
+      
+      // Puis placer en première position (index 0)
+      await reorderTask.mutateAsync({
+        id: id,
+        target_index: 0
+      });
+      
       const statusLabel = targetStatus === 'TODO' ? 'À faire' : targetStatus === 'IN_PROGRESS' ? 'En cours' : 'Terminé';
-      toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée vers "${statusLabel}".` });
+      const priorityMessage = isFromUrgent ? ' (priorité réduite)' : '';
+      toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée en haut de la colonne "${statusLabel}"${priorityMessage}.` });
+    } catch {
+      toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
+    }
+  };
+  
+  const handleDropVertical = async (e: React.DragEvent<HTMLDivElement>, columnTasks: Task[], columnStatus: Task['status'], isUrgentColumn: boolean = false) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropIndicatorIndex(null);
+    setDragOverStatus(null);
+    
+    if (!dropIndicatorIndex) return;
+    
+    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+    
+    // Déterminer la position cible et si c'est une colonne urgente
+    const targetPosition = dropIndicatorIndex.index;
+    const targetIsUrgent = isUrgentColumn;
+    
+    try {
+      // Appeler le nouvel endpoint reorder avec tous les paramètres
+      await reorderTask.mutateAsync({
+        id: data.id,
+        target_position: targetPosition,
+        target_status: columnStatus,
+        target_is_urgent: targetIsUrgent
+      });
+      
+      // Message de succès
+      const statusLabel = columnStatus === 'TODO' ? 'À faire' : columnStatus === 'IN_PROGRESS' ? 'En cours' : 'Terminé';
+      const oldIsUrgent = data.priority === 'URGENT';
+      
+      if (data.status !== columnStatus || oldIsUrgent !== targetIsUrgent) {
+        const priorityMessage = oldIsUrgent && !targetIsUrgent ? ' (priorité réduite à normale)' : 
+                                !oldIsUrgent && targetIsUrgent ? ' (priorité augmentée à urgente)' : '';
+        toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée vers "${statusLabel}"${priorityMessage}.` });
+      } else {
+        toast({ title: 'Tâche réordonnée', description: 'La position de la tâche a été mise à jour.' });
+      }
     } catch {
       toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
     }
@@ -219,9 +301,9 @@ export const TasksGrid = () => {
         {/* Colonne À faire */}
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
-          onDragOver={(e) => handleDragOver(e, 'TODO')}
+          onDragOver={(e) => tasksTodo.length === 0 ? handleDragOver(e, 'TODO') : e.preventDefault()}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, 'TODO')}
+          onDrop={(e) => tasksTodo.length === 0 ? handleDrop(e, 'TODO') : e.preventDefault()}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">À faire ({tasksTodo.length})</h4>
@@ -235,27 +317,42 @@ export const TasksGrid = () => {
                 Aucune tâche pour le moment
               </div>
             )}
-            {tasksTodo.map((task) => (
-              <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
-                <TaskCard
-                  task={task}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTaskClick}
-                  onClick={handleTaskClick}
-                  onMarkDone={handleMarkDone}
-                  onAssignProject={handleAssignProject}
-                />
+            {tasksTodo.map((task, index) => (
+              <div key={task.id} className="relative">
+                {dropIndicatorIndex?.column === 'TODO' && dropIndicatorIndex.index === index && (
+                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+                )}
+                <div 
+                  draggable 
+                  onDragStart={(e) => handleDragStart(e, task)}
+                  onDragOver={(e) => handleDragOverVertical(e, index, 'TODO', tasksTodo)}
+                  onDrop={(e) => handleDropVertical(e, tasksTodo, 'TODO')}
+                  onDragEnd={handleDragEnd}
+                  className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                >
+                  <TaskCard
+                    task={task}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTaskClick}
+                    onClick={handleTaskClick}
+                    onMarkDone={handleMarkDone}
+                    onAssignProject={handleAssignProject}
+                  />
+                </div>
               </div>
             ))}
+            {dropIndicatorIndex?.column === 'TODO' && dropIndicatorIndex.index === tasksTodo.length && (
+              <div className="h-0.5 bg-primary rounded" />
+            )}
           </div>
         </div>
 
         {/* Colonne En cours */}
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
-          onDragOver={(e) => handleDragOver(e, 'IN_PROGRESS')}
+          onDragOver={(e) => tasksInProgress.length === 0 ? handleDragOver(e, 'IN_PROGRESS') : e.preventDefault()}
           onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
+          onDrop={(e) => tasksInProgress.length === 0 ? handleDrop(e, 'IN_PROGRESS') : e.preventDefault()}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">En cours ({tasksInProgress.length})</h4>
@@ -269,18 +366,33 @@ export const TasksGrid = () => {
                 Aucune tâche pour le moment
               </div>
             )}
-            {tasksInProgress.map((task) => (
-              <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
-                <TaskCard
-                  task={task}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTaskClick}
-                  onClick={handleTaskClick}
-                  onMarkDone={handleMarkDone}
-                  onAssignProject={handleAssignProject}
-                />
+            {tasksInProgress.map((task, index) => (
+              <div key={task.id} className="relative">
+                {dropIndicatorIndex?.column === 'IN_PROGRESS' && dropIndicatorIndex.index === index && (
+                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+                )}
+                <div 
+                  draggable 
+                  onDragStart={(e) => handleDragStart(e, task)}
+                  onDragOver={(e) => handleDragOverVertical(e, index, 'IN_PROGRESS', tasksInProgress)}
+                  onDrop={(e) => handleDropVertical(e, tasksInProgress, 'IN_PROGRESS')}
+                  onDragEnd={handleDragEnd}
+                  className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                >
+                  <TaskCard
+                    task={task}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTaskClick}
+                    onClick={handleTaskClick}
+                    onMarkDone={handleMarkDone}
+                    onAssignProject={handleAssignProject}
+                  />
+                </div>
               </div>
             ))}
+            {dropIndicatorIndex?.column === 'IN_PROGRESS' && dropIndicatorIndex.index === tasksInProgress.length && (
+              <div className="h-0.5 bg-primary rounded" />
+            )}
           </div>
         </div>
 
@@ -288,9 +400,9 @@ export const TasksGrid = () => {
         {showDone && (
           <div
             className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'DONE' ? 'border-primary' : 'border-border'} transition-smooth`}
-            onDragOver={(e) => handleDragOver(e, 'DONE')}
+            onDragOver={(e) => tasksDone.length === 0 ? handleDragOver(e, 'DONE') : e.preventDefault()}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'DONE')}
+            onDrop={(e) => tasksDone.length === 0 ? handleDrop(e, 'DONE') : e.preventDefault()}
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-base font-semibold">Terminé ({tasksDone.length})</h4>
@@ -304,17 +416,32 @@ export const TasksGrid = () => {
                   Aucune tâche pour le moment
                 </div>
               )}
-              {tasksDone.map((task) => (
-                <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task)}>
-                  <TaskCard
-                    task={task}
-                    onEdit={handleEditTask}
-                    onDelete={handleDeleteTaskClick}
-                    onClick={handleTaskClick}
-                    onAssignProject={handleAssignProject}
-                  />
+              {tasksDone.map((task, index) => (
+                <div key={task.id} className="relative">
+                  {dropIndicatorIndex?.column === 'DONE' && dropIndicatorIndex.index === index && (
+                    <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+                  )}
+                  <div 
+                    draggable 
+                    onDragStart={(e) => handleDragStart(e, task)}
+                    onDragOver={(e) => handleDragOverVertical(e, index, 'DONE', tasksDone)}
+                    onDrop={(e) => handleDropVertical(e, tasksDone, 'DONE')}
+                    onDragEnd={handleDragEnd}
+                    className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                  >
+                    <TaskCard
+                      task={task}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTaskClick}
+                      onClick={handleTaskClick}
+                      onAssignProject={handleAssignProject}
+                    />
+                  </div>
                 </div>
               ))}
+              {dropIndicatorIndex?.column === 'DONE' && dropIndicatorIndex.index === tasksDone.length && (
+                <div className="h-0.5 bg-primary rounded" />
+              )}
             </div>
           </div>
         )}
