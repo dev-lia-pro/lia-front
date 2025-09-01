@@ -114,18 +114,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
         <div className="flex items-center gap-1">
           {getPriorityIcon(task.priority)}
-          <span className="text-xs text-foreground/70">{getPriorityText(task.priority)}</span>
+          <span className="text-sm text-foreground/70">{getPriorityText(task.priority)}</span>
         </div>
       </div>
 
       {/* Titre de la tâche */}
-      <span className="text-sm font-medium text-foreground text-center line-clamp-2">
+      <span className="text-base font-semibold text-foreground text-center line-clamp-2">
         {task.title}
       </span>
 
       {/* Description de la tâche (optionnelle) */}
       {task.description && (
-        <p className="text-xs text-foreground/70 text-center line-clamp-2">
+        <p className="text-sm text-foreground/70 text-center line-clamp-2">
           {task.description}
         </p>
       )}

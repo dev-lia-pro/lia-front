@@ -105,7 +105,7 @@ export const EventsGrid = () => {
     return (
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Événements ({events?.length || 0})</h3>
+          <h3 className="text-xl font-semibold text-foreground">Événements ({events?.length || 0})</h3>
           <Button
             size="sm"
             className="bg-gold hover:bg-gold/90 text-navy"
@@ -134,7 +134,7 @@ export const EventsGrid = () => {
   return (
     <section className="animate-slide-up">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
+        <h3 className="text-xl font-semibold text-foreground">
           Événements ({events.length})
         </h3>
         <Button
@@ -173,12 +173,12 @@ export const EventsGrid = () => {
               </div>
 
               {/* Titre de l'événement */}
-              <span className="text-sm text-foreground font-medium text-center line-clamp-2">
+              <span className="text-base text-foreground font-semibold text-center line-clamp-2">
                 {event.title}
               </span>
 
               {/* Date et heure */}
-              <div className="text-xs text-foreground/70 text-center">
+              <div className="text-sm text-foreground/70 text-center"
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Calendar className="w-3 h-3" />
                   <span>{formatDate(event.starts_at)}</span>
@@ -191,7 +191,7 @@ export const EventsGrid = () => {
 
               {/* Localisation si disponible */}
               {event.location && (
-                <div className="text-xs text-foreground/60 text-center flex items-center justify-center gap-1">
+                <div className="text-sm text-foreground/60 text-center flex items-center justify-center gap-1">
                   <MapPin className="w-3 h-3" />
                   <span className="line-clamp-1">{event.location}</span>
                 </div>
@@ -199,7 +199,7 @@ export const EventsGrid = () => {
 
               {/* Nombre de participants si disponible */}
               {event.attendees && event.attendees.length > 0 && (
-                <div className="text-xs text-foreground/60 text-center flex items-center justify-center gap-1">
+                <div className="text-sm text-foreground/60 text-center flex items-center justify-center gap-1">
                   <Users className="w-3 h-3" />
                   <span>{event.attendees.length} participant(s)</span>
                 </div>

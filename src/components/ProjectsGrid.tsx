@@ -86,7 +86,7 @@ export const ProjectsGrid = () => {
     return (
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Projets ({projects?.length || 0})</h3>
+          <h3 className="text-xl font-semibold text-foreground">Projets ({projects?.length || 0})</h3>
           <Button size="sm" className="h-9 w-9 p-0 border border-gold bg-gold text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
@@ -110,7 +110,7 @@ export const ProjectsGrid = () => {
   return (
     <section className="animate-slide-up">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
+        <h3 className="text-xl font-semibold text-foreground">
           Projets ({projects.length})
         </h3>
         <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" aria-label="Créer un projet" title="Créer un projet">
@@ -144,13 +144,13 @@ export const ProjectsGrid = () => {
               </div>
 
               {/* Titre du projet */}
-              <span className="text-sm text-foreground font-medium text-center">
+              <span className="text-base text-foreground font-semibold text-center">
                 {project.title}
               </span>
 
               {/* Description du projet (optionnelle) */}
               {project.description && (
-                <p className="text-xs text-foreground/70 text-center line-clamp-2">
+                <p className="text-sm text-foreground/70 text-center line-clamp-2">
                   {project.description}
                 </p>
               )}

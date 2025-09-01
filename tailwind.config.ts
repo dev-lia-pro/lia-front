@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -18,6 +19,17 @@ export default {
 			}
 		},
 		extend: {
+			fontSize: {
+				'xs': ['0.8125rem', { lineHeight: '1.25rem' }],    // 13px (up from 12px)
+				'sm': ['0.9375rem', { lineHeight: '1.375rem' }],   // 15px (up from 14px)
+				'base': ['1.0625rem', { lineHeight: '1.625rem' }], // 17px (up from 16px)
+				'lg': ['1.1875rem', { lineHeight: '1.75rem' }],    // 19px (up from 18px)
+				'xl': ['1.3125rem', { lineHeight: '1.875rem' }],   // 21px (up from 20px)
+				'2xl': ['1.5625rem', { lineHeight: '2rem' }],      // 25px (up from 24px)
+				'3xl': ['1.9375rem', { lineHeight: '2.375rem' }],  // 31px (up from 30px)
+				'4xl': ['2.3125rem', { lineHeight: '2.625rem' }],  // 37px (up from 36px)
+				'5xl': ['3.125rem', { lineHeight: '1' }],          // 50px (up from 48px)
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -102,5 +114,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [tailwindcssAnimate],
 } satisfies Config;

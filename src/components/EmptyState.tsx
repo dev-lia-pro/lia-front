@@ -23,8 +23,8 @@ export const EmptyState = ({
       >
         <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
       </button>
-      <p className="text-foreground/70 mb-2">{title}</p>
-      <p className="text-sm text-foreground/50">{description}</p>
+      <p className="text-base text-foreground/70 mb-2">{title}</p>
+      <p className="text-base text-foreground/50">{description}</p>
     </div>
   );
 };

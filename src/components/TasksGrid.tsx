@@ -169,7 +169,7 @@ export const TasksGrid = () => {
     return (
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Tâches ({totalCount})</h3>
+          <h3 className="text-xl font-semibold text-foreground">Tâches ({totalCount})</h3>
           <Button size="sm" className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
@@ -199,7 +199,7 @@ export const TasksGrid = () => {
   return (
     <section className="animate-slide-up">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Tâches ({totalCount})</h3>
+        <h3 className="text-xl font-semibold text-foreground">Tâches ({totalCount})</h3>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -222,7 +222,7 @@ export const TasksGrid = () => {
           onDrop={(e) => handleDrop(e, 'TODO')}
         >
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold">À faire ({tasksTodo.length})</h4>
+            <h4 className="text-base font-semibold">À faire ({tasksTodo.length})</h4>
             <Button size="icon" onClick={() => { setCreateDefaultStatus('TODO'); setIsCreateModalOpen(true); }} className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4" />
             </Button>
@@ -256,7 +256,7 @@ export const TasksGrid = () => {
           onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
         >
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-semibold">En cours ({tasksInProgress.length})</h4>
+            <h4 className="text-base font-semibold">En cours ({tasksInProgress.length})</h4>
             <Button size="icon" onClick={() => { setCreateDefaultStatus('IN_PROGRESS'); setIsCreateModalOpen(true); }} className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4" />
             </Button>
@@ -291,7 +291,7 @@ export const TasksGrid = () => {
             onDrop={(e) => handleDrop(e, 'DONE')}
           >
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold">Terminé ({tasksDone.length})</h4>
+              <h4 className="text-base font-semibold">Terminé ({tasksDone.length})</h4>
               <Button size="icon" onClick={() => { setCreateDefaultStatus('DONE'); setIsCreateModalOpen(true); }} className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Plus className="w-4 h-4" />
               </Button>

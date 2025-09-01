@@ -53,7 +53,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
                 className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} 
               />
               <span 
-                className={`text-xs font-medium ${
+                className={`text-sm font-medium ${
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >

@@ -189,7 +189,7 @@ export const UpcomingMeetings = () => {
     return (
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Réunions à venir</h3>
+          <h3 className="text-xl font-semibold text-foreground">Réunions à venir</h3>
           <Button size="sm" className="h-9 w-9 p-0 border border-primary bg-primary text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
@@ -218,7 +218,7 @@ export const UpcomingMeetings = () => {
   return (
     <section className="animate-slide-up">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
+        <h3 className="text-xl font-semibold text-foreground">
           Réunions à venir ({allEvents.length})
         </h3>
         <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="h-9 w-9 p-0 border border-primary bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Créer un événement" title="Créer un événement">
@@ -286,10 +286,10 @@ export const UpcomingMeetings = () => {
                   }
                   {/* Titre et heure */}
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`font-semibold text-sm text-foreground`}>
+                    <span className={`font-semibold text-base text-foreground`}>
                       {formatTime(event.starts_at)}
                     </span>
-                    <span className="text-foreground font-medium text-sm truncate">
+                    <span className="text-foreground font-semibold text-base truncate">
                       {event.title}
                     </span>
                     {isToday(event.starts_at) && (
@@ -300,7 +300,7 @@ export const UpcomingMeetings = () => {
                   </div>
 
                   {/* Date */}
-                  <div className="text-xs text-foreground/70 mb-2">
+                  <div className="text-sm text-foreground/70 mb-2">
                     {isMultiDay(event.starts_at, event.ends_at)
                       ? `${formatDatePlain(event.starts_at)} - ${formatDatePlain(event.ends_at)}`
                       : formatDate(event.starts_at)}
@@ -308,7 +308,7 @@ export const UpcomingMeetings = () => {
 
                   {/* Localisation */}
                   {event.location && (
-                    <div className="flex items-center gap-1 text-xs text-foreground/60 mb-1">
+                    <div className="flex items-center gap-1 text-sm text-foreground/60 mb-1">
                       <MapPin className="w-3 h-3" />
                       <span className="truncate">{event.location}</span>
                     </div>
@@ -316,7 +316,7 @@ export const UpcomingMeetings = () => {
 
                   {/* Participants */}
                   {event.attendees && event.attendees.length > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-foreground/60">
+                    <div className="flex items-center gap-1 text-sm text-foreground/60">
                       <Users className="w-3 h-3" />
                       <span>{event.attendees.length} participant(s)</span>
                     </div>
