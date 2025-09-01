@@ -10,6 +10,7 @@ import { TaskModal } from './TaskModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from './EmptyState';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const UrgentTasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -17,6 +18,7 @@ export const UrgentTasks = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   // Statut de création par défaut (selon la colonne +)
   const [createDefaultStatus, setCreateDefaultStatus] = useState<'TODO' | 'IN_PROGRESS'>('TODO');
+  const isMobile = useIsMobile();
   
   // Récupérer les tâches (filtrées par projet sélectionné)
   const { selected } = useProjectStore();
@@ -171,9 +173,9 @@ export const UrgentTasks = () => {
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`${isMobile ? 'flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
           {[...Array(2)].map((_, index) => (
-            <div key={index} className="p-4 bg-card/30 border border-border rounded-xl animate-pulse">
+            <div key={index} className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 border border-border rounded-xl animate-pulse`}>
               <div className="h-5 w-24 bg-border rounded mb-4" />
               {[...Array(2)].map((_, i) => (
                 <div key={i} className="p-4 bg-card border border-border rounded-xl mb-3">
@@ -201,10 +203,10 @@ export const UrgentTasks = () => {
           Tâches urgentes ({allUrgentTasks.length})
         </h3>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={`${isMobile ? 'flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
         {/* Urgent - À faire */}
         <div
-          className={`p-4 bg-card/30 rounded-xl border ${dragOverUrgent === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
+          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverUrgent === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
           onDragOver={(e) => handleDragOver(e, 'TODO')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'TODO')}
@@ -215,7 +217,7 @@ export const UrgentTasks = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-3 min-h-[60px]">
+          <div className="flex flex-col gap-2 min-h-[60px]">
             {urgentTodo.length === 0 && (
               <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche urgente pour le moment
@@ -238,7 +240,7 @@ export const UrgentTasks = () => {
 
         {/* Urgent - En cours */}
         <div
-          className={`p-4 bg-card/30 rounded-xl border ${dragOverUrgent === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
+          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverUrgent === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
           onDragOver={(e) => handleDragOver(e, 'IN_PROGRESS')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
@@ -249,7 +251,7 @@ export const UrgentTasks = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-3 min-h-[60px]">
+          <div className="flex flex-col gap-2 min-h-[60px]">
             {urgentInProgress.length === 0 && (
               <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche urgente pour le moment

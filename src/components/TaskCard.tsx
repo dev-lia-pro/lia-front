@@ -79,7 +79,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <div
-      className="group relative flex flex-col gap-3 p-4 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98]"
+      className="group relative flex flex-col gap-2 p-3 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98] overflow-hidden"
       onClick={() => onClick(task)}
     >
 
@@ -92,7 +92,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 {task.project ? (
                   <>
                     <span>{getIconByValue((projects.find(p => p.id === task.project)?.icon) || '')}</span>
-                    <span className="truncate max-w-[120px]">{projects.find(p => p.id === task.project)?.title || `Projet #${task.project}`}</span>
+                    <span className="truncate max-w-[100px]">{projects.find(p => p.id === task.project)?.title || `Projet #${task.project}`}</span>
                   </>
                 ) : (
                   <span className="text-foreground/60">Aucun projet</span>
@@ -119,13 +119,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       </div>
 
       {/* Titre de la tâche */}
-      <span className="text-base font-semibold text-foreground text-center line-clamp-2">
+      <span className="text-base font-semibold text-foreground text-center line-clamp-2 break-words">
         {task.title}
       </span>
 
       {/* Description de la tâche (optionnelle) */}
       {task.description && (
-        <p className="text-sm text-foreground/70 text-center line-clamp-2">
+        <p className="text-sm text-foreground/70 text-center line-clamp-2 break-words">
           {task.description}
         </p>
       )}

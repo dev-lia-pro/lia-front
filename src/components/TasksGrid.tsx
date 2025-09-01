@@ -9,6 +9,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks, Task, CreateTaskData, UpdateTaskData } from '@/hooks/useTasks';
 import { useProjectStore } from '@/stores/projectStore';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
  
 
 export const TasksGrid = () => {
@@ -19,6 +20,7 @@ export const TasksGrid = () => {
   
   const { projects } = useProjects();
   const { selected } = useProjectStore();
+  const isMobile = useIsMobile();
 
   // Affichage/masquage de la colonne Terminé
   const [showDone, setShowDone] = useState(true);
@@ -213,10 +215,10 @@ export const TasksGrid = () => {
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 ${showDone ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+      <div className={`${isMobile ? 'flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4' : `grid grid-cols-1 ${showDone ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}`}>
         {/* Colonne À faire */}
         <div
-          className={`p-4 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
+          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
           onDragOver={(e) => handleDragOver(e, 'TODO')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'TODO')}
@@ -227,7 +229,7 @@ export const TasksGrid = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-3 min-h-[60px]">
+          <div className="flex flex-col gap-2 min-h-[60px]">
             {tasksTodo.length === 0 && (
               <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche pour le moment
@@ -250,7 +252,7 @@ export const TasksGrid = () => {
 
         {/* Colonne En cours */}
         <div
-          className={`p-4 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
+          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
           onDragOver={(e) => handleDragOver(e, 'IN_PROGRESS')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
@@ -261,7 +263,7 @@ export const TasksGrid = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-3 min-h-[60px]">
+          <div className="flex flex-col gap-2 min-h-[60px]">
             {tasksInProgress.length === 0 && (
               <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche pour le moment
@@ -285,7 +287,7 @@ export const TasksGrid = () => {
         {/* Colonne Terminé */}
         {showDone && (
           <div
-            className={`p-4 bg-card/30 rounded-xl border ${dragOverStatus === 'DONE' ? 'border-primary' : 'border-border'} transition-smooth`}
+            className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'DONE' ? 'border-primary' : 'border-border'} transition-smooth`}
             onDragOver={(e) => handleDragOver(e, 'DONE')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'DONE')}
@@ -296,7 +298,7 @@ export const TasksGrid = () => {
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex flex-col gap-3 min-h-[60px]">
+            <div className="flex flex-col gap-2 min-h-[60px]">
               {tasksDone.length === 0 && (
                 <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                   Aucune tâche pour le moment
