@@ -86,7 +86,7 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">
@@ -96,7 +96,7 @@ const MessagesPage = () => {
             <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
             <div className="flex items-center gap-2">
               <select
-                className="bg-navy-card border border-border rounded px-2 py-1 text-sm"
+                className="bg-card border border-border rounded px-2 py-1 text-sm"
                 value={channelFilter ?? ''}
                 onChange={(e) => setChannelFilter((e.target.value || undefined) as Channel | undefined)}
               >
@@ -109,9 +109,9 @@ const MessagesPage = () => {
                 value={searchTag}
                 onChange={(e) => setSearchTag(e.target.value)}
                 placeholder="Filtrer par tag"
-                className="bg-navy-card border border-border rounded px-2 py-1 text-sm"
+                className="bg-card border border-border rounded px-2 py-1 text-sm"
               />
-              <button onClick={() => refetch()} className="border border-border bg-navy-card hover:bg-navy-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
+              <button onClick={() => refetch()} className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
             </div>
           </div>
 
@@ -120,7 +120,7 @@ const MessagesPage = () => {
             <div className="text-foreground/70">Chargement…</div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-card border border-border flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
                 <svg className="w-8 h-8 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -131,7 +131,7 @@ const MessagesPage = () => {
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-navy-card border border-border rounded p-3">
+                <div key={msg.id} className="bg-card border border-border rounded p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
@@ -155,12 +155,12 @@ const MessagesPage = () => {
                               )}
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground">
-                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')} className="cursor-pointer hover:bg-navy-muted">
+                          <DropdownMenuContent align="start" className="bg-card border-border text-foreground">
+                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')} className="cursor-pointer hover:bg-muted">
                               Aucun projet
                             </DropdownMenuItem>
                             {projects.map((p) => (
-                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)} className="cursor-pointer hover:bg-muted">
                                 <span className="mr-2">{getIconByValue(p.icon)}</span>
                                 <span>{p.title || `Projet #${p.id}`}</span>
                               </DropdownMenuItem>

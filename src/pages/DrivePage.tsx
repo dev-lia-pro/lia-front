@@ -161,7 +161,7 @@ const DrivePage = () => {
 
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">
@@ -173,7 +173,7 @@ const DrivePage = () => {
           </div>
 
           {/* Filtres */}
-          <div className="bg-navy-card border border-border rounded-lg p-4 mb-6">
+          <div className="bg-card border border-border rounded-lg p-4 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Recherche */}
               <div className="flex-1">
@@ -184,7 +184,7 @@ const DrivePage = () => {
                     placeholder="Rechercher par nom de fichier..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-navy-deep border border-border rounded-md text-foreground placeholder-foreground/50"
+                    className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-md text-foreground placeholder-foreground/50"
                   />
                 </div>
               </div>
@@ -194,7 +194,7 @@ const DrivePage = () => {
                 <select
                   value={driveFilter}
                   onChange={(e) => setDriveFilter(e.target.value as 'all' | 'in_drive' | 'not_in_drive')}
-                  className="w-full px-3 py-2 bg-navy-deep border border-border rounded-md text-foreground"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
                 >
                   <option value="all">Tous les fichiers</option>
                   <option value="in_drive">Dans Google Drive</option>
@@ -206,7 +206,7 @@ const DrivePage = () => {
 
           {/* Statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-navy-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground/70">Total fichiers</p>
@@ -218,7 +218,7 @@ const DrivePage = () => {
               </div>
             </div>
             
-            <div className="bg-navy-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground/70">Dans Google Drive</p>
@@ -232,7 +232,7 @@ const DrivePage = () => {
               </div>
             </div>
             
-            <div className="bg-navy-card border border-border rounded-lg p-4">
+            <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground/70">Taille dans Drive</p>
@@ -255,7 +255,7 @@ const DrivePage = () => {
             </div>
           ) : attachments.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-card border border-border flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
                 <Cloud className="w-8 h-8 text-foreground/50" />
               </div>
               <p className="text-foreground/70 mb-2">Aucun fichier trouvé</p>
@@ -270,7 +270,7 @@ const DrivePage = () => {
               {attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="bg-navy-card border border-border rounded-lg p-4 hover:bg-navy-muted transition-colors"
+                  className="bg-card border border-border rounded-lg p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

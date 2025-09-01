@@ -4,6 +4,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginEmailPage1 from "./pages/LoginEmailPage1";
@@ -28,10 +29,11 @@ const App = () => {
   }, [initializeAuth]);
 
   return (
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <Routes>
           {/* Routes protégées - nécessitent une authentification */}
           <Route path="/" element={
@@ -103,7 +105,8 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   );
   }
 

@@ -257,7 +257,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ex: Mon Gmail, Calendrier perso..."
-            className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground"
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground"
           />
           {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
         </div>
@@ -270,7 +270,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             id="provider_type"
             value={formData.provider_type}
             onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as ProviderTypeInfo['value'] })}
-            className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground"
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground"
           >
             {types.map((type) => (
               <option key={type.value} value={type.value}>
@@ -280,7 +280,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           </select>
         </div>
 
-        <div className="p-3 bg-navy-deep rounded-lg border border-border">
+        <div className="p-3 bg-background rounded-lg border border-border">
           <p className="text-sm text-foreground/70">
             {types.find(t => t.value === formData.provider_type)?.description}
           </p>
@@ -298,7 +298,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             type="button"
             onClick={handleTypeSelection}
             disabled={!formData.name.trim() || isAuthenticating}
-            className="border border-border bg-navy-card hover:bg-navy-muted text-foreground/80"
+            className="border border-border bg-card hover:bg-muted text-foreground/80"
           >
             {isAuthenticating ? (
               <>
@@ -313,7 +313,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="border-border text-foreground hover:bg-navy-muted"
+            className="border-border text-foreground hover:bg-muted"
           >
             Annuler
           </Button>
@@ -359,7 +359,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             id="provider_type"
             value={formData.provider_type}
             onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as ProviderTypeInfo['value'] })}
-            className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground"
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground"
           >
             {types.map((type) => (
               <option key={type.value} value={type.value}>
@@ -402,7 +402,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             type="button"
             variant="outline"
             onClick={() => setStep('type')}
-            className="border-border text-foreground hover:bg-navy-muted"
+            className="border-border text-foreground hover:bg-muted"
           >
             Retour
           </Button>

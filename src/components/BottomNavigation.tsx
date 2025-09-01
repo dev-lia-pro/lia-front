@@ -37,7 +37,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
   const currentTab = navItems.find(item => item.path === location.pathname)?.id || 'accueil';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-navy-card border-t border-border">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
       <div className="grid grid-cols-6 h-16">
         {navItems.map((item) => {
           const IconComponent = item.icon;
@@ -50,11 +50,11 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
               className="flex flex-col items-center justify-center gap-1 transition-smooth animate-press"
             >
               <IconComponent 
-                className={`w-5 h-5 ${isActive ? 'text-gold' : 'text-muted-foreground'}`} 
+                className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} 
               />
               <span 
                 className={`text-xs font-medium ${
-                  isActive ? 'text-gold' : 'text-muted-foreground'
+                  isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
                 {item.label}

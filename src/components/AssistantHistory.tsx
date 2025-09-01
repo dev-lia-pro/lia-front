@@ -48,7 +48,7 @@ export const AssistantHistory: React.FC = () => {
         </CardTitle>
         
         <select
-          className="bg-navy-card border border-border rounded px-2 py-1 text-sm text-foreground"
+          className="bg-card border border-border rounded px-2 py-1 text-sm text-foreground"
           value={methodFilter}
           onChange={(e) => setMethodFilter(e.target.value)}
         >

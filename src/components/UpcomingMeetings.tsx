@@ -190,7 +190,7 @@ export const UpcomingMeetings = () => {
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">Réunions à venir</h3>
-          <Button size="sm" className="h-9 w-9 p-0 border border-gold bg-gold text-primary-foreground" disabled>
+          <Button size="sm" className="h-9 w-9 p-0 border border-primary bg-primary text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
@@ -199,7 +199,7 @@ export const UpcomingMeetings = () => {
           {[...Array(3)].map((_, index) => (
             <div
               key={index}
-              className="p-4 bg-navy-card border border-border rounded-xl animate-pulse"
+              className="p-4 bg-card border border-border rounded-xl animate-pulse"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-border rounded" />
@@ -221,7 +221,7 @@ export const UpcomingMeetings = () => {
         <h3 className="text-lg font-semibold text-foreground">
           Réunions à venir ({allEvents.length})
         </h3>
-        <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" aria-label="Créer un événement" title="Créer un événement">
+        <Button size="sm" onClick={() => setIsCreateModalOpen(true)} className="h-9 w-9 p-0 border border-primary bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Créer un événement" title="Créer un événement">
           <Plus className="w-4 h-4" />
         </Button>
       </div>
@@ -237,7 +237,7 @@ export const UpcomingMeetings = () => {
           {allEvents.map((event) => (
             <div
               key={event.id}
-              className={`group relative p-4 rounded-xl border transition-smooth cursor-pointer active:scale-[0.98] bg-navy-card border-border hover:border-gold`}
+              className={`group relative p-4 rounded-xl border transition-smooth cursor-pointer active:scale-[0.98] bg-card border-border hover:border-primary`}
               onClick={() => handleEventClick(event)}
             >
               
@@ -245,7 +245,7 @@ export const UpcomingMeetings = () => {
 
               <div className="flex items-center gap-3">
                 {/* Icône du fournisseur */}
-                <div className={`w-8 h-8 rounded-full border flex items-center justify-center bg-navy-deep flex-shrink-0 border-border`}>
+                <div className={`w-8 h-8 rounded-full border flex items-center justify-center bg-background flex-shrink-0 border-border`}>
                   <EventIcon provider={event.provider} size="sm" />
                 </div>
 
@@ -270,12 +270,12 @@ export const UpcomingMeetings = () => {
                             )}
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={() => handleAssignEventProject(event.id, '')} className="cursor-pointer hover:bg-navy-muted">
+                        <DropdownMenuContent align="start" className="bg-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={() => handleAssignEventProject(event.id, '')} className="cursor-pointer hover:bg-muted">
                             Aucun projet
                           </DropdownMenuItem>
                           {projects.map((p) => (
-                            <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(event.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                            <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(event.id, p.id)} className="cursor-pointer hover:bg-muted">
                               <span className="mr-2">{getIconByValue(p.icon)}</span>
                               <span>{p.title}</span>
                             </DropdownMenuItem>

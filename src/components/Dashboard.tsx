@@ -10,7 +10,7 @@ export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">

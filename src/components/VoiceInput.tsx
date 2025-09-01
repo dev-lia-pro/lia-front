@@ -34,10 +34,10 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({ onResult, className = ''
           relative w-14 h-14 rounded-full p-0 transition-all duration-200
           ${isRecording 
             ? 'bg-red-500 hover:bg-red-600 scale-110 animate-pulse' 
-            : 'bg-gold hover:bg-gold/90'
+            : 'bg-primary hover:bg-primary/90'
           }
           ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-          text-navy shadow-lg active:scale-95
+          text-primary-foreground shadow-lg active:scale-95
         `}
         onClick={handleMicrophoneClick}
         disabled={isLoading}
@@ -60,8 +60,8 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({ onResult, className = ''
         
         {/* Loading indicator */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gold/90 rounded-full">
-            <div className="w-6 h-6 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center bg-primary/90 rounded-full">
+            <div className="w-6 h-6 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </Button>

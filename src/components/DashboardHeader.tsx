@@ -1,8 +1,9 @@
   import React, { useState } from 'react';
-import { User, LogOut, Plus } from 'lucide-react';
+import { User, LogOut, Plus, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
 import { ProjectIcon } from '@/components/ProjectIcon';
@@ -20,6 +22,7 @@ export const DashboardHeader = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const { projects, createProject } = useProjects();
   const { selected, setSelected } = useProjectStore();
@@ -71,7 +74,7 @@ export const DashboardHeader = () => {
             <DropdownMenuContent className="bg-navy-card border-border text-foreground min-w-[220px]">
               <DropdownMenuItem
                 onClick={() => setSelected({ id: null, title: 'Tous les projets' })}
-                className="cursor-pointer hover:bg-navy-muted items-center"
+                className="cursor-pointer hover:bg-muted items-center"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full border border-border flex items-center justify-center bg-navy-deep">
@@ -84,7 +87,7 @@ export const DashboardHeader = () => {
                 <DropdownMenuItem
                   key={p.id}
                   onClick={() => setSelected({ id: p.id, title: p.title })}
-                  className="cursor-pointer hover:bg-navy-muted items-center"
+                  className="cursor-pointer hover:bg-muted items-center"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-full border border-border flex items-center justify-center bg-navy-deep overflow-hidden">
@@ -123,6 +126,27 @@ export const DashboardHeader = () => {
           >
             <User className="mr-2 h-4 w-4" />
             Mon profil
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem
+            className="hover:bg-navy-muted focus:bg-navy-muted cursor-pointer"
+            onSelect={(e) => e.preventDefault()}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center">
+                {theme === 'dark' ? (
+                  <Moon className="mr-2 h-4 w-4" />
+                ) : (
+                  <Sun className="mr-2 h-4 w-4" />
+                )}
+                <span>Thème</span>
+              </div>
+              <Switch
+                checked={theme === 'light'}
+                onCheckedChange={toggleTheme}
+                className="ml-2"
+              />
+            </div>
           </DropdownMenuItem>
           
           <DropdownMenuSeparator className="bg-border" />

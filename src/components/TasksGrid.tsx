@@ -170,16 +170,16 @@ export const TasksGrid = () => {
       <section className="animate-slide-up">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">Tâches ({totalCount})</h3>
-          <Button size="sm" className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" disabled>
+          <Button size="sm" className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground" disabled>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {["À faire", "En cours", "Terminé"].map((title, index) => (
-            <div key={index} className="p-4 bg-navy-card/30 rounded-xl border border-border">
+            <div key={index} className="p-4 bg-card/30 rounded-xl border border-border">
               <div className="h-5 w-24 bg-border rounded mb-4 animate-pulse" />
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="p-4 bg-navy-card rounded-xl border border-border animate-pulse mb-3">
+                <div key={i} className="p-4 bg-card rounded-xl border border-border animate-pulse mb-3">
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-16 h-3 bg-border rounded" />
                     <div className="w-12 h-3 bg-border rounded" />
@@ -204,7 +204,7 @@ export const TasksGrid = () => {
           <button
             type="button"
             onClick={() => setShowDone((v) => !v)}
-            className="px-2 py-1 rounded border border-border bg-navy-card hover:bg-navy-card/80 text-foreground text-xs inline-flex items-center gap-1"
+            className="px-2 py-1 rounded border border-border bg-card hover:bg-card/80 text-foreground text-xs inline-flex items-center gap-1"
             title={showDone ? 'Masquer Terminé' : 'Afficher Terminé'}
           >
             {showDone ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -216,20 +216,20 @@ export const TasksGrid = () => {
       <div className={`grid grid-cols-1 ${showDone ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
         {/* Colonne À faire */}
         <div
-          className={`p-4 bg-navy-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-gold' : 'border-border'} transition-smooth`}
+          className={`p-4 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
           onDragOver={(e) => handleDragOver(e, 'TODO')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'TODO')}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-semibold">À faire ({tasksTodo.length})</h4>
-            <Button size="icon" onClick={() => { setCreateDefaultStatus('TODO'); setIsCreateModalOpen(true); }} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
+            <Button size="icon" onClick={() => { setCreateDefaultStatus('TODO'); setIsCreateModalOpen(true); }} className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4" />
             </Button>
           </div>
           <div className="flex flex-col gap-3 min-h-[60px]">
             {tasksTodo.length === 0 && (
-              <div className="p-3 text-xs text-foreground/60 bg-navy-card rounded border border-border text-center">
+              <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche pour le moment
               </div>
             )}
@@ -250,20 +250,20 @@ export const TasksGrid = () => {
 
         {/* Colonne En cours */}
         <div
-          className={`p-4 bg-navy-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-gold' : 'border-border'} transition-smooth`}
+          className={`p-4 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
           onDragOver={(e) => handleDragOver(e, 'IN_PROGRESS')}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, 'IN_PROGRESS')}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-semibold">En cours ({tasksInProgress.length})</h4>
-            <Button size="icon" onClick={() => { setCreateDefaultStatus('IN_PROGRESS'); setIsCreateModalOpen(true); }} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
+            <Button size="icon" onClick={() => { setCreateDefaultStatus('IN_PROGRESS'); setIsCreateModalOpen(true); }} className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground">
               <Plus className="w-4 h-4" />
             </Button>
           </div>
           <div className="flex flex-col gap-3 min-h-[60px]">
             {tasksInProgress.length === 0 && (
-              <div className="p-3 text-xs text-foreground/60 bg-navy-card rounded border border-border text-center">
+              <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche pour le moment
               </div>
             )}
@@ -285,20 +285,20 @@ export const TasksGrid = () => {
         {/* Colonne Terminé */}
         {showDone && (
           <div
-            className={`p-4 bg-navy-card/30 rounded-xl border ${dragOverStatus === 'DONE' ? 'border-gold' : 'border-border'} transition-smooth`}
+            className={`p-4 bg-card/30 rounded-xl border ${dragOverStatus === 'DONE' ? 'border-primary' : 'border-border'} transition-smooth`}
             onDragOver={(e) => handleDragOver(e, 'DONE')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'DONE')}
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold">Terminé ({tasksDone.length})</h4>
-              <Button size="icon" onClick={() => { setCreateDefaultStatus('DONE'); setIsCreateModalOpen(true); }} className="border border-gold bg-gold hover:bg-gold/90 text-primary-foreground">
+              <Button size="icon" onClick={() => { setCreateDefaultStatus('DONE'); setIsCreateModalOpen(true); }} className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
             <div className="flex flex-col gap-3 min-h-[60px]">
               {tasksDone.length === 0 && (
-                <div className="p-3 text-xs text-foreground/60 bg-navy-card rounded border border-border text-center">
+                <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                   Aucune tâche pour le moment
                 </div>
               )}

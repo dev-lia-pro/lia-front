@@ -312,26 +312,26 @@ const SettingsPage = () => {
   }, [error, toast]);
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 py-6">
           {/* Section Projets */}
-          <Card className="bg-navy-card border-border mb-6">
+          <Card className="bg-card border-border mb-6">
             <CardContent className="pt-6">
               <ProjectsGrid />
             </CardContent>
           </Card>
 
           {/* Section des providers */}
-          <Card className="bg-navy-card border-border mb-6">
+          <Card className="bg-card border-border mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Fournisseurs de données
                 </CardTitle>
-                <Button size="sm" onClick={() => setIsAddingProvider(true)} className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" aria-label="Ajouter un fournisseur" title="Ajouter un fournisseur">
+                <Button size="sm" onClick={() => setIsAddingProvider(true)} className="h-9 w-9 p-0 border border-primary bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Ajouter un fournisseur" title="Ajouter un fournisseur">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -341,7 +341,7 @@ const SettingsPage = () => {
 
               {/* Formulaire d'ajout/édition */}
               {(isAddingProvider || editingProvider) && (
-                <div className="mb-6 p-4 bg-navy-deep rounded-lg border border-border">
+                <div className="mb-6 p-4 bg-background rounded-lg border border-border">
                   <h3 className="text-lg font-medium mb-4 text-foreground">
                     {editingProvider ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
                   </h3>
@@ -361,16 +361,16 @@ const SettingsPage = () => {
                 {Array.isArray(providers) && providers.map((provider) => (
                   <div
                     key={provider.id}
-                    className="flex items-center justify-between p-4 bg-navy-deep rounded-lg border border-border"
+                    className="flex items-center justify-between p-4 bg-background rounded-lg border border-border"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg bg-navy-card ${getProviderTypeColor(provider.provider_type)}`}>
+                      <div className={`p-3 rounded-lg bg-card ${getProviderTypeColor(provider.provider_type)}`}>
                         <span className="text-2xl">{getProviderIcon(provider.provider_type)}</span>
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-foreground">{provider.name}</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-navy-card text-foreground/70">
+                          <span className="text-xs px-2 py-1 rounded-full bg-card text-foreground/70">
                             {getProviderTypeLabel(provider.provider_type)}
                           </span>
                           {provider.is_active ? (
@@ -405,7 +405,7 @@ const SettingsPage = () => {
                         variant="outline"
                         onClick={() => handleTestConnection(provider.id)}
                         disabled={testingConnection === provider.id}
-                        className="border-border text-foreground hover:bg-navy-muted"
+                        className="border-border text-foreground hover:bg-muted"
                       >
                         {testingConnection === provider.id ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
@@ -418,7 +418,7 @@ const SettingsPage = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenPreview(provider)}
-                        className="border-border text-foreground hover:bg-navy-muted"
+                        className="border-border text-foreground hover:bg-muted"
                         aria-label="Synchroniser"
                         disabled={provider.provider_type === 'GOOGLE_DRIVE'}
                         title={provider.provider_type === 'GOOGLE_DRIVE' ? 'Pas de synchronisation pour Google Drive' : 'Synchroniser'}
@@ -465,7 +465,7 @@ const SettingsPage = () => {
                   <div className="text-center py-8">
                     <button
 
-                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold border border-gold hover:bg-gold/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
+                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary border border-primary hover:bg-primary/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
                       type="button"
                     >
                       <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
@@ -488,14 +488,14 @@ const SettingsPage = () => {
           </Card>
 
           {/* Section Historique de l'assistant */}
-          <Card className="bg-navy-card border-border mb-6 pt-6">
+          <Card className="bg-card border-border mb-6 pt-6">
             <CardContent>
               <AssistantHistory />
             </CardContent>
           </Card>
 
           {/* Section des préférences (mock) */}
-          <Card className="bg-navy-card border-border">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-foreground">
                 Préférences générales
@@ -532,7 +532,7 @@ const SettingsPage = () => {
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       <Dialog open={!!previewProvider} onOpenChange={(open) => { if (!open) { setPreviewProvider(null); setPreviewData(null); setPreviewError(null); } }}>
-        <DialogContent className="max-w-3xl bg-navy-card border-border text-foreground">
+        <DialogContent className="max-w-3xl bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Aperçu des données</DialogTitle>
             <DialogDescription>
@@ -552,7 +552,7 @@ const SettingsPage = () => {
               </div>
             )}
             {!previewLoading && previewData && (
-              <pre className="max-h-[60vh] overflow-auto bg-navy-deep border border-border rounded-md p-3 text-xs text-foreground/90">
+              <pre className="max-h-[60vh] overflow-auto bg-background border border-border rounded-md p-3 text-xs text-foreground/90">
 {JSON.stringify(previewData, null, 2)}
               </pre>
             )}
