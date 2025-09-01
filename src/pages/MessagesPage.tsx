@@ -5,6 +5,7 @@ import type { NavigationTab } from '@/types/navigation';
 import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
+import { useDebounce } from '@/hooks/useDebounce';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,11 +16,18 @@ const MessagesPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
+  const [searchKeyword, setSearchKeyword] = React.useState<string>('');
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const { selected } = useProjectStore();
-  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined });
+  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ 
+    channel: channelFilter, 
+    tag: searchTag || undefined, 
+    project: selected.id ?? undefined,
+    search: debouncedSearchKeyword || undefined
+  });
   const { projects } = useProjects();
   const { toast } = useToast();
 
@@ -92,15 +100,24 @@ const MessagesPage = () => {
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 py-6">
           {/* En-tête et filtres */}
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
+              <button onClick={() => refetch()} className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="Rechercher par mot-clé..."
+                className="bg-card border border-border rounded px-3 py-1.5 text-sm flex-1 min-w-[200px]"
+              />
               <select
-                className="bg-card border border-border rounded px-2 py-1 text-sm"
+                className="bg-card border border-border rounded px-2 py-1.5 text-sm"
                 value={channelFilter ?? ''}
                 onChange={(e) => setChannelFilter((e.target.value || undefined) as Channel | undefined)}
               >
-                <option value="">Tous</option>
+                <option value="">Tous les canaux</option>
                 <option value="EMAIL">Emails</option>
                 <option value="SMS">SMS</option>
                 <option value="WHATSAPP">WhatsApp</option>
@@ -109,9 +126,8 @@ const MessagesPage = () => {
                 value={searchTag}
                 onChange={(e) => setSearchTag(e.target.value)}
                 placeholder="Filtrer par tag"
-                className="bg-card border border-border rounded px-2 py-1 text-sm"
+                className="bg-card border border-border rounded px-2 py-1.5 text-sm"
               />
-              <button onClick={() => refetch()} className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
             </div>
           </div>
 
@@ -127,6 +143,16 @@ const MessagesPage = () => {
               </div>
               <p className="text-foreground/70 mb-2">Aucun message pour le moment</p>
               <p className="text-sm text-foreground/50">Vos messages apparaîtront ici</p>
+            </div>
+          ) : messages.length === 0 && debouncedSearchKeyword ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
+                <svg className="w-8 h-8 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-foreground/70 mb-2">Aucun message trouvé</p>
+              <p className="text-sm text-foreground/50">Essayez avec d'autres mots-clés</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
