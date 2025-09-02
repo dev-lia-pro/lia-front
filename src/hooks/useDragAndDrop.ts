@@ -210,8 +210,23 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       position: task.position
     };
     setDraggedItem(data);
+    setIsDragActive(true);
+    
+    // Store element reference for visual feedback
+    draggedElementRef.current = e.currentTarget as HTMLElement;
+    
+    // Set data transfer
     e.dataTransfer.setData('application/json', JSON.stringify(data));
     e.dataTransfer.effectAllowed = 'move';
+    
+    // Create a drag image that follows the cursor
+    const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    dragImage.style.width = e.currentTarget.offsetWidth + 'px';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, e.currentTarget.offsetWidth / 2, 20);
+    setTimeout(() => document.body.removeChild(dragImage), 0);
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>, status: Task['status']) => {
@@ -223,12 +238,28 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
   const handleDragOverVertical = (e: DragEvent<HTMLDivElement>, index: number, column: string) => {
     e.preventDefault();
     e.stopPropagation();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const height = rect.height;
     
-    const visualIndex = y < height / 2 ? index : index + 1;
-    setDropIndicatorIndex({ column, index: visualIndex });
+    // Find drop position based on absolute position in column, same as mobile
+    const columnTasks = Array.from(document.querySelectorAll(`[data-task-column="${column}"]`));
+    
+    let targetIndex = columnTasks.length; // Default to end
+    
+    // Find position based on Y coordinate
+    for (let i = 0; i < columnTasks.length; i++) {
+      const taskElement = columnTasks[i] as HTMLElement;
+      const rect = taskElement.getBoundingClientRect();
+      const midPoint = rect.top + rect.height / 2;
+      
+      if (e.clientY < midPoint) {
+        targetIndex = i;
+        break;
+      }
+    }
+    
+    // Only update if actually changed
+    if (!dropIndicatorIndex || dropIndicatorIndex.column !== column || dropIndicatorIndex.index !== targetIndex) {
+      setDropIndicatorIndex({ column, index: targetIndex });
+    }
   };
 
   const handleDragLeave = () => {
@@ -236,19 +267,48 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
   };
 
   const handleDragEnd = () => {
+    // Reset visual feedback on dragged element
+    if (draggedElementRef.current) {
+      draggedElementRef.current.style.transition = 'all 0.2s ease-in-out';
+      draggedElementRef.current.style.opacity = '1';
+      draggedElementRef.current.style.transform = 'scale(1)';
+      draggedElementRef.current.style.filter = 'none';
+      // Clean up after transition
+      setTimeout(() => {
+        if (draggedElementRef.current) {
+          draggedElementRef.current.style.transition = '';
+          draggedElementRef.current = null;
+        }
+      }, 200);
+    }
+    
     setDraggedItem(null);
+    setDragOverStatus(null);
     setDropIndicatorIndex(null);
+    setIsDragActive(false);
   };
 
   const handleDrop = async (e: DragEvent<HTMLDivElement>, targetStatus: Task['status']) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Use draggedItem state if dataTransfer is empty (common in some browsers)
+    let data: DragData;
+    const payload = e.dataTransfer.getData('application/json');
+    
+    if (payload) {
+      data = JSON.parse(payload) as DragData;
+    } else if (draggedItem) {
+      data = draggedItem;
+    } else {
+      return;
+    }
+    
     setDragOverStatus(null);
     setDropIndicatorIndex(null);
+    setDraggedItem(null);
+    setIsDragActive(false);
     
-    const payload = e.dataTransfer.getData('application/json');
-    if (!payload) return;
-    
-    const data = JSON.parse(payload) as DragData;
     await onDrop(data, targetStatus);
   };
 
@@ -256,20 +316,54 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     e.preventDefault();
     e.stopPropagation();
     
-    if (!dropIndicatorIndex) return;
+    // Get the current drop position from the drag over calculation
+    const currentDropIndex = dropIndicatorIndex?.index;
+    
+    // Use draggedItem state if dataTransfer is empty (common in some browsers)
+    let data: DragData;
+    const payload = e.dataTransfer.getData('application/json');
+    
+    if (payload) {
+      data = JSON.parse(payload) as DragData;
+    } else if (draggedItem) {
+      data = draggedItem;
+    } else {
+      return;
+    }
     
     setDropIndicatorIndex(null);
     setDragOverStatus(null);
+    setDraggedItem(null);
+    setIsDragActive(false);
     
-    const payload = e.dataTransfer.getData('application/json');
-    if (!payload) return;
-    
-    const data = JSON.parse(payload) as DragData;
-    await onDropVertical(data, dropIndicatorIndex.index, targetStatus);
+    // Use the calculated index or default to 0
+    const targetIndex = currentDropIndex ?? 0;
+    await onDropVertical(data, targetIndex, targetStatus);
   };
 
   // Touch events handlers
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>, task: Task) => {
+    // Check if the touch started on an interactive element that shouldn't trigger drag
+    const target = e.target as HTMLElement;
+    const touchedElement = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+    
+    // Don't start drag if touching an element marked as no-drag or its children
+    if (touchedElement?.closest('[data-no-drag="true"]')) {
+      // Clean up any existing timers
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+        feedbackTimerRef.current = null;
+      }
+      initialTouchRef.current = null;
+      pendingDragDataRef.current = null;
+      draggedElementRef.current = null;
+      return;
+    }
+    
     // Don't prevent default - allow scroll to start
     const touch = e.touches[0];
     const element = e.currentTarget as HTMLElement;
@@ -345,10 +439,11 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       document.body.appendChild(clone);
       cloneRef.current = clone;
 
-      // Hide original element
+      // Make original element semi-transparent during drag
       element.style.opacity = '0.3';
-      element.style.transform = '';
-      element.style.transition = '';
+      element.style.transform = 'scale(0.98)';
+      element.style.filter = 'blur(2px)';
+      element.style.transition = 'all 0.2s ease-in-out';
       
       // Haptic feedback if available
       if ('vibrate' in navigator) {
@@ -442,28 +537,41 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       }
     }
 
-    // Check if over a task card for vertical positioning
-    const taskCard = elementBelow.closest('[data-task-index]');
-    if (taskCard && dropZone) {
-      const index = parseInt(taskCard.getAttribute('data-task-index') || '0', 10);
-      const column = taskCard.getAttribute('data-task-column') || '';
-      const rect = taskCard.getBoundingClientRect();
-      const y = touch.clientY - rect.top;
-      const height = rect.height;
+    // Find drop position based on absolute position in column
+    if (dropZone) {
+      const status = dropZone.getAttribute('data-drop-zone') as Task['status'];
+      const columnTasks = Array.from(document.querySelectorAll(`[data-task-column="${status === 'TODO' ? 'TODO' : status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'DONE'}"]`));
       
-      const visualIndex = y < height / 2 ? index : index + 1;
+      let targetIndex = columnTasks.length; // Default to end
       
-      // Only update if changed
-      if (!dropIndicatorIndex || dropIndicatorIndex.column !== column || dropIndicatorIndex.index !== visualIndex) {
-        setDropIndicatorIndex({ column, index: visualIndex });
+      // Find position based on Y coordinate
+      for (let i = 0; i < columnTasks.length; i++) {
+        const taskElement = columnTasks[i] as HTMLElement;
+        const rect = taskElement.getBoundingClientRect();
+        const midPoint = rect.top + rect.height / 2;
+        
+        if (touch.clientY < midPoint) {
+          targetIndex = i;
+          break;
+        }
       }
-    } else if (!taskCard && dropIndicatorIndex) {
-      // Clear indicator if not over a task
+      
+      const column = status === 'TODO' ? 'TODO' : status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'DONE';
+      
+      // Only update if actually changed
+      if (!dropIndicatorIndex || dropIndicatorIndex.column !== column || dropIndicatorIndex.index !== targetIndex) {
+        setDropIndicatorIndex({ column, index: targetIndex });
+      }
+    } else if (dropIndicatorIndex) {
+      // Clear indicator if not over any drop zone
       setDropIndicatorIndex(null);
     }
   };
 
   const handleTouchEnd = async (e: TouchEvent<HTMLDivElement>) => {
+    // Re-enable native drag after touch ends
+    e.currentTarget.setAttribute('draggable', 'true');
+    
     // Cancel timers
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -478,12 +586,19 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     document.body.style.overflow = '';
     document.body.style.touchAction = '';
     
-    // Reset visual feedback
+    // Reset visual feedback with smooth transition
     if (draggedElementRef.current) {
-      draggedElementRef.current.style.opacity = '';
-      draggedElementRef.current.style.transform = '';
-      draggedElementRef.current.style.transition = '';
-      draggedElementRef.current = null;
+      draggedElementRef.current.style.transition = 'all 0.2s ease-in-out';
+      draggedElementRef.current.style.opacity = '1';
+      draggedElementRef.current.style.transform = 'scale(1)';
+      draggedElementRef.current.style.filter = 'none';
+      // Clean up after transition
+      setTimeout(() => {
+        if (draggedElementRef.current) {
+          draggedElementRef.current.style.transition = '';
+          draggedElementRef.current = null;
+        }
+      }, 200);
     }
     
     // If drag wasn't activated, just cleanup and return
@@ -559,7 +674,12 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
   };
 
   // Handle touch cancel (e.g., when scrolling starts or call comes in)
-  const handleTouchCancel = () => {
+  const handleTouchCancel = (e?: TouchEvent<HTMLDivElement>) => {
+    // Re-enable native drag after touch cancels
+    if (e?.currentTarget) {
+      e.currentTarget.setAttribute('draggable', 'true');
+    }
+    
     // Clean up everything
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -587,10 +707,17 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     enableSnapScrolling();
     
     if (draggedElementRef.current) {
-      draggedElementRef.current.style.opacity = '';
-      draggedElementRef.current.style.transform = '';
-      draggedElementRef.current.style.transition = '';
-      draggedElementRef.current = null;
+      draggedElementRef.current.style.transition = 'all 0.2s ease-in-out';
+      draggedElementRef.current.style.opacity = '1';
+      draggedElementRef.current.style.transform = 'scale(1)';
+      draggedElementRef.current.style.filter = 'none';
+      // Clean up after transition
+      setTimeout(() => {
+        if (draggedElementRef.current) {
+          draggedElementRef.current.style.transition = '';
+          draggedElementRef.current = null;
+        }
+      }, 200);
     }
     
     setDraggedItem(null);

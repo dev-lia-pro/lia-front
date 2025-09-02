@@ -132,8 +132,8 @@ export const DashboardHeader = () => {
             className="hover:bg-foreground/10 focus:bg-foreground/10 cursor-pointer"
             onSelect={(e) => e.preventDefault()}
           >
-            <div className="flex items-center justify-between w-full" onClick={toggleTheme}>
-              <div className="flex items-center">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center flex-1" onClick={toggleTheme}>
                 {theme === 'dark' ? (
                   <Moon className="mr-2 h-4 w-4" />
                 ) : (
@@ -145,6 +145,7 @@ export const DashboardHeader = () => {
                 checked={theme === 'light'}
                 onCheckedChange={toggleTheme}
                 className="ml-2"
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
           </DropdownMenuItem>

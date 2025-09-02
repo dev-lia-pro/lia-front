@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DashboardHeader } from './DashboardHeader';
 import { MainTitle } from './MainTitle';
-import { UrgentTasks } from './UrgentTasks';
+import { TasksGrid } from './TasksGrid';
 import { UpcomingMeetings } from './UpcomingMeetings';
 import { BottomNavigation } from './BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
@@ -21,7 +21,7 @@ export const Dashboard = () => {
           <UpcomingMeetings />
           
           {/* Section des tâches urgentes */}
-          <UrgentTasks />
+          <TasksGrid urgentOnlyFilter={true} showToggles={false} includeUrgent={true} />
           
           {/* Section des projets (aperçu) retirée */}
         </div>

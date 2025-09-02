@@ -77,9 +77,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     });
   };
 
+  const isUrgent = task.priority === 'URGENT';
+  
   return (
     <div
-      className="group relative flex flex-col gap-2 p-3 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98] overflow-hidden select-none"
+      className={`group relative flex flex-col gap-2 p-3 rounded-xl border transition-smooth cursor-pointer active:scale-[0.98] overflow-hidden select-none ${
+        isUrgent 
+          ? 'bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30 hover:border-red-400 hover:from-red-500/25 hover:to-red-600/15 dark:bg-gradient-to-br dark:from-red-500/20 dark:to-red-600/10' 
+          : 'bg-navy-card border-border hover:border-gold'
+      }`}
       onClick={() => onClick(task)}
     >
 
@@ -88,7 +94,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs" onClick={(e) => e.stopPropagation()}>
+              <button 
+                className={`px-2 py-0.5 rounded flex items-center gap-1 text-xs ${isUrgent ? 'bg-red-900/30 border border-red-500/20 hover:bg-red-900/40 text-black dark:text-foreground' : 'bg-muted/10 border border-border hover:bg-muted/20'}`} 
+                onClick={(e) => e.stopPropagation()}
+                data-no-drag="true"
+              >
                 {task.project ? (
                   <>
                     <span>{getIconByValue((projects.find(p => p.id === task.project)?.icon) || '')}</span>
@@ -114,25 +124,25 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
         <div className="flex items-center gap-1">
           {getPriorityIcon(task.priority)}
-          <span className="text-sm text-foreground/70">{getPriorityText(task.priority)}</span>
+          <span className={`text-sm ${isUrgent ? 'text-black/70 dark:text-foreground/70' : 'text-foreground/70'}`}>{getPriorityText(task.priority)}</span>
         </div>
       </div>
 
       {/* Titre de la tâche */}
-      <span className="text-base font-semibold text-foreground text-center line-clamp-2 break-words">
+      <span className={`text-base font-semibold text-center line-clamp-2 break-words ${isUrgent ? 'text-black dark:text-red-100' : 'text-foreground'}`}>
         {task.title}
       </span>
 
       {/* Description de la tâche (optionnelle) */}
       {task.description && (
-        <p className="text-sm text-foreground/70 text-center line-clamp-2 break-words">
+        <p className={`text-sm text-center line-clamp-2 break-words ${isUrgent ? 'text-black/70 dark:text-foreground/70' : 'text-foreground/70'}`}>
           {task.description}
         </p>
       )}
 
       {/* Date d'échéance */}
       {task.due_at && (
-        <div className="flex items-center justify-center gap-2 text-xs text-foreground/70">
+        <div className={`flex items-center justify-center gap-2 text-xs ${isUrgent ? 'text-black/70 dark:text-foreground/70' : 'text-foreground/70'}`}>
           <Calendar className="w-3 h-3" />
           <span>Échéance : {formatDate(task.due_at)}</span>
         </div>
@@ -161,6 +171,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             className="px-2 py-0.5 rounded bg-muted/10 border border-border text-xs text-foreground/80 hover:bg-muted/20 flex items-center gap-1 group/status"
             aria-label="Marquer comme terminé"
             title="Marquer comme terminé"
+            data-no-drag="true"
           >
             {getStatusIcon(task.status)}
             <span className="group-hover/status:hidden inline">{getStatusText(task.status)}</span>
