@@ -11,6 +11,7 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from './EmptyState';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 
 export const UrgentTasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -18,8 +19,6 @@ export const UrgentTasks = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   // Statut de création par défaut (selon la colonne +)
   const [createDefaultStatus, setCreateDefaultStatus] = useState<'TODO' | 'IN_PROGRESS'>('TODO');
-  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
-  const [dropIndicatorIndex, setDropIndicatorIndex] = useState<{ column: string; index: number } | null>(null);
   const isMobile = useIsMobile();
   
   // Récupérer les tâches (filtrées par projet sélectionné)
@@ -119,51 +118,10 @@ export const UrgentTasks = () => {
     }
   };
 
-  // Drag & Drop
-  const [dragOverUrgent, setDragOverUrgent] = useState<Task['status'] | null>(null);
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
-    setDraggedTaskId(task.id);
-    e.dataTransfer.setData('application/json', JSON.stringify({ 
-      id: task.id, 
-      status: task.status, 
-      priority: task.priority,
-      position: task.position 
-    }));
-    e.dataTransfer.effectAllowed = 'move';
-  };
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: Task['status']) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (dragOverUrgent !== status) setDragOverUrgent(status);
-  };
-  
-  const handleDragOverVertical = (e: React.DragEvent<HTMLDivElement>, index: number, column: string, tasks: Task[]) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const height = rect.height;
-    
-    // Déterminer si on est dans la moitié haute ou basse
-    const visualIndex = y < height / 2 ? index : index + 1;
-    
-    setDropIndicatorIndex({ column, index: visualIndex });
-  };
-  
-  const handleDragLeave = () => setDragOverUrgent(null);
-  
-  const handleDragEnd = () => {
-    setDraggedTaskId(null);
-    setDropIndicatorIndex(null);
-  };
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetStatus: Extract<Task['status'], 'TODO' | 'IN_PROGRESS'>) => {
-    e.preventDefault();
-    setDragOverUrgent(null);
-    setDropIndicatorIndex(null);
+  // Drag & Drop handlers
+  const handleDropSimple = async (data: any, targetStatus: Task['status']) => {
     try {
-      const payload = e.dataTransfer.getData('application/json');
-      if (!payload) return;
-      const { id, status: sourceStatus, priority } = JSON.parse(payload) as { id: number; status: Task['status']; priority: Task['priority'] };
+      const { id, status: sourceStatus, priority } = data;
       
       // Si c'est déjà une tâche urgente avec le même statut, ne rien faire
       if (sourceStatus === targetStatus && priority === 'URGENT') return;
@@ -185,34 +143,22 @@ export const UrgentTasks = () => {
       toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
     }
   };
-  
-  const handleDropVertical = async (e: React.DragEvent<HTMLDivElement>, columnTasks: Task[], columnStatus: Task['status']) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDropIndicatorIndex(null);
-    setDragOverUrgent(null);
-    
-    if (!dropIndicatorIndex) return;
-    
-    const data = JSON.parse(e.dataTransfer.getData('application/json'));
-    
-    // Position cible dans la colonne urgente
-    const targetPosition = dropIndicatorIndex.index;
-    
+
+  const handleDropWithPosition = async (data: any, targetIndex: number, targetStatus: Task['status']) => {
     try {
       // Appeler le nouvel endpoint reorder avec les paramètres pour colonne urgente
       await reorderTask.mutateAsync({
         id: data.id,
-        target_position: targetPosition,
-        target_status: columnStatus,
+        target_position: targetIndex,
+        target_status: targetStatus,
         target_is_urgent: true // Toujours urgent dans UrgentTasks
       });
       
       // Message de succès
-      const statusLabel = columnStatus === 'TODO' ? 'À faire' : 'En cours';
+      const statusLabel = targetStatus === 'TODO' ? 'À faire' : 'En cours';
       const oldIsUrgent = data.priority === 'URGENT';
       
-      if (data.status !== columnStatus || !oldIsUrgent) {
+      if (data.status !== targetStatus || !oldIsUrgent) {
         const priorityMessage = !oldIsUrgent ? ' (priorité augmentée à urgente)' : '';
         toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée vers la section urgente "${statusLabel}"${priorityMessage}.` });
       } else {
@@ -222,6 +168,11 @@ export const UrgentTasks = () => {
       toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
     }
   };
+
+  const { draggedItemId, dragOverStatus, dropIndicatorIndex, handlers } = useDragAndDrop({
+    onDrop: handleDropSimple,
+    onDropVertical: handleDropWithPosition
+  });
 
   const handleCreateTask = async (data: CreateTaskData) => {
     try {
@@ -286,10 +237,11 @@ export const UrgentTasks = () => {
       <div className={`${isMobile ? 'flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
         {/* Urgent - À faire */}
         <div
-          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverUrgent === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
-          onDragOver={(e) => urgentTodo.length === 0 ? handleDragOver(e, 'TODO') : e.preventDefault()}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => urgentTodo.length === 0 ? handleDrop(e, 'TODO') : e.preventDefault()}
+          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
+          data-drop-zone="TODO"
+          onDragOver={(e) => urgentTodo.length === 0 ? handlers.onDragOver(e, 'TODO') : e.preventDefault()}
+          onDragLeave={handlers.onDragLeave}
+          onDrop={(e) => urgentTodo.length === 0 ? handlers.onDrop(e, 'TODO') : e.preventDefault()}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">À faire ({urgentTodo.length})</h4>
@@ -310,11 +262,17 @@ export const UrgentTasks = () => {
                 )}
                 <div 
                   draggable 
-                  onDragStart={(e) => handleDragStart(e, task)}
-                  onDragOver={(e) => handleDragOverVertical(e, index, 'URGENT_TODO', urgentTodo)}
-                  onDrop={(e) => handleDropVertical(e, urgentTodo, 'TODO')}
-                  onDragEnd={handleDragEnd}
-                  className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                  data-task-index={index}
+                  data-task-column="URGENT_TODO"
+                  onDragStart={(e) => handlers.onDragStart(e, task)}
+                  onDragOver={(e) => handlers.onDragOverVertical(e, index, 'URGENT_TODO')}
+                  onDrop={(e) => handlers.onDropVertical(e, 'TODO')}
+                  onDragEnd={handlers.onDragEnd}
+                  onTouchStart={(e) => handlers.onTouchStart(e, task)}
+                  onTouchMove={handlers.onTouchMove}
+                  onTouchEnd={handlers.onTouchEnd}
+                  className={draggedItemId === task.id ? 'opacity-50' : ''}
+                  style={{ touchAction: 'none' }}
                 >
                   <TaskCard
                     task={task}
@@ -335,10 +293,11 @@ export const UrgentTasks = () => {
 
         {/* Urgent - En cours */}
         <div
-          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverUrgent === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
-          onDragOver={(e) => urgentInProgress.length === 0 ? handleDragOver(e, 'IN_PROGRESS') : e.preventDefault()}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => urgentInProgress.length === 0 ? handleDrop(e, 'IN_PROGRESS') : e.preventDefault()}
+          className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
+          data-drop-zone="IN_PROGRESS"
+          onDragOver={(e) => urgentInProgress.length === 0 ? handlers.onDragOver(e, 'IN_PROGRESS') : e.preventDefault()}
+          onDragLeave={handlers.onDragLeave}
+          onDrop={(e) => urgentInProgress.length === 0 ? handlers.onDrop(e, 'IN_PROGRESS') : e.preventDefault()}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">En cours ({urgentInProgress.length})</h4>
@@ -359,11 +318,17 @@ export const UrgentTasks = () => {
                 )}
                 <div 
                   draggable 
-                  onDragStart={(e) => handleDragStart(e, task)}
-                  onDragOver={(e) => handleDragOverVertical(e, index, 'URGENT_IN_PROGRESS', urgentInProgress)}
-                  onDrop={(e) => handleDropVertical(e, urgentInProgress, 'IN_PROGRESS')}
-                  onDragEnd={handleDragEnd}
-                  className={draggedTaskId === task.id ? 'opacity-50' : ''}
+                  data-task-index={index}
+                  data-task-column="URGENT_IN_PROGRESS"
+                  onDragStart={(e) => handlers.onDragStart(e, task)}
+                  onDragOver={(e) => handlers.onDragOverVertical(e, index, 'URGENT_IN_PROGRESS')}
+                  onDrop={(e) => handlers.onDropVertical(e, 'IN_PROGRESS')}
+                  onDragEnd={handlers.onDragEnd}
+                  onTouchStart={(e) => handlers.onTouchStart(e, task)}
+                  onTouchMove={handlers.onTouchMove}
+                  onTouchEnd={handlers.onTouchEnd}
+                  className={draggedItemId === task.id ? 'opacity-50' : ''}
+                  style={{ touchAction: 'none' }}
                 >
                   <TaskCard
                     task={task}
