@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { EmptyState } from './EmptyState';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
+import { useIsTouchDevice } from '@/hooks/use-touch-device';
 
 export const UrgentTasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -20,6 +21,7 @@ export const UrgentTasks = () => {
   // Statut de création par défaut (selon la colonne +)
   const [createDefaultStatus, setCreateDefaultStatus] = useState<'TODO' | 'IN_PROGRESS'>('TODO');
   const isMobile = useIsMobile();
+  const isTouchDevice = useIsTouchDevice();
   
   // Récupérer les tâches (filtrées par projet sélectionné)
   const { selected } = useProjectStore();
@@ -261,18 +263,18 @@ export const UrgentTasks = () => {
                   <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
                 )}
                 <div 
-                  draggable 
+                  draggable={!isTouchDevice}
                   data-task-index={index}
                   data-task-column="URGENT_TODO"
-                  onDragStart={(e) => handlers.onDragStart(e, task)}
-                  onDragOver={(e) => handlers.onDragOverVertical(e, index, 'URGENT_TODO')}
-                  onDrop={(e) => handlers.onDropVertical(e, 'TODO')}
-                  onDragEnd={handlers.onDragEnd}
+                  onDragStart={!isTouchDevice ? (e) => handlers.onDragStart(e, task) : undefined}
+                  onDragOver={!isTouchDevice ? (e) => handlers.onDragOverVertical(e, index, 'URGENT_TODO') : undefined}
+                  onDrop={!isTouchDevice ? (e) => handlers.onDropVertical(e, 'TODO') : undefined}
+                  onDragEnd={!isTouchDevice ? handlers.onDragEnd : undefined}
                   onTouchStart={(e) => handlers.onTouchStart(e, task)}
                   onTouchMove={handlers.onTouchMove}
                   onTouchEnd={handlers.onTouchEnd}
+                  onTouchCancel={handlers.onTouchCancel}
                   className={draggedItemId === task.id ? 'opacity-50' : ''}
-                  style={{ touchAction: 'none' }}
                 >
                   <TaskCard
                     task={task}
@@ -317,18 +319,18 @@ export const UrgentTasks = () => {
                   <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
                 )}
                 <div 
-                  draggable 
+                  draggable={!isTouchDevice}
                   data-task-index={index}
                   data-task-column="URGENT_IN_PROGRESS"
-                  onDragStart={(e) => handlers.onDragStart(e, task)}
-                  onDragOver={(e) => handlers.onDragOverVertical(e, index, 'URGENT_IN_PROGRESS')}
-                  onDrop={(e) => handlers.onDropVertical(e, 'IN_PROGRESS')}
-                  onDragEnd={handlers.onDragEnd}
+                  onDragStart={!isTouchDevice ? (e) => handlers.onDragStart(e, task) : undefined}
+                  onDragOver={!isTouchDevice ? (e) => handlers.onDragOverVertical(e, index, 'URGENT_IN_PROGRESS') : undefined}
+                  onDrop={!isTouchDevice ? (e) => handlers.onDropVertical(e, 'IN_PROGRESS') : undefined}
+                  onDragEnd={!isTouchDevice ? handlers.onDragEnd : undefined}
                   onTouchStart={(e) => handlers.onTouchStart(e, task)}
                   onTouchMove={handlers.onTouchMove}
                   onTouchEnd={handlers.onTouchEnd}
+                  onTouchCancel={handlers.onTouchCancel}
                   className={draggedItemId === task.id ? 'opacity-50' : ''}
-                  style={{ touchAction: 'none' }}
                 >
                   <TaskCard
                     task={task}

@@ -11,6 +11,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
+import { useIsTouchDevice } from '@/hooks/use-touch-device';
  
 
 export const TasksGrid = () => {
@@ -22,6 +23,7 @@ export const TasksGrid = () => {
   const { projects } = useProjects();
   const { selected } = useProjectStore();
   const isMobile = useIsMobile();
+  const isTouchDevice = useIsTouchDevice();
 
   // Affichage/masquage de la colonne Terminé
   const [showDone, setShowDone] = useState(true);
@@ -272,18 +274,18 @@ export const TasksGrid = () => {
                   <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
                 )}
                 <div 
-                  draggable 
+                  draggable={!isTouchDevice}
                   data-task-index={index}
                   data-task-column="TODO"
-                  onDragStart={(e) => handlers.onDragStart(e, task)}
-                  onDragOver={(e) => handlers.onDragOverVertical(e, index, 'TODO')}
-                  onDrop={(e) => handlers.onDropVertical(e, 'TODO')}
-                  onDragEnd={handlers.onDragEnd}
+                  onDragStart={!isTouchDevice ? (e) => handlers.onDragStart(e, task) : undefined}
+                  onDragOver={!isTouchDevice ? (e) => handlers.onDragOverVertical(e, index, 'TODO') : undefined}
+                  onDrop={!isTouchDevice ? (e) => handlers.onDropVertical(e, 'TODO') : undefined}
+                  onDragEnd={!isTouchDevice ? handlers.onDragEnd : undefined}
                   onTouchStart={(e) => handlers.onTouchStart(e, task)}
                   onTouchMove={handlers.onTouchMove}
                   onTouchEnd={handlers.onTouchEnd}
+                  onTouchCancel={handlers.onTouchCancel}
                   className={draggedItemId === task.id ? 'opacity-50' : ''}
-                  style={{ touchAction: 'none' }}
                 >
                   <TaskCard
                     task={task}
@@ -328,18 +330,18 @@ export const TasksGrid = () => {
                   <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
                 )}
                 <div 
-                  draggable 
+                  draggable={!isTouchDevice}
                   data-task-index={index}
                   data-task-column="IN_PROGRESS"
-                  onDragStart={(e) => handlers.onDragStart(e, task)}
-                  onDragOver={(e) => handlers.onDragOverVertical(e, index, 'IN_PROGRESS')}
-                  onDrop={(e) => handlers.onDropVertical(e, 'IN_PROGRESS')}
-                  onDragEnd={handlers.onDragEnd}
+                  onDragStart={!isTouchDevice ? (e) => handlers.onDragStart(e, task) : undefined}
+                  onDragOver={!isTouchDevice ? (e) => handlers.onDragOverVertical(e, index, 'IN_PROGRESS') : undefined}
+                  onDrop={!isTouchDevice ? (e) => handlers.onDropVertical(e, 'IN_PROGRESS') : undefined}
+                  onDragEnd={!isTouchDevice ? handlers.onDragEnd : undefined}
                   onTouchStart={(e) => handlers.onTouchStart(e, task)}
                   onTouchMove={handlers.onTouchMove}
                   onTouchEnd={handlers.onTouchEnd}
+                  onTouchCancel={handlers.onTouchCancel}
                   className={draggedItemId === task.id ? 'opacity-50' : ''}
-                  style={{ touchAction: 'none' }}
                 >
                   <TaskCard
                     task={task}
@@ -385,18 +387,18 @@ export const TasksGrid = () => {
                     <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
                   )}
                   <div 
-                    draggable 
+                    draggable={!isTouchDevice}
                     data-task-index={index}
                     data-task-column="DONE"
-                    onDragStart={(e) => handlers.onDragStart(e, task)}
-                    onDragOver={(e) => handlers.onDragOverVertical(e, index, 'DONE')}
-                    onDrop={(e) => handlers.onDropVertical(e, 'DONE')}
-                    onDragEnd={handlers.onDragEnd}
+                    onDragStart={!isTouchDevice ? (e) => handlers.onDragStart(e, task) : undefined}
+                    onDragOver={!isTouchDevice ? (e) => handlers.onDragOverVertical(e, index, 'DONE') : undefined}
+                    onDrop={!isTouchDevice ? (e) => handlers.onDropVertical(e, 'DONE') : undefined}
+                    onDragEnd={!isTouchDevice ? handlers.onDragEnd : undefined}
                     onTouchStart={(e) => handlers.onTouchStart(e, task)}
                     onTouchMove={handlers.onTouchMove}
                     onTouchEnd={handlers.onTouchEnd}
+                    onTouchCancel={handlers.onTouchCancel}
                     className={draggedItemId === task.id ? 'opacity-50' : ''}
-                    style={{ touchAction: 'none' }}
                   >
                     <TaskCard
                       task={task}
