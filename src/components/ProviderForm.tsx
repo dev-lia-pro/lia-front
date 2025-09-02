@@ -14,6 +14,34 @@ interface ProviderFormProps {
   loading?: boolean;
 }
 
+const getDefaultConfig = (providerType: string) => {
+  switch (providerType) {
+    case 'GMAIL':
+      return {
+        days_back: 10,
+        max_results: 50,
+        query: ''
+      };
+    case 'GOOGLE_CALENDAR':
+      return {
+        calendar_id: 'primary',
+        days_back: 365,
+        days_ahead: 365
+      };
+    case 'GOOGLE_DRIVE_SMS':
+      return {
+        folder_name: 'SMS',
+        days_back: 10
+      };
+    case 'GOOGLE_DRIVE':
+      return {
+        folder_name: 'LIA'
+      };
+    default:
+      return {};
+  }
+};
+
 export const ProviderForm: React.FC<ProviderFormProps> = ({
   provider,
   types,
@@ -29,7 +57,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
     is_active: true,
     credentials_json: {},
     token_json: {},
-    config: {}
+    config: getDefaultConfig('GMAIL')
   });
 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -257,7 +285,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ex: Mon Gmail, Calendrier perso..."
-            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground"
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
           />
           {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
         </div>
@@ -269,8 +297,15 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           <select
             id="provider_type"
             value={formData.provider_type}
-            onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as ProviderTypeInfo['value'] })}
-            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground"
+            onChange={(e) => {
+              const newType = e.target.value as ProviderTypeInfo['value'];
+              setFormData({ 
+                ...formData, 
+                provider_type: newType,
+                config: getDefaultConfig(newType)
+              });
+            }}
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
           >
             {types.map((type) => (
               <option key={type.value} value={type.value}>
@@ -344,7 +379,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Ex: Mon Gmail, Calendrier perso..."
-          className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground"
+          className="w-full mt-1 p-2 bg-navy-card border border-border rounded-md text-foreground text-sm"
         />
         {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
       </div>
@@ -358,8 +393,15 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           <select
             id="provider_type"
             value={formData.provider_type}
-            onChange={(e) => setFormData({ ...formData, provider_type: e.target.value as ProviderTypeInfo['value'] })}
-            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground"
+            onChange={(e) => {
+              const newType = e.target.value as ProviderTypeInfo['value'];
+              setFormData({ 
+                ...formData, 
+                provider_type: newType,
+                config: getDefaultConfig(newType)
+              });
+            }}
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
           >
             {types.map((type) => (
               <option key={type.value} value={type.value}>
@@ -382,6 +424,32 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         <Label htmlFor="is_active" className="text-sm text-foreground/70">
           {isEditing ? 'Activer ce provider' : 'Activer ce provider immédiatement'}
         </Label>
+      </div>
+
+      {/* Configuration JSON personnalisée */}
+      <div>
+        <Label htmlFor="config" className="text-sm text-foreground/70">
+          Configuration avancée (JSON)
+        </Label>
+        <textarea
+          id="config"
+          value={JSON.stringify(formData.config, null, 2)}
+          onChange={(e) => {
+            try {
+              const config = JSON.parse(e.target.value);
+              setFormData({ ...formData, config });
+              setErrors({ ...errors, config: '' });
+            } catch (err) {
+              setErrors({ ...errors, config: 'JSON invalide' });
+            }
+          }}
+          placeholder='{"folder_name": "SMS", "sync_interval": 600}'
+          className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground font-mono text-sm min-h-[120px]"
+        />
+        {errors.config && <p className="text-red-400 text-xs mt-1">{errors.config}</p>}
+        <p className="text-xs text-foreground/50 mt-1">
+          Configuration optionnelle pour personnaliser le comportement du provider
+        </p>
       </div>
 
       {/* Erreur générale */}

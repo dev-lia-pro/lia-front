@@ -10,7 +10,8 @@ import {
   Power,
   PowerOff,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Settings2
 } from 'lucide-react';
 import type { NavigationTab } from '@/types/navigation';
 import type { Provider } from '@/types/provider';
@@ -35,6 +36,9 @@ const SettingsPage = () => {
   const [syncingProvider, setSyncingProvider] = useState<number | null>(null);
   const [previewData, setPreviewData] = useState<unknown>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [configuringProvider, setConfiguringProvider] = useState<Provider | null>(null);
+  const [configJson, setConfigJson] = useState<string>('{}');
+  const [configError, setConfigError] = useState<string>('');
   
   const { toast } = useToast();
   const {
@@ -342,7 +346,7 @@ const SettingsPage = () => {
               {/* Formulaire d'ajout/édition */}
               {(isAddingProvider || editingProvider) && (
                 <div className="mb-6 p-4 bg-background rounded-lg border border-border">
-                  <h3 className="text-lg font-medium mb-4 text-foreground">
+                  <h3 className="text-sm font-medium mb-4 text-foreground">
                     {editingProvider ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
                   </h3>
                   <ProviderForm
@@ -428,6 +432,21 @@ const SettingsPage = () => {
                         ) : (
                           <RefreshCw className="w-4 h-4" />
                         )}
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setConfiguringProvider(provider);
+                          setConfigJson(JSON.stringify(provider.config || {}, null, 2));
+                          setConfigError('');
+                        }}
+                        className="border-border text-foreground hover:bg-muted"
+                        aria-label="Configurer"
+                        title="Configurer"
+                      >
+                        <Settings2 className="w-4 h-4" />
                       </Button>
                       
                       <Button
@@ -559,6 +578,107 @@ const SettingsPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Dialog de configuration du provider */}
+      <Dialog open={!!configuringProvider} onOpenChange={(open) => {
+        if (!open) {
+          setConfiguringProvider(null);
+          setConfigJson('{}');
+          setConfigError('');
+        }
+      }}>
+        <DialogContent className="max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              Configuration de {configuringProvider?.name}
+            </DialogTitle>
+            <DialogDescription className="text-foreground/70">
+              Personnalisez les paramètres avancés du provider
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-foreground/70 block mb-2">
+                Configuration JSON
+              </label>
+              <textarea
+                value={configJson}
+                onChange={(e) => {
+                  setConfigJson(e.target.value);
+                  try {
+                    JSON.parse(e.target.value);
+                    setConfigError('');
+                  } catch (err) {
+                    setConfigError('JSON invalide');
+                  }
+                }}
+                className="w-full h-64 p-3 bg-background border border-border rounded-md text-foreground font-mono text-sm"
+                placeholder='{"folder_name": "SMS", "sync_interval": 600}'
+              />
+              {configError && (
+                <p className="text-red-400 text-xs mt-1">{configError}</p>
+              )}
+            </div>
+            
+            <div className="bg-background p-3 rounded-md border border-border">
+              <p className="text-sm text-foreground/70 mb-2">Exemples de configuration :</p>
+              <ul className="text-xs space-y-1 text-foreground/60">
+                <li>• <code>folder_name</code> : Nom du dossier pour Google Drive SMS</li>
+                <li>• <code>sync_interval</code> : Intervalle de synchronisation en secondes</li>
+                <li>• <code>max_results</code> : Nombre maximum de résultats par sync</li>
+                <li>• <code>days_back</code> : Nombre de jours d'historique à synchroniser</li>
+              </ul>
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setConfiguringProvider(null);
+                  setConfigJson('{}');
+                  setConfigError('');
+                }}
+                className="border-border text-foreground hover:bg-muted"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (configuringProvider && !configError) {
+                    try {
+                      const config = JSON.parse(configJson);
+                      const success = await updateProvider(configuringProvider.id, { config });
+                      if (success) {
+                        toast({
+                          title: "Configuration mise à jour",
+                          description: "Les paramètres ont été enregistrés avec succès.",
+                        });
+                        setConfiguringProvider(null);
+                        setConfigJson('{}');
+                        setConfigError('');
+                        fetchProviders(); // Rafraîchir la liste
+                      }
+                    } catch (err) {
+                      toast({
+                        title: "Erreur",
+                        description: "Impossible de sauvegarder la configuration.",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
+                disabled={!!configError || loading}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Enregistrer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 };
