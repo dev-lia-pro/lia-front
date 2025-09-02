@@ -46,7 +46,6 @@ export interface ReorderTaskData {
   id: number;
   target_position: number;
   target_status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-  target_is_urgent: boolean;
 }
 
 export interface TaskFilters {
@@ -113,8 +112,7 @@ export const useTasks = (filters?: TaskFilters, options?: { enabled?: boolean })
     mutationFn: async (data: ReorderTaskData): Promise<Task> => {
       const response = await axios.patch(`/tasks/${data.id}/reorder/`, {
         target_position: data.target_position,
-        target_status: data.target_status,
-        target_is_urgent: data.target_is_urgent
+        target_status: data.target_status
       });
       return response.data;
     },

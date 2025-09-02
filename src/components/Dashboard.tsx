@@ -6,28 +6,34 @@ import { UpcomingMeetings } from './UpcomingMeetings';
 import { BottomNavigation } from './BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 
-export const Dashboard = () => {
+interface DashboardProps {
+  className?: string;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ className = '' }) => {
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className={`min-h-screen bg-background text-foreground flex flex-col ${className}`}>
       <DashboardHeader />
       
-      <div className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 space-y-6">
           <MainTitle />
-          
-          {/* Section des événements du jour et à venir */}
           <UpcomingMeetings />
-          
-          {/* Section des tâches urgentes */}
-          <TasksGrid urgentOnlyFilter={true} showToggles={false} includeUrgent={true} />
-          
-          {/* Section des projets (aperçu) retirée */}
+          <TasksGrid 
+            urgentOnlyFilter={true} 
+            showToggles={false} 
+            includeUrgent={true}
+            disableUrgentBackground={true}
+          />
         </div>
-      </div>
+      </main>
       
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNavigation 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
     </div>
   );
 };

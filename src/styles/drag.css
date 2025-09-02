@@ -1,0 +1,38 @@
+/* Styles for drag and drop */
+.dragging-source {
+  opacity: 0.4 !important;
+  filter: blur(1px) !important;
+  transform: scale(0.98) !important;
+  transition: none !important;
+}
+
+.drag-clone {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  will-change: transform !important;
+  opacity: 0.9 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+}
+
+/* Disable text selection during drag */
+.drag-active * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Ensure drop zones are accessible */
+[data-drop-zone] {
+  touch-action: auto !important;
+}
+
+/* Disable scroll snapping during drag */
+.drag-scrolling {
+  scroll-snap-type: none !important;
+}
