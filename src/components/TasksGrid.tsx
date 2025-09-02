@@ -305,8 +305,8 @@ export const TasksGrid = ({ includeUrgent = false, urgentOnlyFilter = false, sho
               return (
                 <React.Fragment key={task.id}>
                   {showDropZone && !isDragging && (
-                    <div className="relative h-0 mb-0">
-                      <div className="absolute left-0 right-0 -top-1 h-1 bg-primary rounded-full shadow-lg shadow-primary/50 z-20" />
+                    <div className="relative h-4 mb-2">
+                      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full shadow-lg shadow-primary/50 z-20" />
                     </div>
                   )}
                   <div 
@@ -343,7 +343,7 @@ export const TasksGrid = ({ includeUrgent = false, urgentOnlyFilter = false, sho
             })}
             {dropIndicatorIndex?.column === 'TODO' && dropIndicatorIndex.index === tasksTodo.length && (
               <div className="relative h-4 mt-2">
-                <div className="absolute left-0 right-0 top-1 h-1 bg-primary rounded-full shadow-lg shadow-primary/50" />
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full shadow-lg shadow-primary/50" />
               </div>
             )}
           </div>
@@ -394,8 +394,8 @@ export const TasksGrid = ({ includeUrgent = false, urgentOnlyFilter = false, sho
               return (
                 <React.Fragment key={task.id}>
                   {showDropZone && !isDragging && (
-                    <div className="relative h-0 mb-0">
-                      <div className="absolute left-0 right-0 -top-1 h-1 bg-primary rounded-full shadow-lg shadow-primary/50 z-20" />
+                    <div className="relative h-4 mb-2">
+                      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full shadow-lg shadow-primary/50 z-20" />
                     </div>
                   )}
                   <div 
@@ -432,7 +432,7 @@ export const TasksGrid = ({ includeUrgent = false, urgentOnlyFilter = false, sho
             })}
             {dropIndicatorIndex?.column === 'IN_PROGRESS' && dropIndicatorIndex.index === tasksInProgress.length && (
               <div className="relative h-4 mt-2">
-                <div className="absolute left-0 right-0 top-1 h-1 bg-primary rounded-full shadow-lg shadow-primary/50" />
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full shadow-lg shadow-primary/50" />
               </div>
             )}
           </div>
@@ -521,7 +521,7 @@ export const TasksGrid = ({ includeUrgent = false, urgentOnlyFilter = false, sho
               })}
               {dropIndicatorIndex?.column === 'DONE' && dropIndicatorIndex.index === tasksDone.length && (
                 <div className="relative h-4 mt-2">
-                  <div className="absolute left-0 right-0 top-1 h-1 bg-primary rounded-full shadow-lg shadow-primary/50" />
+                  <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full shadow-lg shadow-primary/50" />
                 </div>
               )}
             </div>
