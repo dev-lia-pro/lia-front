@@ -189,6 +189,34 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans text-base;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Roboto', sans-serif;
   }
+  
+  /* Mobile font size reduction - 80-85% of desktop */
+  @media (max-width: 768px) {
+    html {
+      font-size: 85%; /* Reduces all rem-based sizes to 85% */
+    }
+    
+    /* Fine-tune specific elements if needed */
+    body {
+      @apply text-sm; /* Base text smaller on mobile */
+    }
+    
+    h1 { @apply text-2xl; }
+    h2 { @apply text-xl; }
+    h3 { @apply text-lg; }
+    h4 { @apply text-base; }
+    
+    /* Adjust button and input sizes */
+    button, input, select, textarea {
+      @apply text-sm;
+    }
+    
+    /* Smaller padding and spacing */
+    .p-4 { @apply p-3; }
+    .p-6 { @apply p-4; }
+    .py-6 { @apply py-4; }
+    .px-4 { @apply px-3; }
+  }
 }
 
 @layer utilities {
