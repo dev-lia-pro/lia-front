@@ -51,18 +51,18 @@ export const TasksGrid = () => {
     try {
       const { id, priority, status: sourceStatus } = data;
       
-      // Si c'est le même statut et pas de changement de priorité, ne rien faire
-      const isFromUrgent = priority === 'URGENT' || priority === 'HIGH';
+      // Si c'est le même statut et la même priorité, ne rien faire
+      const isFromUrgent = priority === 'URGENT';
       if (sourceStatus === targetStatus && !isFromUrgent) return;
       
-      // Si la tâche provient de la section urgente (priority URGENT ou HIGH) et est déposée ici,
+      // Si la tâche provient de la section urgente (priority URGENT) et est déposée ici,
       // on rétrograde la priorité à MEDIUM.
       const updatePayload: UpdateTaskData = { id, status: targetStatus };
-      if (isFromUrgent && targetStatus !== 'DONE') {
+      if (isFromUrgent) {
         updatePayload.priority = 'MEDIUM';
       }
       
-      // D'abord mettre à jour le statut
+      // D'abord mettre à jour le statut et/ou la priorité
       await updateTask.mutateAsync(updatePayload);
       
       // Puis placer en première position (index 0)
@@ -72,7 +72,7 @@ export const TasksGrid = () => {
       });
       
       const statusLabel = targetStatus === 'TODO' ? 'À faire' : targetStatus === 'IN_PROGRESS' ? 'En cours' : 'Terminé';
-      const priorityMessage = isFromUrgent ? ' (priorité réduite)' : '';
+      const priorityMessage = isFromUrgent ? ' (priorité réduite à normale)' : '';
       toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée en haut de la colonne "${statusLabel}"${priorityMessage}.` });
     } catch {
       toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
@@ -252,9 +252,9 @@ export const TasksGrid = () => {
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
           data-drop-zone="TODO"
-          onDragOver={(e) => tasksTodo.length === 0 ? handlers.onDragOver(e, 'TODO') : e.preventDefault()}
+          onDragOver={(e) => handlers.onDragOver(e, 'TODO')}
           onDragLeave={handlers.onDragLeave}
-          onDrop={(e) => tasksTodo.length === 0 ? handlers.onDrop(e, 'TODO') : e.preventDefault()}
+          onDrop={(e) => handlers.onDrop(e, 'TODO')}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">À faire ({tasksTodo.length})</h4>
@@ -262,16 +262,17 @@ export const TasksGrid = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-2 min-h-[60px]">
+          <div className="flex flex-col min-h-[60px]">
             {tasksTodo.length === 0 && (
               <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche pour le moment
               </div>
             )}
             {tasksTodo.map((task, index) => (
-              <div key={task.id} className="relative">
-                {dropIndicatorIndex?.column === 'TODO' && dropIndicatorIndex.index === index && (
-                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+              <React.Fragment key={task.id}>
+                {dropIndicatorIndex?.column === 'TODO' && dropIndicatorIndex.index === index && tasksTodo.length > 1 && (
+                  <div className="h-24 bg-transparent rounded-xl transition-all duration-200 mb-2">
+                  </div>
                 )}
                 <div 
                   draggable={!isTouchDevice}
@@ -285,7 +286,7 @@ export const TasksGrid = () => {
                   onTouchMove={handlers.onTouchMove}
                   onTouchEnd={handlers.onTouchEnd}
                   onTouchCancel={handlers.onTouchCancel}
-                  className={draggedItemId === task.id ? 'opacity-50' : ''}
+                  className={`${draggedItemId === task.id ? 'opacity-50' : ''} ${index < tasksTodo.length - 1 ? 'mb-2' : ''}`}
                 >
                   <TaskCard
                     task={task}
@@ -296,10 +297,11 @@ export const TasksGrid = () => {
                     onAssignProject={handleAssignProject}
                   />
                 </div>
-              </div>
+              </React.Fragment>
             ))}
             {dropIndicatorIndex?.column === 'TODO' && dropIndicatorIndex.index === tasksTodo.length && (
-              <div className="h-0.5 bg-primary rounded" />
+              <div className="h-24 bg-transparent rounded-xl transition-all duration-200 mt-2">
+              </div>
             )}
           </div>
         </div>
@@ -308,9 +310,9 @@ export const TasksGrid = () => {
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
           data-drop-zone="IN_PROGRESS"
-          onDragOver={(e) => tasksInProgress.length === 0 ? handlers.onDragOver(e, 'IN_PROGRESS') : e.preventDefault()}
+          onDragOver={(e) => handlers.onDragOver(e, 'IN_PROGRESS')}
           onDragLeave={handlers.onDragLeave}
-          onDrop={(e) => tasksInProgress.length === 0 ? handlers.onDrop(e, 'IN_PROGRESS') : e.preventDefault()}
+          onDrop={(e) => handlers.onDrop(e, 'IN_PROGRESS')}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">En cours ({tasksInProgress.length})</h4>
@@ -318,16 +320,17 @@ export const TasksGrid = () => {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex flex-col gap-2 min-h-[60px]">
+          <div className="flex flex-col min-h-[60px]">
             {tasksInProgress.length === 0 && (
               <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                 Aucune tâche pour le moment
               </div>
             )}
             {tasksInProgress.map((task, index) => (
-              <div key={task.id} className="relative">
-                {dropIndicatorIndex?.column === 'IN_PROGRESS' && dropIndicatorIndex.index === index && (
-                  <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+              <React.Fragment key={task.id}>
+                {dropIndicatorIndex?.column === 'IN_PROGRESS' && dropIndicatorIndex.index === index && tasksInProgress.length > 1 && (
+                  <div className="h-24 bg-transparent rounded-xl transition-all duration-200 mb-2">
+                  </div>
                 )}
                 <div 
                   draggable={!isTouchDevice}
@@ -341,7 +344,7 @@ export const TasksGrid = () => {
                   onTouchMove={handlers.onTouchMove}
                   onTouchEnd={handlers.onTouchEnd}
                   onTouchCancel={handlers.onTouchCancel}
-                  className={draggedItemId === task.id ? 'opacity-50' : ''}
+                  className={`${draggedItemId === task.id ? 'opacity-50' : ''} ${index < tasksInProgress.length - 1 ? 'mb-2' : ''}`}
                 >
                   <TaskCard
                     task={task}
@@ -352,10 +355,11 @@ export const TasksGrid = () => {
                     onAssignProject={handleAssignProject}
                   />
                 </div>
-              </div>
+              </React.Fragment>
             ))}
             {dropIndicatorIndex?.column === 'IN_PROGRESS' && dropIndicatorIndex.index === tasksInProgress.length && (
-              <div className="h-0.5 bg-primary rounded" />
+              <div className="h-24 bg-transparent rounded-xl transition-all duration-200 mt-2">
+              </div>
             )}
           </div>
         </div>
@@ -365,9 +369,9 @@ export const TasksGrid = () => {
           <div
             className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'DONE' ? 'border-primary' : 'border-border'} transition-smooth`}
             data-drop-zone="DONE"
-            onDragOver={(e) => tasksDone.length === 0 ? handlers.onDragOver(e, 'DONE') : e.preventDefault()}
+            onDragOver={(e) => handlers.onDragOver(e, 'DONE')}
             onDragLeave={handlers.onDragLeave}
-            onDrop={(e) => tasksDone.length === 0 ? handlers.onDrop(e, 'DONE') : e.preventDefault()}
+            onDrop={(e) => handlers.onDrop(e, 'DONE')}
           >
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-base font-semibold">Terminé ({tasksDone.length})</h4>
@@ -375,16 +379,17 @@ export const TasksGrid = () => {
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex flex-col gap-2 min-h-[60px]">
+            <div className="flex flex-col min-h-[60px]">
               {tasksDone.length === 0 && (
                 <div className="p-3 text-xs text-foreground/60 bg-card rounded border border-border text-center">
                   Aucune tâche pour le moment
                 </div>
               )}
               {tasksDone.map((task, index) => (
-                <div key={task.id} className="relative">
-                  {dropIndicatorIndex?.column === 'DONE' && dropIndicatorIndex.index === index && (
-                    <div className="absolute -top-1 left-0 right-0 h-0.5 bg-primary rounded z-10" />
+                <React.Fragment key={task.id}>
+                  {dropIndicatorIndex?.column === 'DONE' && dropIndicatorIndex.index === index && tasksDone.length > 1 && (
+                    <div className="h-24 bg-transparent rounded-xl transition-all duration-200 mb-2">
+                    </div>
                   )}
                   <div 
                     draggable={!isTouchDevice}
@@ -398,7 +403,7 @@ export const TasksGrid = () => {
                     onTouchMove={handlers.onTouchMove}
                     onTouchEnd={handlers.onTouchEnd}
                     onTouchCancel={handlers.onTouchCancel}
-                    className={draggedItemId === task.id ? 'opacity-50' : ''}
+                    className={`${draggedItemId === task.id ? 'opacity-50' : ''} ${index < tasksDone.length - 1 ? 'mb-2' : ''}`}
                   >
                     <TaskCard
                       task={task}
@@ -408,10 +413,11 @@ export const TasksGrid = () => {
                       onAssignProject={handleAssignProject}
                     />
                   </div>
-                </div>
+                </React.Fragment>
               ))}
               {dropIndicatorIndex?.column === 'DONE' && dropIndicatorIndex.index === tasksDone.length && (
-                <div className="h-0.5 bg-primary rounded" />
+                <div className="h-24 bg-transparent rounded-xl transition-all duration-200 mt-2">
+                </div>
               )}
             </div>
           </div>

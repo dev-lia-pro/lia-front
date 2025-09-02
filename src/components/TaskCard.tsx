@@ -79,7 +79,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <div
-      className="group relative flex flex-col gap-2 p-3 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98] overflow-hidden"
+      className="group relative flex flex-col gap-2 p-3 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98] overflow-hidden select-none"
       onClick={() => onClick(task)}
     >
 

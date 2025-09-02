@@ -128,6 +128,7 @@ export const UrgentTasks = () => {
       // Si c'est déjà une tâche urgente avec le même statut, ne rien faire
       if (sourceStatus === targetStatus && priority === 'URGENT') return;
       
+      // Toujours mettre la priorité à URGENT quand on drop dans la section urgente
       const updatePayload: UpdateTaskData = { id, status: targetStatus, priority: 'URGENT' };
       
       // D'abord mettre à jour le statut et la priorité
@@ -140,7 +141,9 @@ export const UrgentTasks = () => {
       });
       
       const statusLabel = targetStatus === 'TODO' ? 'À faire' : 'En cours';
-      toast({ title: 'Tâche urgente déplacée', description: `La tâche a été déplacée en haut de la colonne urgente "${statusLabel}".` });
+      const wasUrgent = priority === 'URGENT';
+      const priorityMessage = !wasUrgent ? ' et marquée comme urgente' : '';
+      toast({ title: 'Tâche déplacée', description: `La tâche a été déplacée vers "${statusLabel}"${priorityMessage}.` });
     } catch (error) {
       toast({ title: 'Erreur', description: 'Impossible de déplacer la tâche.', variant: 'destructive' });
     }
@@ -241,9 +244,9 @@ export const UrgentTasks = () => {
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'TODO' ? 'border-primary' : 'border-border'} transition-smooth`}
           data-drop-zone="TODO"
-          onDragOver={(e) => urgentTodo.length === 0 ? handlers.onDragOver(e, 'TODO') : e.preventDefault()}
+          onDragOver={(e) => handlers.onDragOver(e, 'TODO')}
           onDragLeave={handlers.onDragLeave}
-          onDrop={(e) => urgentTodo.length === 0 ? handlers.onDrop(e, 'TODO') : e.preventDefault()}
+          onDrop={(e) => handlers.onDrop(e, 'TODO')}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">À faire ({urgentTodo.length})</h4>
@@ -297,9 +300,9 @@ export const UrgentTasks = () => {
         <div
           className={`${isMobile ? 'w-[240px] flex-shrink-0 snap-center' : ''} p-3 bg-card/30 rounded-xl border ${dragOverStatus === 'IN_PROGRESS' ? 'border-primary' : 'border-border'} transition-smooth`}
           data-drop-zone="IN_PROGRESS"
-          onDragOver={(e) => urgentInProgress.length === 0 ? handlers.onDragOver(e, 'IN_PROGRESS') : e.preventDefault()}
+          onDragOver={(e) => handlers.onDragOver(e, 'IN_PROGRESS')}
           onDragLeave={handlers.onDragLeave}
-          onDrop={(e) => urgentInProgress.length === 0 ? handlers.onDrop(e, 'IN_PROGRESS') : e.preventDefault()}
+          onDrop={(e) => handlers.onDrop(e, 'IN_PROGRESS')}
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-base font-semibold">En cours ({urgentInProgress.length})</h4>
