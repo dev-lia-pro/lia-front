@@ -23,6 +23,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
   const [isLongPressing, setIsLongPressing] = useState(false); // Visual feedback state
   
   const draggedElementRef = useRef<HTMLElement | null>(null);
+  const originalIndexRef = useRef<number>(-1);
   const cloneRef = useRef<HTMLElement | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,53 +39,65 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     currentTouchXRef.current = clientX;
     currentTouchYRef.current = clientY;
     
-    // Configuration
-    const scrollZoneSize = 60;
-    const baseScrollSpeed = 5;
-    const scrollZoneSizeVertical = 50; // Reduced from 80 to 50 - only trigger near edges
-    const baseVerticalScrollSpeed = 6; // Reduced from 8 to 6 for better control
+    console.log('handleAutoScroll called with:', { clientX, clientY });
     
-    // Clear existing interval
+    // Configuration
+    const scrollZoneSize = 80; // Increased for easier triggering
+    const baseScrollSpeed = 12; // Increased for better responsiveness
+    const scrollZoneSizeVertical = 100; // Increased zone
+    const baseVerticalScrollSpeed = 15; // Increased speed
+    
+    // Clear any existing interval first
     if (autoScrollIntervalRef.current) {
       clearInterval(autoScrollIntervalRef.current);
       autoScrollIntervalRef.current = null;
     }
     
-    // Setup scroll interval
+    // Create new interval
+    console.log('Creating auto-scroll interval');
     autoScrollIntervalRef.current = setInterval(() => {
       const currentX = currentTouchXRef.current;
       const currentY = currentTouchYRef.current;
+      
+      // Check if we have valid coordinates
+      if (currentX === null || currentX === undefined || currentY === null || currentY === undefined) {
+        console.log('Invalid coordinates:', { currentX, currentY });
+        return;
+      }
+      
+      console.log('Auto-scroll tick:', { currentX, currentY });
+      
       let scrollingHorizontally = false;
       let scrollingVertically = false;
       
       // Mobile only for horizontal scroll
       const isMobile = window.innerWidth < 768;
       
-      // Find the element at current position
-      const elementAtPoint = document.elementFromPoint(currentX, currentY);
+      // Don't need elementFromPoint for scrolling detection
       
       // Horizontal scrolling (mobile only)
-      if (isMobile && elementAtPoint) {
-        // Find the horizontal scrollable container (urgent tasks or main grid)
-        const urgentSection = elementAtPoint.closest('section')?.querySelector('.overflow-x-auto');
-        const isInUrgentSection = urgentSection && urgentSection.contains(elementAtPoint);
+      if (isMobile) {
+        // Find the horizontal scrollable container - could be in TasksGrid
+        const horizontalScrollContainer = document.querySelector('.overflow-x-auto') as HTMLElement;
         
-        let horizontalScrollContainer = null;
-        if (isInUrgentSection) {
-          horizontalScrollContainer = urgentSection;
-        } else {
-          // We're in the main grid - find the TasksGrid container
-          const gridSection = document.querySelector('section:last-of-type');
-          if (gridSection) {
-            horizontalScrollContainer = gridSection.querySelector('.flex.overflow-x-auto') || 
-                                       gridSection.querySelector('[class*="overflow-x-auto"]');
-          }
-        }
+        console.log('Looking for horizontal scroll container:', !!horizontalScrollContainer);
         
         if (horizontalScrollContainer) {
-          const rect = horizontalScrollContainer.getBoundingClientRect();
-          const nearLeftEdge = currentX - rect.left < scrollZoneSize;
-          const nearRightEdge = rect.right - currentX < scrollZoneSize;
+          // Use smaller zones for mobile
+          const mobileScrollZone = 50;
+          const viewportLeft = 0;
+          const viewportRight = window.innerWidth;
+          const nearLeftEdge = currentX < viewportLeft + mobileScrollZone;
+          const nearRightEdge = currentX > viewportRight - mobileScrollZone;
+          
+          console.log('Horizontal scroll check:', { 
+            nearLeftEdge, 
+            nearRightEdge, 
+            scrollLeft: horizontalScrollContainer.scrollLeft,
+            currentX,
+            viewportRight,
+            mobileScrollZone
+          });
           
           // Disable snap scrolling during drag
           if (!horizontalScrollContainer.classList.contains('drag-scrolling')) {
@@ -93,65 +106,66 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
           }
           
           if (nearLeftEdge && horizontalScrollContainer.scrollLeft > 0) {
-            const distanceFromEdge = Math.max(1, currentX - rect.left);
-            const speedMultiplier = Math.max(0.5, (scrollZoneSize - distanceFromEdge) / scrollZoneSize);
+            const distanceFromEdge = Math.max(1, currentX);
+            const speedMultiplier = Math.max(0.5, (mobileScrollZone - distanceFromEdge) / mobileScrollZone);
             const scrollSpeed = baseScrollSpeed * speedMultiplier;
+            console.log('Scrolling left:', { scrollSpeed, distanceFromEdge });
             horizontalScrollContainer.scrollBy({ left: -scrollSpeed, behavior: 'auto' });
             scrollingHorizontally = true;
           } else if (nearRightEdge && horizontalScrollContainer.scrollLeft < horizontalScrollContainer.scrollWidth - horizontalScrollContainer.clientWidth) {
-            const distanceFromEdge = Math.max(1, rect.right - currentX);
-            const speedMultiplier = Math.max(0.5, (scrollZoneSize - distanceFromEdge) / scrollZoneSize);
+            const distanceFromEdge = Math.max(1, viewportRight - currentX);
+            const speedMultiplier = Math.max(0.5, (mobileScrollZone - distanceFromEdge) / mobileScrollZone);
             const scrollSpeed = baseScrollSpeed * speedMultiplier;
+            console.log('Scrolling right:', { scrollSpeed, distanceFromEdge });
             horizontalScrollContainer.scrollBy({ left: scrollSpeed, behavior: 'auto' });
             scrollingHorizontally = true;
           }
         }
       }
       
-      // Vertical scrolling - Only when VERY close to viewport edges
-      // This prevents scrolling when just moving the task down within visible area
-      const verticalScrollContainer = document.querySelector('.flex-1.overflow-y-auto');
+      // Vertical scrolling - Use window scroll for better control
+      const viewportHeight = window.innerHeight;
+      const scrollZoneTop = 80; // Larger zone at top
+      const scrollZoneBottom = 80; // Larger zone at bottom
       
-      if (verticalScrollContainer) {
-        const viewportHeight = window.innerHeight;
-        const headerHeight = 60; // Approximate header height
-        
-        // Only trigger when REALLY close to edges (not just moving down)
-        const nearTopEdge = currentY < scrollZoneSizeVertical + headerHeight;
-        const nearBottomEdge = currentY > viewportHeight - scrollZoneSizeVertical;
-        
-        // Check if we can actually scroll in that direction
-        const canScrollUp = verticalScrollContainer.scrollTop > 0;
-        const canScrollDown = verticalScrollContainer.scrollTop < verticalScrollContainer.scrollHeight - verticalScrollContainer.clientHeight;
-        
-        if (nearTopEdge && canScrollUp) {
-          const distanceFromEdge = Math.max(1, currentY - headerHeight);
-          // Use a more aggressive curve - slower at first, faster when very close
-          const speedMultiplier = Math.pow(Math.max(0, (scrollZoneSizeVertical - distanceFromEdge) / scrollZoneSizeVertical), 1.5);
-          const scrollSpeed = baseVerticalScrollSpeed * speedMultiplier;
-          if (scrollSpeed > 0.5) { // Only scroll if speed is meaningful
-            verticalScrollContainer.scrollBy({ top: -scrollSpeed, behavior: 'auto' });
-            scrollingVertically = true;
-          }
-        } else if (nearBottomEdge && canScrollDown) {
-          const distanceFromEdge = Math.max(1, viewportHeight - currentY);
-          // Use a more aggressive curve - slower at first, faster when very close
-          const speedMultiplier = Math.pow(Math.max(0, (scrollZoneSizeVertical - distanceFromEdge) / scrollZoneSizeVertical), 1.5);
-          const scrollSpeed = baseVerticalScrollSpeed * speedMultiplier;
-          if (scrollSpeed > 0.5) { // Only scroll if speed is meaningful
-            verticalScrollContainer.scrollBy({ top: scrollSpeed, behavior: 'auto' });
-            scrollingVertically = true;
-          }
+      // Trigger when close to edges
+      const nearTopEdge = currentY < scrollZoneTop;
+      const nearBottomEdge = currentY > viewportHeight - scrollZoneBottom;
+      
+      // Check if we can actually scroll in that direction
+      const canScrollUp = window.scrollY > 0;
+      const canScrollDown = window.scrollY < document.documentElement.scrollHeight - window.innerHeight;
+      
+      console.log('Vertical scroll check:', { 
+        nearTopEdge, 
+        nearBottomEdge, 
+        canScrollUp, 
+        canScrollDown,
+        scrollY: window.scrollY,
+        currentY 
+      });
+      
+      if (nearTopEdge && canScrollUp) {
+        const distanceFromEdge = Math.max(1, currentY);
+        const speedMultiplier = Math.pow(Math.max(0, (scrollZoneTop - distanceFromEdge) / scrollZoneTop), 1.2);
+        const scrollSpeed = baseVerticalScrollSpeed * speedMultiplier * 1.5;
+        console.log('Scrolling up:', { scrollSpeed });
+        if (scrollSpeed > 0.5) {
+          window.scrollBy({ top: -scrollSpeed, behavior: 'auto' });
+          scrollingVertically = true;
+        }
+      } else if (nearBottomEdge && canScrollDown) {
+        const distanceFromEdge = Math.max(1, viewportHeight - currentY);
+        const speedMultiplier = Math.pow(Math.max(0, (scrollZoneBottom - distanceFromEdge) / scrollZoneBottom), 1.2);
+        const scrollSpeed = baseVerticalScrollSpeed * speedMultiplier * 1.5;
+        console.log('Scrolling down:', { scrollSpeed });
+        if (scrollSpeed > 0.5) {
+          window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+          scrollingVertically = true;
         }
       }
       
-      const isScrolling = scrollingHorizontally || scrollingVertically;
-      
-      // Stop interval if not scrolling
-      if (!isScrolling && autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current);
-        autoScrollIntervalRef.current = null;
-      }
+      // Keep interval running during drag
     }, 16); // ~60fps
   }, []);
   
@@ -215,6 +229,17 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     // Store element reference for visual feedback
     draggedElementRef.current = e.currentTarget as HTMLElement;
     
+    // Store the original index
+    const column = task.status;
+    const columnTasks = Array.from(document.querySelectorAll(`[data-task-column="${column}"]`));
+    for (let i = 0; i < columnTasks.length; i++) {
+      if (columnTasks[i] === e.currentTarget) {
+        originalIndexRef.current = i;
+        console.log('Stored original index (desktop):', i, 'for task:', task.id);
+        break;
+      }
+    }
+    
     // Set data transfer
     e.dataTransfer.setData('application/json', JSON.stringify(data));
     e.dataTransfer.effectAllowed = 'move';
@@ -256,6 +281,22 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       }
     }
     
+    // Check if dragging within same column and position doesn't change
+    if (draggedItem) {
+      const targetStatus = column as Task['status'];
+      
+      if (draggedItem.status === targetStatus) {
+        // Use the stored original index
+        const draggedItemIndex = originalIndexRef.current;
+        
+        // If target position is same as current or just after, don't show indicator
+        if (draggedItemIndex >= 0 && (targetIndex === draggedItemIndex || targetIndex === draggedItemIndex + 1)) {
+          setDropIndicatorIndex(null);
+          return;
+        }
+      }
+    }
+    
     // Only update if actually changed
     if (!dropIndicatorIndex || dropIndicatorIndex.column !== column || dropIndicatorIndex.index !== targetIndex) {
       setDropIndicatorIndex({ column, index: targetIndex });
@@ -286,6 +327,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     setDragOverStatus(null);
     setDropIndicatorIndex(null);
     setIsDragActive(false);
+    originalIndexRef.current = -1;
   };
 
   const handleDrop = async (e: DragEvent<HTMLDivElement>, targetStatus: Task['status']) => {
@@ -308,6 +350,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     setDropIndicatorIndex(null);
     setDraggedItem(null);
     setIsDragActive(false);
+    originalIndexRef.current = -1;
     
     await onDrop(data, targetStatus);
   };
@@ -335,6 +378,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     setDragOverStatus(null);
     setDraggedItem(null);
     setIsDragActive(false);
+    originalIndexRef.current = -1;
     
     // Use the calculated index or default to 0
     const targetIndex = currentDropIndex ?? 0;
@@ -391,6 +435,19 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     };
     pendingDragDataRef.current = data;
     draggedElementRef.current = element;
+    
+    // Find and store the original index
+    const status = task.status;
+    const columnTasks = Array.from(document.querySelectorAll(`[data-task-column="${status}"]`));
+    let foundIndex = -1;
+    for (let i = 0; i < columnTasks.length; i++) {
+      if (columnTasks[i] === element) {
+        foundIndex = i;
+        break;
+      }
+    }
+    originalIndexRef.current = foundIndex;
+    console.log('Stored original index (mobile):', foundIndex, 'for task:', task.id, 'element:', element);
 
     // Start feedback timer (visual indication after 300ms)
     feedbackTimerRef.current = setTimeout(() => {
@@ -404,6 +461,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
 
     // Start long press timer
     longPressTimerRef.current = setTimeout(() => {
+      console.log('Long press activated, draggedElementRef:', draggedElementRef.current);
       // Get current touch position (may have moved slightly)
       const currentTouch = e.touches[0];
       if (!currentTouch) return;
@@ -412,6 +470,19 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       setIsDragActive(true);
       setDraggedItem(data);
       setIsLongPressing(false);
+      
+      // Re-find and update the original index in case DOM changed
+      if (originalIndexRef.current < 0) {
+        const status = data.status;
+        const columnTasks = Array.from(document.querySelectorAll(`[data-task-column="${status}"]`));
+        for (let i = 0; i < columnTasks.length; i++) {
+          if (columnTasks[i] === draggedElementRef.current) {
+            originalIndexRef.current = i;
+            console.log('Re-found original index:', i);
+            break;
+          }
+        }
+      }
       
       // Recalculate position in case of slight movement
       const newRect = element.getBoundingClientRect();
@@ -440,19 +511,29 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       cloneRef.current = clone;
 
       // Make original element semi-transparent during drag
-      element.style.opacity = '0.3';
-      element.style.transform = 'scale(0.98)';
-      element.style.filter = 'blur(2px)';
-      element.style.transition = 'all 0.2s ease-in-out';
+      // Use draggedElementRef which should be more reliable
+      if (draggedElementRef.current) {
+        draggedElementRef.current.style.opacity = '0.3';
+        draggedElementRef.current.style.transform = 'scale(0.98)';
+        draggedElementRef.current.style.filter = 'blur(2px)';
+        draggedElementRef.current.style.transition = 'all 0.2s ease-in-out';
+        console.log('Applied opacity to dragged element');
+      } else {
+        console.log('Warning: draggedElementRef.current is null');
+        // Fallback to element
+        element.style.opacity = '0.3';
+        element.style.transform = 'scale(0.98)';
+        element.style.filter = 'blur(2px)';
+        element.style.transition = 'all 0.2s ease-in-out';
+      }
       
       // Haptic feedback if available
       if ('vibrate' in navigator) {
         navigator.vibrate(10);
       }
       
-      // Prevent native scrolling on mobile during drag
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+      // Don't prevent scrolling - we handle it with auto-scroll
+      // This allows the auto-scroll zones to work properly
     }, longPressDelay);
   };
 
@@ -558,6 +639,41 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       
       const column = status === 'TODO' ? 'TODO' : status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'DONE';
       
+      // Check if dragging within same column and position doesn't change
+      if (draggedItem && draggedItem.status === status) {
+        // Use the stored original index
+        let draggedItemIndex = originalIndexRef.current;
+        
+        // If we don't have the original index, try to find it by checking for reduced opacity
+        if (draggedItemIndex < 0) {
+          for (let i = 0; i < columnTasks.length; i++) {
+            const taskElement = columnTasks[i] as HTMLElement;
+            const computedStyle = window.getComputedStyle(taskElement);
+            const opacity = parseFloat(computedStyle.opacity);
+            console.log(`Task ${i} opacity:`, opacity);
+            if (opacity < 0.5) { // Check for 0.3 with some tolerance
+              draggedItemIndex = i;
+              originalIndexRef.current = i;
+              console.log('Found dragged item by opacity at index:', i);
+              break;
+            }
+          }
+        }
+        
+        console.log('Separator check (mobile):', {
+          draggedItemIndex,
+          targetIndex,
+          status,
+          shouldHide: draggedItemIndex >= 0 && (targetIndex === draggedItemIndex || targetIndex === draggedItemIndex + 1)
+        });
+        
+        // If target position is same as current or just after, don't show indicator
+        if (draggedItemIndex >= 0 && (targetIndex === draggedItemIndex || targetIndex === draggedItemIndex + 1)) {
+          setDropIndicatorIndex(null);
+          return;
+        }
+      }
+      
       // Only update if actually changed
       if (!dropIndicatorIndex || dropIndicatorIndex.column !== column || dropIndicatorIndex.index !== targetIndex) {
         setDropIndicatorIndex({ column, index: targetIndex });
@@ -582,9 +698,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       feedbackTimerRef.current = null;
     }
     
-    // Re-enable native scrolling
-    document.body.style.overflow = '';
-    document.body.style.touchAction = '';
+    // No need to re-enable scrolling since we don't disable it anymore
     
     // Reset visual feedback with smooth transition
     if (draggedElementRef.current) {
@@ -642,6 +756,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       setDragOverStatus(null);
       setDropIndicatorIndex(null);
       setIsDragActive(false);
+      originalIndexRef.current = -1;
       return;
     }
 
@@ -671,6 +786,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     setIsLongPressing(false);
     initialTouchRef.current = null;
     pendingDragDataRef.current = null;
+    originalIndexRef.current = -1;
   };
 
   // Handle touch cancel (e.g., when scrolling starts or call comes in)
@@ -690,9 +806,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
       feedbackTimerRef.current = null;
     }
     
-    // Re-enable native scrolling
-    document.body.style.overflow = '';
-    document.body.style.touchAction = '';
+    // No need to re-enable scrolling since we don't disable it anymore
     
     if (cloneRef.current) {
       cloneRef.current.remove();
@@ -727,6 +841,7 @@ export const useDragAndDrop = ({ onDrop, onDropVertical, longPressDelay = 500 }:
     setIsLongPressing(false);
     initialTouchRef.current = null;
     pendingDragDataRef.current = null;
+    originalIndexRef.current = -1;
   };
 
   return {
