@@ -365,14 +365,14 @@ const SettingsPage = () => {
                 {Array.isArray(providers) && providers.map((provider) => (
                   <div
                     key={provider.id}
-                    className="flex items-center justify-between p-4 bg-background rounded-lg border border-border"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-background rounded-lg border border-border gap-4"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-3 rounded-lg bg-card ${getProviderTypeColor(provider.provider_type)}`}>
                         <span className="text-2xl">{getProviderIcon(provider.provider_type)}</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium text-foreground">{provider.name}</span>
                           <span className="text-xs px-2 py-1 rounded-full bg-card text-foreground/70">
                             {getProviderTypeLabel(provider.provider_type)}
@@ -403,7 +403,7 @@ const SettingsPage = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <Button
                         size="sm"
                         variant="outline"
