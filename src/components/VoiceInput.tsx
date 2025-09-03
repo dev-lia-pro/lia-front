@@ -129,7 +129,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({ onResult, className = ''
   const handleTouchEnd = !isDesktop ? handleMobileEnd : undefined;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 right-6 z-30">
       <Button
         className={`${className} ${floatingButtonStyles} relative`}
         onClick={handleClick}

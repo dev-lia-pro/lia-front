@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, LogOut, Plus, Moon, Sun } from 'lucide-react';
+import { User, LogOut, Plus, Moon, Sun, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +39,11 @@ export const DashboardHeader = () => {
 
   const handleProfileClick = () => {
     navigate('/profile');
+    setIsOpen(false);
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
     setIsOpen(false);
   };
 
@@ -143,6 +148,14 @@ export const DashboardHeader = () => {
           >
             <User className="mr-2 h-4 w-4" />
             Mon profil
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem
+            onClick={handleSettingsClick}
+            className="hover:bg-foreground/10 focus:bg-foreground/10 cursor-pointer"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Paramètres
           </DropdownMenuItem>
           
           <DropdownMenuItem
