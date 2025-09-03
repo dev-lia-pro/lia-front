@@ -7,8 +7,8 @@ interface UseAudioRecordingReturn {
   isRecording: boolean;
   isLoading: boolean;
   audioLevel: number;
-  recordingMode: 'tap' | 'hold' | null;
-  startRecording: (mode?: 'tap' | 'hold') => Promise<void>;
+  isDesktop: boolean;
+  startRecording: () => Promise<void>;
   stopRecording: () => void;
   resetAudio: () => void;
   sendRecordedAudio: () => Promise<void>;
@@ -18,7 +18,6 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
-  const [recordingMode, setRecordingMode] = useState<'tap' | 'hold' | null>(null);
   
   const recorderRef = useRef<RecordRTC | null>(null);
   const recordedAudioBlobRef = useRef<Blob | null>(null);
@@ -26,16 +25,16 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const silenceStartRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const silenceCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const maxRecordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const { toast } = useToast();
-
-  // Constantes pour la détection de silence
-  const SILENCE_DURATION = 2000; // 2 secondes de silence avant arrêt automatique
-  const SILENCE_THRESHOLD = 0.02; // Seuil de détection du silence (ajusté pour être moins sensible)
-  const SILENCE_CHECK_INTERVAL = 100; // Vérifier toutes les 100ms
+  
+  // Détection desktop/mobile basée sur la largeur d'écran
+  const isDesktop = window.innerWidth >= 768; // Breakpoint sm de Tailwind
+  
+  // Durée maximale d'enregistrement sur mobile (1 minute)
+  const MAX_RECORDING_DURATION = 60000; // 60 secondes
 
   const sendRecordedAudio = useCallback(async () => {
     if (!recordedAudioBlobRef.current) {
@@ -188,12 +187,12 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       return;
     }
     
-    console.log(`Stopping recording in ${recordingMode} mode...`);
+    console.log('Stopping recording...');
     
-    // Arrêter le monitoring du silence immédiatement
-    if (silenceCheckIntervalRef.current) {
-      clearInterval(silenceCheckIntervalRef.current);
-      silenceCheckIntervalRef.current = null;
+    // Arrêter le timer de durée maximale
+    if (maxRecordingTimerRef.current) {
+      clearTimeout(maxRecordingTimerRef.current);
+      maxRecordingTimerRef.current = null;
     }
     
     // Arrêter le monitoring du niveau audio
@@ -224,9 +223,7 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       recorderRef.current = null;
       
       setIsRecording(false);
-      setRecordingMode(null);
       setAudioLevel(0);
-      silenceStartRef.current = null;
       
       toast({
         title: "Enregistrement trop court",
@@ -272,58 +269,12 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
     });
     
     setIsRecording(false);
-    setRecordingMode(null);
     setAudioLevel(0);
-    silenceStartRef.current = null;
-  }, [isRecording, recordingMode, sendRecordedAudio, toast]);
+  }, [isRecording, sendRecordedAudio, toast]);
 
-  // Fonction pour vérifier le silence (mode tap uniquement)
-  const checkForSilence = useCallback(() => {
-    if (!analyserRef.current || !isRecording || recordingMode !== 'tap') {
-      return;
-    }
-
-    const bufferLength = analyserRef.current.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyserRef.current.getByteFrequencyData(dataArray);
-    
-    // Calculer le niveau moyen du signal
-    let sum = 0;
-    for (let i = 0; i < bufferLength; i++) {
-      sum += dataArray[i];
-    }
-    const average = sum / bufferLength;
-    const normalizedLevel = average / 255;
-    
-    // Vérifier si c'est du silence
-    if (normalizedLevel < SILENCE_THRESHOLD) {
-      if (!silenceStartRef.current) {
-        silenceStartRef.current = Date.now();
-        console.log(`Silence detected (level: ${normalizedLevel.toFixed(3)}), starting timer`);
-      } else {
-        const silenceDuration = Date.now() - silenceStartRef.current;
-        if (silenceDuration >= SILENCE_DURATION) {
-          console.log(`${SILENCE_DURATION}ms de silence détecté, arrêt automatique`);
-          // Nettoyer l'intervalle avant d'arrêter
-          if (silenceCheckIntervalRef.current) {
-            clearInterval(silenceCheckIntervalRef.current);
-            silenceCheckIntervalRef.current = null;
-          }
-          stopRecording();
-        }
-      }
-    } else {
-      if (silenceStartRef.current) {
-        const silenceDuration = Date.now() - silenceStartRef.current;
-        console.log(`Sound detected (level: ${normalizedLevel.toFixed(3)}), was silent for ${silenceDuration}ms`);
-        silenceStartRef.current = null;
-      }
-    }
-  }, [isRecording, recordingMode, stopRecording]);
-
-  const startRecording = useCallback(async (mode: 'tap' | 'hold' = 'tap') => {
+  const startRecording = useCallback(async () => {
     try {
-      console.log(`Starting recording in ${mode} mode`);
+      console.log('Starting recording');
       
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -352,29 +303,22 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       const recorder = new RecordRTC(stream, options);
       recorderRef.current = recorder;
       recordingStartTimeRef.current = Date.now();
-      silenceStartRef.current = null;
       
       // Démarrer l'enregistrement
       recorder.startRecording();
       setIsRecording(true);
-      setRecordingMode(mode);
       
       // Démarrer le monitoring du niveau audio
       setTimeout(() => {
         monitorAudioLevel();
       }, 100);
       
-      // Si mode tap, démarrer la détection de silence après un délai
-      if (mode === 'tap') {
-        console.log('Starting silence detection for tap mode');
-        // Attendre 500ms avant de commencer à détecter le silence
-        setTimeout(() => {
-          if (isRecording && recordingMode === 'tap') {
-            silenceCheckIntervalRef.current = setInterval(() => {
-              checkForSilence();
-            }, SILENCE_CHECK_INTERVAL);
-          }
-        }, 500);
+      // Sur mobile uniquement : arrêt automatique après 1 minute
+      if (!isDesktop) {
+        maxRecordingTimerRef.current = setTimeout(() => {
+          console.log('Max recording duration reached (1 minute)');
+          stopRecording();
+        }, MAX_RECORDING_DURATION);
       }
       
     } catch (error) {
@@ -385,9 +329,8 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
         variant: "destructive",
       });
       setIsRecording(false);
-      setRecordingMode(null);
     }
-  }, [toast, setupAudioAnalyser, monitorAudioLevel, checkForSilence]);
+  }, [toast, setupAudioAnalyser, monitorAudioLevel, isDesktop, stopRecording]);
 
   const resetAudio = useCallback(() => {
     recordedAudioBlobRef.current = null;
@@ -396,8 +339,8 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
   // Nettoyer les ressources au démontage
   useEffect(() => {
     return () => {
-      if (silenceCheckIntervalRef.current) {
-        clearInterval(silenceCheckIntervalRef.current);
+      if (maxRecordingTimerRef.current) {
+        clearTimeout(maxRecordingTimerRef.current);
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -422,7 +365,7 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
     isRecording,
     isLoading,
     audioLevel,
-    recordingMode,
+    isDesktop,
     startRecording,
     stopRecording,
     resetAudio,
