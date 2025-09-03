@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import axios from '@/api/axios';
-import RecordRTC, { StereoAudioRecorder } from 'recordrtc';
 
 interface UseAudioRecordingReturn {
   isRecording: boolean;
@@ -19,7 +18,8 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
   const [isLoading, setIsLoading] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   
-  const recorderRef = useRef<RecordRTC | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const recordedAudioBlobRef = useRef<Blob | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
@@ -182,7 +182,7 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
   // pour éviter la dépendance circulaire
 
   const stopRecording = useCallback(() => {
-    if (!recorderRef.current || !isRecording) {
+    if (!mediaRecorderRef.current || !isRecording) {
       console.log('No recording to stop');
       return;
     }
@@ -219,8 +219,8 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
         audioContextRef.current = null;
       }
       
-      recorderRef.current?.destroy();
-      recorderRef.current = null;
+      mediaRecorderRef.current = null;
+      audioChunksRef.current = [];
       
       setIsRecording(false);
       setAudioLevel(0);
@@ -233,44 +233,14 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       return;
     }
     
-    recorderRef.current.stopRecording(() => {
-      const blob = recorderRef.current?.getBlob();
-      if (blob && blob.size > 0) {
-        recordedAudioBlobRef.current = blob;
-        console.log(`Recording stopped successfully, blob size: ${blob.size} bytes`);
-        
-        // Envoyer automatiquement après un court délai
-        setTimeout(() => {
-          sendRecordedAudio();
-        }, 100);
-      } else {
-        console.error('No audio data captured');
-        toast({
-          title: "Erreur d'enregistrement",
-          description: "Aucune donnée audio capturée.",
-          variant: "destructive",
-        });
-      }
-      
-      // Nettoyer les ressources
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-      
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-      
-      // Détruire le recorder
-      recorderRef.current?.destroy();
-      recorderRef.current = null;
-    });
+    // Arrêter l'enregistrement
+    if (mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
     
     setIsRecording(false);
     setAudioLevel(0);
-  }, [isRecording, sendRecordedAudio, toast]);
+  }, [isRecording, toast]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -281,7 +251,9 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          sampleRate: 44100
+          sampleRate: 48000,
+          sampleSize: 24,      // 24 bits pour encore meilleure qualité
+          channelCount: 1       // Mono pour éviter les problèmes de phase
         } 
       });
       streamRef.current = stream;
@@ -289,23 +261,79 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       // Configurer l'analyseur audio
       setupAudioAnalyser(stream);
       
-      // Configuration RecordRTC
-      const options: RecordRTC.Options = {
-        type: 'audio',
-        mimeType: 'audio/webm',
-        recorderType: StereoAudioRecorder,
-        numberOfAudioChannels: 1,
-        desiredSampRate: 16000,
-        bufferSize: 16384,
-        timeSlice: 100, // Chunks toutes les 100ms
+      // Réinitialiser les chunks audio
+      audioChunksRef.current = [];
+      
+      // Déterminer le meilleur codec disponible
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/ogg;codecs=opus', 
+        'audio/webm',
+        'audio/mp4',
+      ];
+      
+      let selectedMimeType = 'audio/webm';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          console.log('Using mime type:', mimeType);
+          break;
+        }
+      }
+      
+      // Créer le MediaRecorder avec les meilleures options
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: selectedMimeType,
+        audioBitsPerSecond: 128000  // 128 kbps pour haute qualité
+      });
+      
+      // Gérer les données audio
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
       };
       
-      const recorder = new RecordRTC(stream, options);
-      recorderRef.current = recorder;
+      // Gérer la fin de l'enregistrement
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: selectedMimeType });
+        if (audioBlob.size > 0) {
+          recordedAudioBlobRef.current = audioBlob;
+          console.log(`Recording stopped successfully, blob size: ${audioBlob.size} bytes`);
+          
+          // Envoyer automatiquement après un court délai
+          setTimeout(() => {
+            sendRecordedAudio();
+          }, 100);
+        } else {
+          console.error('No audio data captured');
+          toast({
+            title: "Erreur d'enregistrement",
+            description: "Aucune donnée audio capturée.",
+            variant: "destructive",
+          });
+        }
+        
+        // Nettoyer les ressources
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
+        
+        mediaRecorderRef.current = null;
+        audioChunksRef.current = [];
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
       recordingStartTimeRef.current = Date.now();
       
-      // Démarrer l'enregistrement
-      recorder.startRecording();
+      // Démarrer l'enregistrement avec un intervalle de temps pour éviter le hachage
+      mediaRecorder.start(100); // Collecter les données toutes les 100ms
       setIsRecording(true);
       
       // Démarrer le monitoring du niveau audio
@@ -330,7 +358,7 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       });
       setIsRecording(false);
     }
-  }, [toast, setupAudioAnalyser, monitorAudioLevel, isDesktop, stopRecording]);
+  }, [toast, setupAudioAnalyser, monitorAudioLevel, isDesktop, stopRecording, sendRecordedAudio]);
 
   const resetAudio = useCallback(() => {
     recordedAudioBlobRef.current = null;
