@@ -18,21 +18,33 @@ const MessagesPage = () => {
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
+  const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
   const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined });
   const { projects } = useProjects();
   const { toast } = useToast();
 
-  // Initialiser l'état des attachments quand les messages sont chargés
+  // Initialiser l'état des attachments seulement une fois au chargement initial
   React.useEffect(() => {
-    const newAttachmentStates: Record<number, boolean> = {};
-    messages.forEach(msg => {
-      msg.attachments?.forEach(att => {
-        newAttachmentStates[att.id] = att.google_drive_backup || false;
+    if (!initializedRef.current && messages.length > 0) {
+      const newAttachmentStates: Record<number, boolean> = {};
+      messages.forEach(msg => {
+        if (Array.isArray(msg.attachments)) {
+          msg.attachments.forEach(att => {
+            newAttachmentStates[att.id] = att.google_drive_backup || false;
+          });
+        }
       });
-    });
-    setAttachmentStates(newAttachmentStates);
+      setAttachmentStates(newAttachmentStates);
+      initializedRef.current = true;
+    }
   }, [messages]);
+
+  // Réinitialiser quand les filtres changent
+  React.useEffect(() => {
+    initializedRef.current = false;
+    setAttachmentStates({});
+  }, [channelFilter, searchTag, selected.id]);
 
   const handleAssignProject = async (messageId: number, projectId: number | '') => {
     try {
@@ -167,7 +179,7 @@ const MessagesPage = () => {
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        {msg.tags?.map((t) => (
+                        {Array.isArray(msg.tags) && msg.tags.map((t) => (
                           <span key={t} className="px-2 py-0.5 rounded bg-muted/10 border border-border">#{t}</span>
                         ))}
                         <span className="ml-auto">{new Date(msg.received_at).toLocaleString()}</span>
@@ -193,7 +205,7 @@ const MessagesPage = () => {
                         <div className="mt-2 text-xs">
                           <div className="text-foreground/60 mb-2">Pièces jointes: {msg.attachments_count}</div>
                           <div className="flex flex-wrap gap-2">
-                            {msg.attachments?.map((att) => {
+                            {Array.isArray(msg.attachments) && msg.attachments.map((att) => {
                               const isInDrive = attachmentStates[att.id] ?? att.google_drive_backup ?? false;
                               return (
                                 <div key={att.id} className="flex items-center gap-1">

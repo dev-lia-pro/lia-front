@@ -4,7 +4,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore";
-import Index from "./pages/Index";
+import {Index} from "./pages";
 import NotFound from "./pages/NotFound";
 import LoginEmailPage1 from "./pages/LoginEmailPage1";
 import LoginEmailPage2 from "./pages/LoginEmailPage2";
