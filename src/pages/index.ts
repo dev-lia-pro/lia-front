@@ -1,4 +1,4 @@
-export { default as Index } from './Index';
+export { default as Index } from './Index.tsx';
 export { default as NotFound } from './NotFound';
 export { default as LoginEmailPage1 } from './LoginEmailPage1';
 export { default as LoginEmailPage2 } from './LoginEmailPage2';
