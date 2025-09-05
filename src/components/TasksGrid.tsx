@@ -215,6 +215,7 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
         isLoading={createTask.isPending || updateTask.isPending}
         projects={projects || []}
+        defaultPriority={urgentOnlyFilter ? 'URGENT' : undefined}
         defaultStatus={createDefaultStatus}
       />
 
