@@ -42,7 +42,7 @@ export const TaskColumn: React.FC<TaskColumnProps> = ({
   const isMobile = useIsMobile();
   const isHighlighted = dragOverStatus === status && tasks.length === 0;
   
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     handlers.onDragOver(e, status);
     
     if (tasks.length > 0) {

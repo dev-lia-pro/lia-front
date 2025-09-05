@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Calendar, MapPin, Users, Clock } from 'lucide-react';
-import { Button } from '@/componen../button';
+import { Button } from '@/components/ui/button';
 import { EventModal } from './EventModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { EventActions } from './EventActions';
@@ -178,7 +178,7 @@ export const EventsGrid = () => {
               </span>
 
               {/* Date et heure */}
-              <div className="text-sm text-foreground/70 text-center"
+              <div className="text-sm text-foreground/70 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Calendar className="w-3 h-3" />
                   <span>{formatDate(event.starts_at)}</span>
@@ -225,9 +225,10 @@ export const EventsGrid = () => {
       <DeleteConfirmModal
         isOpen={!!deletingEvent}
         onClose={() => setDeletingEvent(null)}
-        projectName={deletingEvent?.title || ''}
+        title="Supprimer l'événement"
+        message={`Êtes-vous sûr de vouloir supprimer l'événement "${deletingEvent?.title || ''}" ?`}
         onConfirm={handleDeleteEvent}
-        isLoading={deleteEvent.isPending}
+        loading={deleteEvent.isPending}
       />
     </section>
   );

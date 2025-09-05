@@ -15,7 +15,7 @@ const UserProfile = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<NavigationTab>('parametres');
+  const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
 
   // Mettre à jour les champs quand les données utilisateur sont chargées
   useEffect(() => {

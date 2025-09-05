@@ -26,7 +26,7 @@ import { ProjectsGrid } from '@/components/ProjectsGrid';
 import { AssistantHistory } from '@/components/AssistantHistory';
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = React.useState<NavigationTab>('parametres');
+  const [activeTab, setActiveTab] = React.useState<NavigationTab>('accueil');
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [testingConnection, setTestingConnection] = useState<number | null>(null);
@@ -678,7 +678,7 @@ const SettingsPage = () => {
         </DialogContent>
       </Dialog>
       
-      <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <BottomNavigation activeTab={activeTab} />
     </div>
   );
 };

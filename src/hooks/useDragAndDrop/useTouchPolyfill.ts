@@ -44,7 +44,9 @@ export const useTouchPolyfill = ({
         priority: 'MEDIUM',
         user: 0,
         created_at: '',
-        updated_at: ''
+        updated_at: '',
+        description: null,
+        created_by_ai: false
       };
       
       activeElementRef.current = taskElement;

@@ -1,7 +1,6 @@
 export { Dashboard } from './Dashboard';
 export { DashboardHeader } from './DashboardHeader';
 export { MainTitle } from './MainTitle';
-export { UrgentTasks } from './UrgentTasks';
 export { UpcomingMeetings } from './UpcomingMeetings';
 export { BottomNavigation } from './BottomNavigation';
 export { VoiceInput } from './VoiceInput';
@@ -25,7 +24,7 @@ export { ProjectIcon } from './ProjectIcon';
 export { ProjectModal } from './ProjectModal';
 export { ProjectsGrid } from './ProjectsGrid';
 export { ProtectedRoute } from './ProtectedRoute';
-export { PublicRoute } from './PublicRoute';
+export { default as PublicRoute } from './PublicRoute';
 export { ProviderForm } from './ProviderForm';
 export { TaskActions } from './TaskActions';
 export { TaskCard } from './TaskCard';
