@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Check, AlertCircle, Clock as ClockIcon } from 'lucide-react';
 import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import type { Event } from '@/hooks/useEvents';
 
@@ -86,6 +86,32 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4" />
               <div>{event.attendees.length} participant(s)</div>
+            </div>
+          )}
+
+          {event.provider === 'GOOGLE' && event.sync_status && (
+            <div className="flex items-center gap-2 text-sm">
+              {event.sync_status === 'SYNCED' && (
+                <>
+                  <Check className="h-4 w-4 text-green-500" />
+                  <div className="text-green-500">Synchronisé avec Google Calendar</div>
+                </>
+              )}
+              {event.sync_status === 'PENDING' && (
+                <>
+                  <ClockIcon className="h-4 w-4 text-yellow-500" />
+                  <div className="text-yellow-500">Synchronisation en attente</div>
+                </>
+              )}
+              {event.sync_status === 'FAILED' && (
+                <>
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <div className="text-red-500">
+                    Échec de synchronisation
+                    {event.sync_error && <div className="text-xs mt-1">{event.sync_error}</div>}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

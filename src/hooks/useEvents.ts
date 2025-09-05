@@ -12,6 +12,9 @@ export interface Event {
   attendees: string[];
   source_message?: number;
   project?: number;
+  sync_status?: 'PENDING' | 'SYNCED' | 'FAILED';
+  synced_at?: string;
+  sync_error?: string;
   created_at: string;
   updated_at: string;
 }
