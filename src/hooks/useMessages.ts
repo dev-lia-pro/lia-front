@@ -48,6 +48,7 @@ export interface MessageFilters {
   project?: number;
   channel?: Channel;
   tag?: string;
+  search?: string;
 }
 
 const MESSAGES_KEY = 'messages';
@@ -60,6 +61,7 @@ export const useMessages = (filters?: MessageFilters) => {
       if (filters?.project) params.append('project', String(filters.project));
       if (filters?.channel) params.append('channel', filters.channel);
       if (filters?.tag) params.append('tag', filters.tag);
+      if (filters?.search) params.append('search', filters.search);
       const res = await axios.get(`/messages/?${params.toString()}`);
       return res.data;
     },

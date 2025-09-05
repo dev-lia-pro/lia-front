@@ -10,7 +10,8 @@ import {
   Power,
   PowerOff,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Settings2
 } from 'lucide-react';
 import type { NavigationTab } from '@/types/navigation';
 import type { Provider } from '@/types/provider';
@@ -22,9 +23,10 @@ import type { ProviderCreate, ProviderUpdate } from '@/types/provider';
 import axios from '@/api/axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ProjectsGrid } from '@/components/ProjectsGrid';
+import { AssistantHistory } from '@/components/AssistantHistory';
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = React.useState<NavigationTab>('parametres');
+  const [activeTab, setActiveTab] = React.useState<NavigationTab>('accueil');
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [testingConnection, setTestingConnection] = useState<number | null>(null);
@@ -34,6 +36,9 @@ const SettingsPage = () => {
   const [syncingProvider, setSyncingProvider] = useState<number | null>(null);
   const [previewData, setPreviewData] = useState<unknown>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [configuringProvider, setConfiguringProvider] = useState<Provider | null>(null);
+  const [configJson, setConfigJson] = useState<string>('{}');
+  const [configError, setConfigError] = useState<string>('');
   
   const { toast } = useToast();
   const {
@@ -311,26 +316,26 @@ const SettingsPage = () => {
   }, [error, toast]);
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 py-6">
           {/* Section Projets */}
-          <Card className="bg-navy-card border-border mb-6">
+          <Card className="bg-card border-border mb-6">
             <CardContent className="pt-6">
               <ProjectsGrid />
             </CardContent>
           </Card>
 
           {/* Section des providers */}
-          <Card className="bg-navy-card border-border mb-6">
+          <Card className="bg-card border-border mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-semibold text-foreground">
                   Fournisseurs de données
                 </CardTitle>
-                <Button size="sm" onClick={() => setIsAddingProvider(true)} className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground" aria-label="Ajouter un fournisseur" title="Ajouter un fournisseur">
+                <Button size="sm" onClick={() => setIsAddingProvider(true)} className="h-9 w-9 p-0 border border-primary bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Ajouter un fournisseur" title="Ajouter un fournisseur">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -340,8 +345,8 @@ const SettingsPage = () => {
 
               {/* Formulaire d'ajout/édition */}
               {(isAddingProvider || editingProvider) && (
-                <div className="mb-6 p-4 bg-navy-deep rounded-lg border border-border">
-                  <h3 className="text-lg font-medium mb-4 text-foreground">
+                <div className="mb-6 p-4 bg-background rounded-lg border border-border">
+                  <h3 className="text-sm font-medium mb-4 text-foreground">
                     {editingProvider ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
                   </h3>
                   <ProviderForm
@@ -360,16 +365,16 @@ const SettingsPage = () => {
                 {Array.isArray(providers) && providers.map((provider) => (
                   <div
                     key={provider.id}
-                    className="flex items-center justify-between p-4 bg-navy-deep rounded-lg border border-border"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-background rounded-lg border border-border gap-4"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg bg-navy-card ${getProviderTypeColor(provider.provider_type)}`}>
+                      <div className={`p-3 rounded-lg bg-card ${getProviderTypeColor(provider.provider_type)}`}>
                         <span className="text-2xl">{getProviderIcon(provider.provider_type)}</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium text-foreground">{provider.name}</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-navy-card text-foreground/70">
+                          <span className="text-xs px-2 py-1 rounded-full bg-card text-foreground/70">
                             {getProviderTypeLabel(provider.provider_type)}
                           </span>
                           {provider.is_active ? (
@@ -398,13 +403,13 @@ const SettingsPage = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleTestConnection(provider.id)}
                         disabled={testingConnection === provider.id}
-                        className="border-border text-foreground hover:bg-navy-muted"
+                        className="border-border text-foreground hover:bg-muted"
                       >
                         {testingConnection === provider.id ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
@@ -417,7 +422,7 @@ const SettingsPage = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenPreview(provider)}
-                        className="border-border text-foreground hover:bg-navy-muted"
+                        className="border-border text-foreground hover:bg-muted"
                         aria-label="Synchroniser"
                         disabled={provider.provider_type === 'GOOGLE_DRIVE'}
                         title={provider.provider_type === 'GOOGLE_DRIVE' ? 'Pas de synchronisation pour Google Drive' : 'Synchroniser'}
@@ -427,6 +432,21 @@ const SettingsPage = () => {
                         ) : (
                           <RefreshCw className="w-4 h-4" />
                         )}
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setConfiguringProvider(provider);
+                          setConfigJson(JSON.stringify(provider.config || {}, null, 2));
+                          setConfigError('');
+                        }}
+                        className="border-border text-foreground hover:bg-muted"
+                        aria-label="Configurer"
+                        title="Configurer"
+                      >
+                        <Settings2 className="w-4 h-4" />
                       </Button>
                       
                       <Button
@@ -464,7 +484,7 @@ const SettingsPage = () => {
                   <div className="text-center py-8">
                     <button
 
-                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold border border-gold hover:bg-gold/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
+                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary border border-primary hover:bg-primary/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
                       type="button"
                     >
                       <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
@@ -486,8 +506,15 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
 
+          {/* Section Historique de l'assistant */}
+          <Card className="bg-card border-border mb-6 pt-6">
+            <CardContent>
+              <AssistantHistory />
+            </CardContent>
+          </Card>
+
           {/* Section des préférences (mock) */}
-          <Card className="bg-navy-card border-border">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-foreground">
                 Préférences générales
@@ -524,7 +551,7 @@ const SettingsPage = () => {
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       <Dialog open={!!previewProvider} onOpenChange={(open) => { if (!open) { setPreviewProvider(null); setPreviewData(null); setPreviewError(null); } }}>
-        <DialogContent className="max-w-3xl bg-navy-card border-border text-foreground">
+        <DialogContent className="max-w-3xl bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Aperçu des données</DialogTitle>
             <DialogDescription>
@@ -544,13 +571,114 @@ const SettingsPage = () => {
               </div>
             )}
             {!previewLoading && previewData && (
-              <pre className="max-h-[60vh] overflow-auto bg-navy-deep border border-border rounded-md p-3 text-xs text-foreground/90">
+              <pre className="max-h-[60vh] overflow-auto bg-background border border-border rounded-md p-3 text-xs text-foreground/90">
 {JSON.stringify(previewData, null, 2)}
               </pre>
             )}
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Dialog de configuration du provider */}
+      <Dialog open={!!configuringProvider} onOpenChange={(open) => {
+        if (!open) {
+          setConfiguringProvider(null);
+          setConfigJson('{}');
+          setConfigError('');
+        }
+      }}>
+        <DialogContent className="max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              Configuration de {configuringProvider?.name}
+            </DialogTitle>
+            <DialogDescription className="text-foreground/70">
+              Personnalisez les paramètres avancés du provider
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm text-foreground/70 block mb-2">
+                Configuration JSON
+              </label>
+              <textarea
+                value={configJson}
+                onChange={(e) => {
+                  setConfigJson(e.target.value);
+                  try {
+                    JSON.parse(e.target.value);
+                    setConfigError('');
+                  } catch (err) {
+                    setConfigError('JSON invalide');
+                  }
+                }}
+                className="w-full h-64 p-3 bg-background border border-border rounded-md text-foreground font-mono text-sm"
+                placeholder='{"folder_name": "SMS", "sync_interval": 600}'
+              />
+              {configError && (
+                <p className="text-red-400 text-xs mt-1">{configError}</p>
+              )}
+            </div>
+            
+            <div className="bg-background p-3 rounded-md border border-border">
+              <p className="text-sm text-foreground/70 mb-2">Exemples de configuration :</p>
+              <ul className="text-xs space-y-1 text-foreground/60">
+                <li>• <code>folder_name</code> : Nom du dossier pour Google Drive SMS</li>
+                <li>• <code>sync_interval</code> : Intervalle de synchronisation en secondes</li>
+                <li>• <code>max_results</code> : Nombre maximum de résultats par sync</li>
+                <li>• <code>days_back</code> : Nombre de jours d'historique à synchroniser</li>
+              </ul>
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setConfiguringProvider(null);
+                  setConfigJson('{}');
+                  setConfigError('');
+                }}
+                className="border-border text-foreground hover:bg-muted"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (configuringProvider && !configError) {
+                    try {
+                      const config = JSON.parse(configJson);
+                      const success = await updateProvider(configuringProvider.id, { config });
+                      if (success) {
+                        toast({
+                          title: "Configuration mise à jour",
+                          description: "Les paramètres ont été enregistrés avec succès.",
+                        });
+                        setConfiguringProvider(null);
+                        setConfigJson('{}');
+                        setConfigError('');
+                        fetchProviders(); // Rafraîchir la liste
+                      }
+                    } catch (err) {
+                      toast({
+                        title: "Erreur",
+                        description: "Impossible de sauvegarder la configuration.",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
+                disabled={!!configError || loading}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Enregistrer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      <BottomNavigation activeTab={activeTab} />
     </div>
   );
 };

@@ -15,7 +15,7 @@ const UserProfile = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<NavigationTab>('parametres');
+  const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
 
   // Mettre à jour les champs quand les données utilisateur sont chargées
   useEffect(() => {
@@ -61,13 +61,13 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <DashboardHeader />
         <div className="flex-1 overflow-y-auto pb-20">
           <div className="px-4 py-6">
             <div className="flex items-center justify-center min-h-[300px]">
               <div className="flex items-center gap-3">
-                <Loader2 className="h-6 w-6 animate-spin text-gold" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="text-foreground">Chargement...</span>
               </div>
             </div>
@@ -80,11 +80,11 @@ const UserProfile = () => {
 
   if (error && !user) {
     return (
-      <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
         <DashboardHeader />
         <div className="flex-1 overflow-y-auto pb-20">
           <div className="px-4 py-6">
-            <Card className="bg-navy-card border-border">
+            <Card className="bg-card border-border">
               <CardContent className="p-8 text-center">
                 <p className="text-red-400 mb-4">{error}</p>
                 <Button onClick={() => window.location.reload()}>
@@ -100,13 +100,13 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 py-6">
           {/* Profile Form */}
-          <Card className="bg-navy-card border-border">
+          <Card className="bg-card border-border">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold text-foreground">
                 Informations personnelles
@@ -149,7 +149,7 @@ const UserProfile = () => {
                   <Button 
                     type="submit" 
                     disabled={updating || !firstName.trim() || !lastName.trim() || !user}
-                    className="bg-gold hover:bg-gold/90 text-navy px-8"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
                   >
                     {updating ? (
                       <>

@@ -1,147 +1,164 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { useAudioRecording } from '@/hooks';
 
 interface VoiceInputProps {
   onResult?: (text: string) => void;
   className?: string;
+  inTopBar?: boolean;
 }
 
-export const VoiceInput: React.FC<VoiceInputProps> = ({ onResult, className = '' }) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const { toast } = useToast();
+export const VoiceInput: React.FC<VoiceInputProps> = ({ onResult, className = '', inTopBar = false }) => {
+  const {
+    isRecording,
+    isLoading,
+    audioLevel,
+    isDesktop,
+    startRecording,
+    stopRecording,
+  } = useAudioRecording(onResult);
+  
+  // Double vérification pour éviter les problèmes de détection
+  const isMobileDevice = window.innerWidth < 768;
 
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+  const isPressedRef = useRef(false);
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAudio(audioBlob);
-        
-        // Clean up
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'accéder au microphone. Vérifiez les permissions.",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsLoading(true);
-    }
-  }, [isRecording]);
-
-  const processAudio = async (audioBlob: Blob) => {
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock API response
-      const mockResponse = "Ça marche !";
-      
-      // Show the response
-      toast({
-        title: "Réponse vocale",
-        description: mockResponse,
-      });
-      
-      onResult?.(mockResponse);
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de traiter l'audio. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMouseDown = useCallback(() => {
-    if (!isRecording && !isLoading) {
+  // Desktop: clic pour start/stop
+  const handleDesktopClick = useCallback(() => {
+    if (isLoading) return;
+    
+    if (isRecording) {
+      stopRecording();
+    } else {
       startRecording();
     }
-  }, [isRecording, isLoading, startRecording]);
+  }, [isRecording, isLoading, startRecording, stopRecording]);
 
-  const handleMouseUp = useCallback(() => {
-    if (isRecording) {
+  // Mobile: push to talk (hold pour enregistrer, relâcher pour envoyer)
+  const handleMobileStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoading || isRecording) return;
+    
+    isPressedRef.current = true;
+    startRecording();
+  }, [isLoading, isRecording, startRecording]);
+
+  const handleMobileEnd = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (isPressedRef.current && isRecording) {
+      isPressedRef.current = false;
       stopRecording();
     }
   }, [isRecording, stopRecording]);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMouseDown();
-  }, [handleMouseDown]);
+  const handleMobileLeave = useCallback(() => {
+    if (isPressedRef.current && isRecording) {
+      isPressedRef.current = false;
+      stopRecording();
+    }
+  }, [isRecording, stopRecording]);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    handleMouseUp();
-  }, [handleMouseUp]);
+  // Nettoyer au démontage
+  useEffect(() => {
+    return () => {
+      if (isRecording) {
+        stopRecording();
+      }
+    };
+  }, []);
+
+  // Styles pour le bouton mobile dans la top bar
+  const mobileTopBarStyles = inTopBar ? `
+    w-10 h-10 min-w-[40px] max-w-[40px] rounded-full p-0 transition-all duration-200 border-2
+    ${isRecording 
+      ? 'bg-red-500 hover:bg-red-600 scale-110 border-red-600' 
+      : 'border-gold bg-navy-deep hover:bg-navy-muted'
+    }
+    flex-shrink-0 aspect-square overflow-hidden flex items-center justify-center
+  ` : '';
+
+  // Styles pour le bouton flottant (desktop ou mobile hors top bar)
+  const floatingButtonStyles = !inTopBar ? `
+    relative w-14 h-14 rounded-full p-0 transition-all duration-200
+    ${isRecording 
+      ? 'bg-red-500 hover:bg-red-600 scale-110' 
+      : 'bg-primary hover:bg-primary/90'
+    }
+    ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+    text-primary-foreground shadow-lg
+  ` : '';
+
+  // Pour mobile dans la top bar
+  if (isMobileDevice && inTopBar) {
+    return (
+      <Button
+        className={`${className} ${mobileTopBarStyles} relative`}
+        style={{ width: '40px', height: '40px', minWidth: '40px', maxWidth: '40px' }}
+        onTouchStart={handleMobileStart}
+        onTouchEnd={handleMobileEnd}
+        onTouchCancel={handleMobileEnd}
+        onMouseDown={handleMobileStart}
+        onMouseUp={handleMobileEnd}
+        onMouseLeave={handleMobileLeave}
+        disabled={isLoading}
+        title="Maintenez pour enregistrer (max 1 minute)"
+      >
+        {/* Icône ou spinner */}
+        {isLoading ? (
+          <svg className="w-5 h-5 animate-spin text-gold" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        ) : (
+          <Mic className={`w-5 h-5 ${isRecording ? 'text-white' : 'text-gold'}`} />
+        )}
+        
+        {/* Simple effet de pulsation quand actif */}
+        {isRecording && !isLoading && (
+          <div className="absolute inset-0 bg-red-500 rounded-full animate-pulse opacity-30" />
+        )}
+      </Button>
+    );
+  }
+
+  // Pour desktop ou mobile hors top bar (bouton flottant)
+  const handleClick = isDesktop ? handleDesktopClick : undefined;
+  const handleTouchStart = !isDesktop ? handleMobileStart : undefined;
+  const handleTouchEnd = !isDesktop ? handleMobileEnd : undefined;
 
   return (
-    <Button
-      className={`
-        ${className}
-        relative w-14 h-14 rounded-full p-0 transition-all duration-200
-        ${isRecording 
-          ? 'bg-red-500 hover:bg-red-600 scale-110 animate-pulse' 
-          : 'bg-gold hover:bg-gold/90'
+    <div className="fixed bottom-20 right-6 z-30">
+      <Button
+        className={`${className} ${floatingButtonStyles} relative`}
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onMouseLeave={!isDesktop ? handleMobileLeave : undefined}
+        disabled={isLoading}
+        title={
+          isDesktop 
+            ? (isRecording ? "Cliquez pour arrêter et envoyer" : "Cliquez pour commencer l'enregistrement")
+            : "Maintenez pour enregistrer (max 1 minute)"
         }
-        ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
-        text-navy shadow-lg active:scale-95
-      `}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp} // Stop recording if mouse leaves button
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      disabled={isLoading}
-    >
-      {isRecording ? (
-        <MicOff className="w-6 h-6" />
-      ) : (
-        <Mic className="w-6 h-6" />
-      )}
-      
-      {/* Recording indicator */}
-      {isRecording && (
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping" />
-      )}
-      
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gold/90 rounded-full">
-          <div className="w-6 h-6 border-2 border-navy border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-    </Button>
+      >
+        {/* Icône ou spinner */}
+        {isLoading ? (
+          <svg className="w-6 h-6 animate-spin" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        ) : (
+          <Mic className={`w-6 h-6 ${isRecording ? 'text-white' : ''}`} />
+        )}
+        
+        {/* Effet de pulsation simplifié */}
+        {isRecording && !isLoading && (
+          <div className="absolute inset-0 bg-red-500 rounded-full animate-pulse opacity-30" />
+        )}
+      </Button>
+    </div>
   );
 };

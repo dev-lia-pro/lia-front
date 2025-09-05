@@ -47,11 +47,11 @@ const LoginEmailPage1 = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-navy-deep p-4 md:p-0">
-      <div className="w-full max-w-md rounded-lg bg-navy-card p-8 shadow-card border border-border">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-0">
+      <div className="w-full max-w-md rounded-lg bg-card p-8 shadow-card border border-border">
         <div className="mb-4 flex justify-center">
-          <div className="w-20 h-20 rounded-full border-2 border-gold flex items-center justify-center bg-navy-deep">
-            <span className="text-gold font-bold text-2xl">L</span>
+          <div className="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center bg-background">
+            <span className="text-primary font-bold text-2xl">L</span>
           </div>
         </div>
 
@@ -76,7 +76,7 @@ const LoginEmailPage1 = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="block w-full rounded-lg border border-border bg-navy-muted p-4 text-sm text-foreground placeholder-muted-foreground focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-smooth"
+            className="block w-full rounded-lg border border-border bg-muted p-4 text-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-smooth"
             required
           />
         </form>
@@ -84,11 +84,11 @@ const LoginEmailPage1 = () => {
         <div className="mb-6 text-center text-sm text-muted-foreground">
           <p>
             En continuant, vous acceptez nos{' '}
-            <a href="/terms" className="text-gold hover:text-gold-muted transition-smooth">
+            <a href="/terms" className="text-primary hover:text-primary/80 transition-smooth">
               conditions d'utilisation
             </a>{' '}
             et notre{' '}
-            <a href="/privacy" className="text-gold hover:text-gold-muted transition-smooth">
+            <a href="/privacy" className="text-primary hover:text-primary/80 transition-smooth">
               politique de confidentialité
             </a>
           </p>
@@ -98,7 +98,7 @@ const LoginEmailPage1 = () => {
           type="submit"
           onClick={handleSubmit}
           disabled={isLoading}
-          className="mb-6 w-full rounded-lg bg-gold p-4 text-sm text-navy-deep font-semibold hover:bg-gold-muted disabled:opacity-50 transition-smooth"
+          className="mb-6 w-full rounded-lg bg-primary p-4 text-sm text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 transition-smooth"
         >
           {isLoading ? 'Envoi en cours...' : 'Envoyer le code'}
         </Button>

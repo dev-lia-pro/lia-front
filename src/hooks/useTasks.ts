@@ -11,6 +11,7 @@ export interface Task {
   project?: number;
   user: number;
   created_by_ai: boolean;
+  position: number;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +40,12 @@ export interface UpdateTaskData {
   priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   due_at?: string;
   project?: number | null;
+}
+
+export interface ReorderTaskData {
+  id: number;
+  target_position: number;
+  target_status: 'TODO' | 'IN_PROGRESS' | 'DONE';
 }
 
 export interface TaskFilters {
@@ -95,6 +102,19 @@ export const useTasks = (filters?: TaskFilters, options?: { enabled?: boolean })
   const deleteTask = useMutation({
     mutationFn: async (id: number): Promise<void> => {
       await axios.delete(`/tasks/${id}/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_KEY] });
+    },
+  });
+
+  const reorderTask = useMutation({
+    mutationFn: async (data: ReorderTaskData): Promise<Task> => {
+      const response = await axios.patch(`/tasks/${data.id}/reorder/`, {
+        target_position: data.target_position,
+        target_status: data.target_status
+      });
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [TASKS_QUERY_KEY] });
@@ -158,6 +178,7 @@ export const useTasks = (filters?: TaskFilters, options?: { enabled?: boolean })
     createTask,
     updateTask,
     deleteTask,
+    reorderTask,
     getTask,
     getTasksByStatus,
     getTasksByPriority,

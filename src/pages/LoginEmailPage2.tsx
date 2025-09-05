@@ -137,8 +137,8 @@ const LoginEmailPage2 = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-navy-deep p-4 md:p-0">
-      <div className="w-full max-w-md rounded-lg bg-navy-card p-8 shadow-card border border-border">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-0">
+      <div className="w-full max-w-md rounded-lg bg-card p-8 shadow-card border border-border">
         <h1 className="mb-4 text-center text-3xl font-bold text-foreground">
           Code envoyé dans votre boîte mail
         </h1>
@@ -169,7 +169,7 @@ const LoginEmailPage2 = () => {
                   onChange={(e) => handleInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg border border-border bg-navy-muted text-center text-sm font-bold text-foreground focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-smooth"
+                  className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg border border-border bg-muted text-center text-sm font-bold text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-smooth"
                 />
               ))}
             </div>
@@ -183,7 +183,7 @@ const LoginEmailPage2 = () => {
           {!isLoading && (
             <button
               onClick={handleResendCode}
-              className="text-sm font-bold text-gold underline hover:text-gold-muted transition-smooth"
+              className="text-sm font-bold text-primary underline hover:text-primary/80 transition-smooth"
             >
               Renvoyer le code
             </button>

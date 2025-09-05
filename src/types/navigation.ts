@@ -1,1 +1,1 @@
-export type NavigationTab = 'accueil' | 'projets' | 'boite' | 'agenda' | 'taches' | 'drive' | 'parametres';
+export type NavigationTab = 'accueil' | 'projets' | 'boite' | 'agenda' | 'taches' | 'drive';

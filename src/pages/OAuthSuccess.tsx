@@ -27,7 +27,7 @@ const OAuthSuccess = () => {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex items-center justify-center">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
       <div className="text-center p-8 max-w-md">
         <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-400" />
         <h1 className="text-2xl font-semibold mb-2 text-green-400">Authentification réussie !</h1>

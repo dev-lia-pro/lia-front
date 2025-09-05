@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { MoreVertical, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/componen../button';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/componen../dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 
 interface ProjectActionsProps {
   onEdit: () => void;

@@ -15,7 +15,7 @@ const OAuthError = () => {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex items-center justify-center">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
       <div className="text-center p-8 max-w-md">
         <XCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
         <h1 className="text-2xl font-semibold mb-2 text-red-400">Erreur d'authentification</h1>

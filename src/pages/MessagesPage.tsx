@@ -5,6 +5,7 @@ import type { NavigationTab } from '@/types/navigation';
 import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
+import { useDebounce } from '@/hooks/useDebounce';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -15,12 +16,19 @@ const MessagesPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
+  const [searchKeyword, setSearchKeyword] = React.useState<string>('');
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
-  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined });
+  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ 
+    channel: channelFilter, 
+    tag: searchTag || undefined, 
+    project: selected.id ?? undefined,
+    search: debouncedSearchKeyword || undefined
+  });
   const { projects } = useProjects();
   const { toast } = useToast();
 
@@ -98,21 +106,30 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-navy-deep text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
       
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-4 py-6">
           {/* En-tête et filtres */}
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 mb-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
+              <button onClick={() => refetch()} className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="Rechercher par mot-clé..."
+                className="bg-card border border-border rounded px-3 py-1.5 text-sm flex-1 min-w-[200px]"
+              />
               <select
-                className="bg-navy-card border border-border rounded px-2 py-1 text-sm"
+                className="bg-card border border-border rounded px-2 py-1.5 text-sm"
                 value={channelFilter ?? ''}
                 onChange={(e) => setChannelFilter((e.target.value || undefined) as Channel | undefined)}
               >
-                <option value="">Tous</option>
+                <option value="">Tous les canaux</option>
                 <option value="EMAIL">Emails</option>
                 <option value="SMS">SMS</option>
                 <option value="WHATSAPP">WhatsApp</option>
@@ -121,9 +138,8 @@ const MessagesPage = () => {
                 value={searchTag}
                 onChange={(e) => setSearchTag(e.target.value)}
                 placeholder="Filtrer par tag"
-                className="bg-navy-card border border-border rounded px-2 py-1 text-sm"
+                className="bg-card border border-border rounded px-2 py-1.5 text-sm"
               />
-              <button onClick={() => refetch()} className="border border-border bg-navy-card hover:bg-navy-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
             </div>
           </div>
 
@@ -132,7 +148,7 @@ const MessagesPage = () => {
             <div className="text-foreground/70">Chargement…</div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-navy-card border border-border flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
                 <svg className="w-8 h-8 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -140,10 +156,20 @@ const MessagesPage = () => {
               <p className="text-foreground/70 mb-2">Aucun message pour le moment</p>
               <p className="text-sm text-foreground/50">Vos messages apparaîtront ici</p>
             </div>
+          ) : messages.length === 0 && debouncedSearchKeyword ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
+                <svg className="w-8 h-8 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-foreground/70 mb-2">Aucun message trouvé</p>
+              <p className="text-sm text-foreground/50">Essayez avec d'autres mots-clés</p>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-navy-card border border-border rounded p-3">
+                <div key={msg.id} className="bg-card border border-border rounded p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
@@ -167,12 +193,12 @@ const MessagesPage = () => {
                               )}
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground">
-                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')} className="cursor-pointer hover:bg-navy-muted">
+                          <DropdownMenuContent align="start" className="bg-card border-border text-foreground">
+                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')} className="cursor-pointer hover:bg-muted">
                               Aucun projet
                             </DropdownMenuItem>
                             {projects.map((p) => (
-                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)} className="cursor-pointer hover:bg-muted">
                                 <span className="mr-2">{getIconByValue(p.icon)}</span>
                                 <span>{p.title || `Projet #${p.id}`}</span>
                               </DropdownMenuItem>
