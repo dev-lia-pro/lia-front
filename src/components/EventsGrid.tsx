@@ -149,7 +149,7 @@ export const EventsGrid = () => {
       {events.length === 0 ? (
         <EmptyState
           title="Aucun événement pour le moment"
-          description="Cliquez sur l'icône ci-dessus pour créer votre premier événement"
+          description="Cliquez sur le bouton + pour créer votre premier événement"
           onCreateClick={() => setIsCreateModalOpen(true)}
         />
       ) : (

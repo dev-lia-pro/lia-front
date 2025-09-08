@@ -493,17 +493,7 @@ const SettingsPage = () => {
                 
                 {(!Array.isArray(providers) || providers.length === 0) && !loading && (
                   <div className="text-center py-8">
-                    <button
-
-                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary border border-primary hover:bg-primary/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
-                      type="button"
-                    >
-                      <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
-                    </button>
                     <p className="text-foreground/70 mb-2">Aucun provider configuré</p>
-                    <p className="text-sm text-foreground/50">
-                      Ajoutez votre premier provider pour commencer à synchroniser vos données
-                    </p>
                   </div>
                 )}
 
