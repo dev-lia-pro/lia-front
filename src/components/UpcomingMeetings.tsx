@@ -229,7 +229,7 @@ export const UpcomingMeetings = () => {
       {allEvents.length === 0 ? (
         <EmptyState
           title="Aucune réunion prévue"
-          description="Cliquez sur l'icône ci-dessus pour créer votre premier événement"
+          description="Cliquez sur le bouton + pour planifier votre première réunion"
           onCreateClick={() => setIsCreateModalOpen(true)}
         />
       ) : (

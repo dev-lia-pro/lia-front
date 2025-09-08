@@ -120,15 +120,7 @@ export const ProjectsGrid = () => {
       
       {projects.length === 0 ? (
         <div className="text-center py-8">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold border border-gold hover:bg-gold/90 flex items-center justify-center transition-all duration-200 cursor-pointer group active:scale-95"
-            type="button"
-          >
-            <Plus className="w-8 h-8 text-primary-foreground transition-all duration-200" />
-          </button>
           <p className="text-foreground/70 mb-2">Aucun projet pour le moment</p>
-          <p className="text-sm text-foreground/50">Cliquez sur l'icône ci-dessus pour créer votre premier projet</p>
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">

@@ -79,17 +79,17 @@ export const TaskColumn: React.FC<TaskColumnProps> = ({
         <Button 
           size="icon" 
           onClick={() => onCreateClick(status)} 
-          className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground"
+          className="border border-primary bg-primary hover:bg-primary/90 text-primary-foreground w-9 h-9"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
         </Button>
       </div>
       
       <div className="flex flex-col min-h-[60px]">
         {tasks.length === 0 ? (
-          <div className="p-8 text-xs text-foreground/60 bg-card/50 rounded-xl border-2 border-dashed border-border/50 text-center">
-            <div className="mb-2">Aucune tâche</div>
-            <div className="text-[10px] text-foreground/40">Glissez une tâche ici</div>
+          <div className="p-6 sm:p-8 text-foreground/60 bg-card/50 rounded-xl border-2 border-dashed border-border/50 text-center flex flex-col items-center">
+            <div className="mb-2 text-sm sm:text-xs font-medium">Aucune tâche</div>
+            <div className="text-xs sm:text-[11px] text-foreground/40 mt-1">Glissez-en une ici</div>
           </div>
         ) : (
           <>
