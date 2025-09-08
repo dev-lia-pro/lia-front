@@ -281,9 +281,19 @@ export const EventsCalendar: React.FC = () => {
           const dayStart = startOfDay(day);
           const dayEnd = endOfDay(day);
           const dayEvents = sortedEvents.filter((ev) => {
-            const s = new Date(ev.starts_at);
-            const e = new Date(ev.ends_at);
-            return e >= dayStart && s <= dayEnd;
+            if (ev.is_all_day) {
+              // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+              const eventStart = new Date(ev.starts_at);
+              const eventEnd = new Date(ev.ends_at);
+              const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+              const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+              const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+              return currentDay >= eventStartDay && currentDay <= eventEndDay;
+            } else {
+              const s = new Date(ev.starts_at);
+              const e = new Date(ev.ends_at);
+              return e >= dayStart && s <= dayEnd;
+            }
           });
           const isDayHoverActive = hoveredDayKey === dayKey && hoveredEventId === null;
           return (
@@ -347,7 +357,9 @@ export const EventsCalendar: React.FC = () => {
                       )}
                       <div className="font-semibold">{ev.title}</div>
                       <div className="text-xs text-muted-foreground">
-                        {isMultiDay ? (
+                        {ev.is_all_day ? (
+                          <>Toute la journée {ev.location ? <>· {ev.location}</> : null}</>
+                        ) : isMultiDay ? (
                           isFirstDay ? (
                             <>À {formatHourShort(start)} {ev.location ? <>· {ev.location}</> : null}</>
                           ) : isLastDay ? (
@@ -408,9 +420,19 @@ export const EventsCalendar: React.FC = () => {
                 const dayStart = startOfDay(day);
                 const dayEnd = endOfDay(day);
                 const dayEvents = sortedEvents.filter((ev) => {
-                  const s = new Date(ev.starts_at);
-                  const e = new Date(ev.ends_at);
-                  return e >= dayStart && s <= dayEnd;
+                  if (ev.is_all_day) {
+                    // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+                    const eventStart = new Date(ev.starts_at);
+                    const eventEnd = new Date(ev.ends_at);
+                    const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+                    const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+                    const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+                    return currentDay >= eventStartDay && currentDay <= eventEndDay;
+                  } else {
+                    const s = new Date(ev.starts_at);
+                    const e = new Date(ev.ends_at);
+                    return e >= dayStart && s <= dayEnd;
+                  }
                 });
                 const isToday = localDateKey(new Date()) === dayKey;
                 const isDayHoverActive = hoveredDayKey === dayKey && hoveredEventId === null;
@@ -477,7 +499,9 @@ export const EventsCalendar: React.FC = () => {
                             )}
                             <div className="font-semibold truncate" title={ev.title}>{ev.title}</div>
                             <div className="text-[10px] text-muted-foreground">
-                              {isMultiDay ? (
+                              {ev.is_all_day ? (
+                                <>Toute la journée {ev.location ? <>· {ev.location}</> : null}</>
+                              ) : isMultiDay ? (
                                 isFirstDay ? (
                                   <>À {formatHourShort(start)} {ev.location ? <>· {ev.location}</> : null}</>
                                 ) : isLastDay ? (
@@ -521,9 +545,19 @@ export const EventsCalendar: React.FC = () => {
       const dayStart = startOfDay(day);
       const dayEnd = endOfDay(day);
       const dayEvents = sortedEvents.filter((ev) => {
-        const s = new Date(ev.starts_at);
-        const e = new Date(ev.ends_at);
-        return e >= dayStart && s <= dayEnd;
+        if (ev.is_all_day) {
+          // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+          const eventStart = new Date(ev.starts_at);
+          const eventEnd = new Date(ev.ends_at);
+          const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+          const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+          const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+          return currentDay >= eventStartDay && currentDay <= eventEndDay;
+        } else {
+          const s = new Date(ev.starts_at);
+          const e = new Date(ev.ends_at);
+          return e >= dayStart && s <= dayEnd;
+        }
       });
       return dayEvents.length > 0;
     });
@@ -535,9 +569,19 @@ export const EventsCalendar: React.FC = () => {
           const dayStart = startOfDay(day);
           const dayEnd = endOfDay(day);
           const dayEvents = sortedEvents.filter((ev) => {
-            const s = new Date(ev.starts_at);
-            const e = new Date(ev.ends_at);
-            return e >= dayStart && s <= dayEnd;
+            if (ev.is_all_day) {
+              // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+              const eventStart = new Date(ev.starts_at);
+              const eventEnd = new Date(ev.ends_at);
+              const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+              const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+              const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+              return currentDay >= eventStartDay && currentDay <= eventEndDay;
+            } else {
+              const s = new Date(ev.starts_at);
+              const e = new Date(ev.ends_at);
+              return e >= dayStart && s <= dayEnd;
+            }
           });
 
           return (
@@ -599,7 +643,9 @@ export const EventsCalendar: React.FC = () => {
                       <div>
                         <div className="font-semibold">{ev.title}</div>
                         <div className="text-xs text-muted-foreground">
-                          {isMultiDay ? (
+                          {ev.is_all_day ? (
+                            <>Toute la journée {ev.location ? `· ${ev.location}` : ''}</>
+                          ) : isMultiDay ? (
                             isFirstDisplayedDay ? (
                               <>À {formatHourShort(startDt)} {ev.location ? `· ${ev.location}` : ''}</>
                             ) : isLastDisplayedDay ? (

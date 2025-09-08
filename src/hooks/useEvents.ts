@@ -7,6 +7,7 @@ export interface Event {
   location?: string;
   starts_at: string;
   ends_at: string;
+  is_all_day: boolean;
   provider: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
   external_id?: string;
   attendees: string[];
@@ -24,6 +25,7 @@ export interface CreateEventData {
   location?: string;
   starts_at: string;
   ends_at: string;
+  is_all_day?: boolean;
   provider: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
   external_id?: string;
   attendees?: string[];
@@ -37,6 +39,7 @@ export interface UpdateEventData {
   location?: string;
   starts_at?: string;
   ends_at?: string;
+  is_all_day?: boolean;
   provider?: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
   external_id?: string;
   attendees?: string[];
