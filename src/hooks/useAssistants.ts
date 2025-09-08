@@ -27,7 +27,7 @@ export const useAssistants = (filters: AssistantFilters = {}) => {
   if (filters.has_audio_output !== undefined) queryParams.append('has_audio_output', filters.has_audio_output.toString());
 
   const queryString = queryParams.toString();
-  const url = `/assistant/${queryString ? `?${queryString}` : ''}`;
+  const url = `/assistant-run/${queryString ? `?${queryString}` : ''}`;
 
   const { data: assistants = [], isLoading, error } = useQuery({
     queryKey: ['assistants', filters],
