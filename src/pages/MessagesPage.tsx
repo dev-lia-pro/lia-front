@@ -9,8 +9,9 @@ import { useDebounce } from '@/hooks/useDebounce';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Cloud, CloudOff } from 'lucide-react';
+import { Cloud, CloudOff, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ContactDetailsModal } from '@/components/ContactDetailsModal';
 
 const MessagesPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
@@ -21,6 +22,7 @@ const MessagesPage = () => {
   const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
+  const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
   const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ 
@@ -213,7 +215,20 @@ const MessagesPage = () => {
 
                       {msg.channel === 'SMS' ? (
                         <div className="text-sm">
-                          <div className="text-foreground/70 truncate">{msg.sender}</div>
+                          <div className="text-foreground/70 truncate flex items-center gap-1">
+                            {msg.sender_contact ? (
+                              <button
+                                onClick={() => setSelectedContactId(msg.sender_contact!.id)}
+                                className="flex items-center gap-1 hover:text-primary transition-colors"
+                              >
+                                <User className="w-3 h-3" />
+                                <span className="font-medium">{msg.sender_contact.display_name}</span>
+                                <span className="text-xs">({msg.sender})</span>
+                              </button>
+                            ) : (
+                              msg.sender
+                            )}
+                          </div>
                           <div className="truncate">{msg.body_text || '(SMS)'}</div>
                         </div>
                       ) : (
@@ -222,7 +237,31 @@ const MessagesPage = () => {
                           className="text-left w-full"
                         >
                           <div className="font-medium truncate">{msg.subject || '(Sans objet)'}</div>
-                          <div className="text-sm text-foreground/70 truncate">{msg.sender}</div>
+                          <div className="text-sm text-foreground/70 truncate flex items-center gap-1">
+                            {msg.sender_contact ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedContactId(msg.sender_contact!.id);
+                                }}
+                                className="flex items-center gap-1 hover:text-primary transition-colors"
+                              >
+                                <User className="w-3 h-3" />
+                                <span className="font-medium">{msg.sender_contact.display_name}</span>
+                                <span className="text-xs ml-1">({msg.sender})</span>
+                              </button>
+                            ) : (
+                              msg.sender
+                            )}
+                          </div>
+                          {msg.recipient_contacts && msg.recipient_contacts.length > 0 && (
+                            <div className="text-xs text-foreground/60 mt-1">
+                              À: {msg.recipient_contacts.map(c => c.display_name).join(', ')}
+                              {msg.recipients.length > msg.recipient_contacts.length && 
+                                ` +${msg.recipients.length - msg.recipient_contacts.length} autre(s)`
+                              }
+                            </div>
+                          )}
                         </button>
                       )}
 
@@ -298,6 +337,11 @@ const MessagesPage = () => {
           )}
         </div>
       </div>
+      
+      <ContactDetailsModal 
+        contactId={selectedContactId}
+        onClose={() => setSelectedContactId(null)}
+      />
       
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>

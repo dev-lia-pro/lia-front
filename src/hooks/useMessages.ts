@@ -35,6 +35,17 @@ export interface Message {
   ingestion_source?: string;
   created_at: string;
   updated_at: string;
+  // Relations avec les contacts
+  sender_contact?: {
+    id: number;
+    display_name: string;
+    avatar_url?: string;
+  } | null;
+  recipient_contacts?: {
+    id: number;
+    display_name: string;
+    avatar_url?: string;
+  }[];
 }
 
 export interface PaginatedResponse<T> {

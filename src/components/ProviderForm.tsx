@@ -37,6 +37,12 @@ const getDefaultConfig = (providerType: string) => {
       return {
         folder_name: 'LIA'
       };
+    case 'GOOGLE_CONTACTS':
+      return {
+        sync_interval: 3600,
+        sync_groups: true,
+        auto_create_from_messages: true
+      };
     default:
       return {};
   }
@@ -101,6 +107,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return '💬';
       case 'GOOGLE_DRIVE':
         return '☁️';
+      case 'GOOGLE_CONTACTS':
+        return '👥';
       default:
         return '🔗';
     }
@@ -116,6 +124,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return 'Google Drive SMS';
       case 'GOOGLE_DRIVE':
         return 'Google Drive';
+      case 'GOOGLE_CONTACTS':
+        return 'Google Contacts';
       default:
         return type;
     }
