@@ -24,6 +24,7 @@ import axios from '@/api/axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ProjectsGrid } from '@/components/ProjectsGrid';
 import { AssistantHistory } from '@/components/AssistantHistory';
+import { ContactsSection } from '@/components/ContactsSection';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('accueil');
@@ -66,6 +67,8 @@ const SettingsPage = () => {
         return '💬';
       case 'GOOGLE_DRIVE':
         return '☁️';
+      case 'GOOGLE_CONTACTS':
+        return '👥';
       default:
         return '🔗';
     }
@@ -81,6 +84,8 @@ const SettingsPage = () => {
         return 'Google Drive SMS';
       case 'GOOGLE_DRIVE':
         return 'Google Drive';
+      case 'GOOGLE_CONTACTS':
+        return 'Google Contacts';
       default:
         return type;
     }
@@ -96,6 +101,8 @@ const SettingsPage = () => {
         return 'text-green-400';
       case 'GOOGLE_DRIVE':
         return 'text-orange-400';
+      case 'GOOGLE_CONTACTS':
+        return 'text-cyan-400';
       default:
         return 'text-gray-400';
     }
@@ -218,6 +225,8 @@ const SettingsPage = () => {
         url = `/providers/${provider.id}/sync_calendar/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE_SMS') {
         url = `/providers/${provider.id}/sync_sms/`;
+      } else if (provider.provider_type === 'GOOGLE_CONTACTS') {
+        url = `/providers/${provider.id}/sync_contacts/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE') {
         // Pour Google Drive, on ne lance pas de synchronisation automatique
         // car c'est principalement pour le stockage de fichiers
@@ -277,6 +286,8 @@ const SettingsPage = () => {
         axios.post(`/providers/${latestProvider.id}/sync_calendar/`, { days_back: 30, days_ahead: 30 });
       } else if (latestProvider.provider_type === 'GOOGLE_DRIVE_SMS') {
         axios.post(`/providers/${latestProvider.id}/sync_sms/`);
+      } else if (latestProvider.provider_type === 'GOOGLE_CONTACTS') {
+        axios.post(`/providers/${latestProvider.id}/sync_contacts/`);
       } else if (latestProvider.provider_type === 'GOOGLE_DRIVE') {
         // Pour Google Drive, on ne lance pas de synchronisation automatique
         // car c'est principalement pour le stockage de fichiers
@@ -503,6 +514,18 @@ const SettingsPage = () => {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Section Contacts */}
+          <Card className="bg-card border-border mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">
+                Contacts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ContactsSection />
             </CardContent>
           </Card>
 

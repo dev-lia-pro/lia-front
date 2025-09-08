@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
-  message: string;
-  loading?: boolean;
+  description: string;
 }
 
 export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
@@ -17,54 +24,48 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   onClose,
   onConfirm,
   title,
-  message,
-  loading = false
+  description,
 }) => {
-  if (!isOpen) return null;
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+      // Si onConfirm réussit, on ferme la modal
+      setIsDeleting(false);
+      onClose();
+    } catch (error) {
+      // En cas d'erreur, on réinitialise l'état pour permettre de réessayer
+      setIsDeleting(false);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="bg-navy-card border-border max-w-md w-full">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-500/20 text-red-400">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <CardTitle className="text-lg font-semibold text-foreground">
-              {title}
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-foreground/70">{message}</p>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-              className="border-border text-foreground hover:bg-navy-muted flex-1"
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={onConfirm}
-              disabled={loading}
-              className="bg-red-500 hover:bg-red-600 text-white flex-1"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Suppression...
-                </>
-              ) : (
-                <>Supprimer</>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <AlertDialog open={isOpen} onOpenChange={isDeleting ? undefined : onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+          <Button 
+            onClick={handleConfirm} 
+            disabled={isDeleting}
+            variant="destructive"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Suppression...
+              </>
+            ) : (
+              'Supprimer'
+            )}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
-
