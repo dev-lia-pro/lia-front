@@ -285,10 +285,12 @@ export const EventsCalendar: React.FC = () => {
               // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
               const eventStart = new Date(ev.starts_at);
               const eventEnd = new Date(ev.ends_at);
+              // Utiliser uniquement la date de début pour les événements all-day
+              // car ends_at est à 23:59:59 du même jour
               const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-              const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
               const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-              return currentDay >= eventStartDay && currentDay <= eventEndDay;
+              // Un événement all-day n'apparaît que sur son jour de début
+              return currentDay.getTime() === eventStartDay.getTime();
             } else {
               const s = new Date(ev.starts_at);
               const e = new Date(ev.ends_at);
@@ -424,10 +426,12 @@ export const EventsCalendar: React.FC = () => {
                     // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
                     const eventStart = new Date(ev.starts_at);
                     const eventEnd = new Date(ev.ends_at);
+                    // Utiliser uniquement la date de début pour les événements all-day
+                    // car ends_at est à 23:59:59 du même jour
                     const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-                    const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
                     const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-                    return currentDay >= eventStartDay && currentDay <= eventEndDay;
+                    // Un événement all-day n'apparaît que sur son jour de début
+                    return currentDay.getTime() === eventStartDay.getTime();
                   } else {
                     const s = new Date(ev.starts_at);
                     const e = new Date(ev.ends_at);
@@ -549,10 +553,12 @@ export const EventsCalendar: React.FC = () => {
           // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
           const eventStart = new Date(ev.starts_at);
           const eventEnd = new Date(ev.ends_at);
+          // Utiliser uniquement la date de début pour les événements all-day
+          // car ends_at est à 23:59:59 du même jour
           const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-          const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
           const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-          return currentDay >= eventStartDay && currentDay <= eventEndDay;
+          // Un événement all-day n'apparaît que sur son jour de début
+          return currentDay.getTime() === eventStartDay.getTime();
         } else {
           const s = new Date(ev.starts_at);
           const e = new Date(ev.ends_at);
@@ -573,10 +579,12 @@ export const EventsCalendar: React.FC = () => {
               // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
               const eventStart = new Date(ev.starts_at);
               const eventEnd = new Date(ev.ends_at);
+              // Utiliser uniquement la date de début pour les événements all-day
+              // car ends_at est à 23:59:59 du même jour
               const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-              const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
               const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-              return currentDay >= eventStartDay && currentDay <= eventEndDay;
+              // Un événement all-day n'apparaît que sur son jour de début
+              return currentDay.getTime() === eventStartDay.getTime();
             } else {
               const s = new Date(ev.starts_at);
               const e = new Date(ev.ends_at);
