@@ -69,6 +69,10 @@ const SettingsPage = () => {
         return '☁️';
       case 'GOOGLE_CONTACTS':
         return '👥';
+      case 'OUTLOOK_MAIL':
+        return '📧';
+      case 'OUTLOOK_CALENDAR':
+        return '📅';
       default:
         return '🔗';
     }
@@ -86,6 +90,10 @@ const SettingsPage = () => {
         return 'Google Drive';
       case 'GOOGLE_CONTACTS':
         return 'Google Contacts';
+      case 'OUTLOOK_MAIL':
+        return 'Outlook Mail';
+      case 'OUTLOOK_CALENDAR':
+        return 'Outlook Calendar';
       default:
         return type;
     }
@@ -103,6 +111,10 @@ const SettingsPage = () => {
         return 'text-orange-400';
       case 'GOOGLE_CONTACTS':
         return 'text-cyan-400';
+      case 'OUTLOOK_MAIL':
+        return 'text-indigo-400';
+      case 'OUTLOOK_CALENDAR':
+        return 'text-pink-400';
       default:
         return 'text-gray-400';
     }
