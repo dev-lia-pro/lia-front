@@ -397,6 +397,11 @@ const SettingsPage = () => {
                               Inactif
                             </span>
                           )}
+                          {provider.config?.read_only && (
+                            <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">
+                              Lecture seule
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-foreground/70">
                           Créé le {new Date(provider.created_at).toLocaleDateString('fr-FR')}

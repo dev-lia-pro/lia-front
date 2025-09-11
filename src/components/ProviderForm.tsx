@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Check, X, Loader2 } from 'lucide-react';
 import type { Provider, ProviderCreate, ProviderUpdate, ProviderTypeInfo } from '@/types/provider';
 import axios from '@/api/axios';
@@ -69,6 +70,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [readOnly, setReadOnly] = useState(false);
 
   const isEditing = !!provider;
 
@@ -139,7 +141,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
       // Demander l'URL d'autorisation au backend
       const { data } = await axios.post('/providers/start_oauth/', {
         name: formData.name,
-        provider_type: formData.provider_type
+        provider_type: formData.provider_type,
+        read_only: readOnly
       });
 
       const authUrl = data?.auth_url;
@@ -330,6 +333,24 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
             {types.find(t => t.value === formData.provider_type)?.description}
           </p>
         </div>
+
+        {/* Option Lecture seule */}
+        {(formData.provider_type === 'GOOGLE_CALENDAR' || 
+          formData.provider_type === 'GOOGLE_CONTACTS') && (
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="readOnly" 
+              checked={readOnly}
+              onCheckedChange={(checked) => setReadOnly(checked as boolean)}
+            />
+            <Label 
+              htmlFor="readOnly" 
+              className="text-sm text-foreground/70 cursor-pointer"
+            >
+              Lecture seule (synchronisation unidirectionnelle)
+            </Label>
+          </div>
+        )}
 
         {/* Erreur d'authentification */}
         {authError && (
