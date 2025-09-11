@@ -44,6 +44,19 @@ const getDefaultConfig = (providerType: string) => {
         sync_groups: true,
         auto_create_from_messages: true
       };
+    case 'OUTLOOK_MAIL':
+      return {
+        days_back: 10,
+        max_results: 50,
+        folder: 'Inbox'
+      };
+    case 'OUTLOOK_CALENDAR':
+      return {
+        calendar_id: 'primary',
+        days_back: 365,
+        days_ahead: 365,
+        read_only: true
+      };
     default:
       return {};
   }
@@ -111,6 +124,10 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return '☁️';
       case 'GOOGLE_CONTACTS':
         return '👥';
+      case 'OUTLOOK_MAIL':
+        return '📧';
+      case 'OUTLOOK_CALENDAR':
+        return '📅';
       default:
         return '🔗';
     }
@@ -128,6 +145,10 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return 'Google Drive';
       case 'GOOGLE_CONTACTS':
         return 'Google Contacts';
+      case 'OUTLOOK_MAIL':
+        return 'Outlook Mail';
+      case 'OUTLOOK_CALENDAR':
+        return 'Outlook Calendar';
       default:
         return type;
     }
