@@ -73,7 +73,7 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       });
 
       // Appeler l'API backend avec axios
-      const response = await axios.post('/assistant/process_audio_user_request/', formData, {
+      const response = await axios.post('/assistant-run/process_audio_user_request/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
