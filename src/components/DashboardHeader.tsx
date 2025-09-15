@@ -17,7 +17,6 @@ import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
 import { ProjectIcon } from '@/components/ProjectIcon';
 import { ProjectModal } from '@/components/ProjectModal';
-import { VoiceInput } from '@/components/VoiceInput';
 
 export const DashboardHeader = () => {
   const navigate = useNavigate();
@@ -29,13 +28,6 @@ export const DashboardHeader = () => {
   const { selected, setSelected } = useProjectStore();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   
-  // Détection mobile basée sur la largeur d'écran
-  const isMobile = window.innerWidth < 768; // Breakpoint sm de Tailwind
-  
-  const handleVoiceResult = (text: string) => {
-    console.log('Résultat vocal:', text);
-    // Traitement du résultat vocal
-  };
 
   const handleProfileClick = () => {
     navigate('/profile');
@@ -120,13 +112,8 @@ export const DashboardHeader = () => {
         </div>
       </div>
       
-      {/* Mobile: Voice Input + Profile Menu */}
+      {/* Profile Menu */}
       <div className="flex items-center gap-2">
-        {isMobile && (
-          <VoiceInput inTopBar={true} onResult={handleVoiceResult} />
-        )}
-        
-        {/* Profile Menu */}
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
