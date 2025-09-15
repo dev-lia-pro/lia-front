@@ -10,8 +10,6 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
   
-  // Détection desktop basée sur la largeur d'écran (sur mobile le micro est dans la top bar)
-  const isDesktop = window.innerWidth >= 768; // Breakpoint sm de Tailwind
 
   const handleVoiceResult = (text: string) => {
     console.log('Résultat vocal:', text);
@@ -25,9 +23,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   return (
     <>
       {children}
-      {/* Assistant vocal flottant uniquement sur desktop */}
-      {/* Sur mobile, il est intégré dans le DashboardHeader */}
-      {isDesktop && <VoiceInput onResult={handleVoiceResult} />}
+      {/* Assistant vocal flottant */}
+      <VoiceInput onResult={handleVoiceResult} />
     </>
   );
 };
