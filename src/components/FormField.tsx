@@ -48,12 +48,12 @@ export const FormField = ({ id, label, required, error, type, inputProps, textar
           value={selectProps?.value}
           onValueChange={selectProps?.onValueChange}
         >
-          <SelectTrigger className={fullClassName}>
+          <SelectTrigger>
             <SelectValue placeholder={selectProps?.placeholder} />
           </SelectTrigger>
-          <SelectContent className="bg-navy-card border-border text-foreground">
+          <SelectContent>
             {selectProps?.options.map((option) => (
-              <SelectItem key={option.value} value={option.value} className="hover:bg-navy-muted focus:bg-navy-muted">
+              <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
             ))}

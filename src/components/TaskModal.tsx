@@ -176,13 +176,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="TODO" className={getStatusColor('TODO')}>
+                <SelectItem value="TODO">
                   À faire
                 </SelectItem>
-                <SelectItem value="IN_PROGRESS" className={getStatusColor('IN_PROGRESS')}>
+                <SelectItem value="IN_PROGRESS">
                   En cours
                 </SelectItem>
-                <SelectItem value="DONE" className={getStatusColor('DONE')}>
+                <SelectItem value="DONE">
                   Terminé
                 </SelectItem>
               </SelectContent>
@@ -199,16 +199,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LOW" className={getPriorityColor('LOW')}>
+                <SelectItem value="LOW">
                   Basse
                 </SelectItem>
-                <SelectItem value="MEDIUM" className={getPriorityColor('MEDIUM')}>
+                <SelectItem value="MEDIUM">
                   Moyenne
                 </SelectItem>
-                <SelectItem value="HIGH" className={getPriorityColor('HIGH')}>
+                <SelectItem value="HIGH">
                   Haute
                 </SelectItem>
-                <SelectItem value="URGENT" className={getPriorityColor('URGENT')}>
+                <SelectItem value="URGENT">
                   Urgente
                 </SelectItem>
               </SelectContent>

@@ -292,10 +292,10 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
               onValueChange={(value) => handleInputChange('provider', value)}
               disabled={true}
             >
-              <SelectTrigger className="bg-navy-muted border-border text-foreground focus:border-gold focus:ring-gold disabled:opacity-50">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-navy-card border-border text-foreground">
+              <SelectContent>
                 <SelectItem value="GOOGLE">Google</SelectItem>
                 <SelectItem value="OUTLOOK">Outlook</SelectItem>
                 <SelectItem value="ICAL">iCal</SelectItem>
