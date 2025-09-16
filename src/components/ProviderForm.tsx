@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Check, X, Loader2 } from 'lucide-react';
 import type { Provider, ProviderCreate, ProviderUpdate, ProviderTypeInfo } from '@/types/provider';
 import axios from '@/api/axios';
@@ -328,25 +335,34 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           <Label htmlFor="provider_type" className="text-sm text-foreground/70">
             Type de fournisseur *
           </Label>
-          <select
-            id="provider_type"
+          <Select
             value={formData.provider_type}
-            onChange={(e) => {
-              const newType = e.target.value as ProviderTypeInfo['value'];
-              setFormData({ 
-                ...formData, 
+            onValueChange={(value) => {
+              const newType = value as ProviderTypeInfo['value'];
+              setFormData({
+                ...formData,
                 provider_type: newType,
                 config: getDefaultConfig(newType)
               });
             }}
-            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
           >
-            {types.map((type) => (
-              <option key={type.value} value={type.value}>
-                {getProviderTypeIcon(type.value)} {type.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un type de fournisseur" />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((type) => (
+                <SelectItem
+                  key={type.value}
+                  value={type.value}
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{getProviderTypeIcon(type.value)}</span>
+                    <span>{type.label}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="p-3 bg-background rounded-lg border border-border">
@@ -442,25 +458,34 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           <Label htmlFor="provider_type" className="text-sm text-foreground/70">
             Type de fournisseur *
           </Label>
-          <select
-            id="provider_type"
+          <Select
             value={formData.provider_type}
-            onChange={(e) => {
-              const newType = e.target.value as ProviderTypeInfo['value'];
-              setFormData({ 
-                ...formData, 
+            onValueChange={(value) => {
+              const newType = value as ProviderTypeInfo['value'];
+              setFormData({
+                ...formData,
                 provider_type: newType,
                 config: getDefaultConfig(newType)
               });
             }}
-            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
           >
-            {types.map((type) => (
-              <option key={type.value} value={type.value}>
-                {getProviderTypeIcon(type.value)} {type.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue placeholder="Sélectionner un type de fournisseur" />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((type) => (
+                <SelectItem
+                  key={type.value}
+                  value={type.value}
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{getProviderTypeIcon(type.value)}</span>
+                    <span>{type.label}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

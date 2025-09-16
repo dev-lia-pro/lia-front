@@ -306,7 +306,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                     value={email.label}
                     onValueChange={(value) => updateEmail(index, 'label', value)}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -367,7 +367,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                     value={phone.label}
                     onValueChange={(value) => updatePhone(index, 'label', value)}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -423,7 +423,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                     value={address.label}
                     onValueChange={(value) => updateAddress(index, 'label', value)}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

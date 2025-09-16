@@ -8,6 +8,7 @@ import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { Cloud, CloudOff, Download, Search, FolderOpen, HardDrive, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Attachment {
   id: number;
@@ -191,15 +192,19 @@ const DrivePage = () => {
 
               {/* Filtre par statut Drive */}
               <div className="min-w-[200px]">
-                <select
+                <Select
                   value={driveFilter}
-                  onChange={(e) => setDriveFilter(e.target.value as 'all' | 'in_drive' | 'not_in_drive')}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground"
+                  onValueChange={(value) => setDriveFilter(value as 'all' | 'in_drive' | 'not_in_drive')}
                 >
-                  <option value="all">Tous les fichiers</option>
-                  <option value="in_drive">Dans Google Drive</option>
-                  <option value="not_in_drive">Pas dans Google Drive</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Tous les fichiers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les fichiers</SelectItem>
+                    <SelectItem value="in_drive">Dans Google Drive</SelectItem>
+                    <SelectItem value="not_in_drive">Pas dans Google Drive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

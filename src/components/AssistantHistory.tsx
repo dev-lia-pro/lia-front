@@ -4,6 +4,7 @@ import { AudioPlayer } from './AudioPlayer';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -47,16 +48,20 @@ export const AssistantHistory: React.FC = () => {
           Historique de l'assistant ({assistants.length})
         </CardTitle>
         
-        <select
-          className="bg-card border border-border rounded px-2 py-1 text-sm text-foreground"
+        <Select
           value={methodFilter}
-          onChange={(e) => setMethodFilter(e.target.value)}
+          onValueChange={setMethodFilter}
         >
-          <option value="all">Toutes les méthodes</option>
-          <option value="audio_user_request">Demande vocale</option>
-          <option value="user_request">Demande texte</option>
-          <option value="message">Analyse de message</option>
-        </select>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Toutes les méthodes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les méthodes</SelectItem>
+            <SelectItem value="audio_user_request">Demande vocale</SelectItem>
+            <SelectItem value="user_request">Demande texte</SelectItem>
+            <SelectItem value="message">Analyse de message</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Résultats */}

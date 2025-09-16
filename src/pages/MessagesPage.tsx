@@ -9,9 +9,12 @@ import { useDebounce } from '@/hooks/useDebounce';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Cloud, CloudOff, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ContactDetailsModal } from '@/components/ContactDetailsModal';
+import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
+import { useQueryClient } from '@tanstack/react-query';
 
 const MessagesPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
@@ -19,7 +22,7 @@ const MessagesPage = () => {
   const [searchTag, setSearchTag] = React.useState<string>('');
   const [searchKeyword, setSearchKeyword] = React.useState<string>('');
   const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
-  const [selectedMessage, setSelectedMessage] = React.useState<Message | null>(null);
+  const [selectedMessageDialog, setSelectedMessageDialog] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
@@ -56,12 +59,37 @@ const MessagesPage = () => {
     setAttachmentStates({});
   }, [channelFilter, searchTag, selected.id]);
 
+  const queryClient = useQueryClient();
+
   const handleAssignProject = async (messageId: number, projectId: number | '') => {
+    const newProjectId = projectId === '' ? null : projectId;
+
+    // Update local state immediately for instant feedback
+    queryClient.setQueryData(['messages', { channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, search: debouncedSearchKeyword || undefined }], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        results: oldData.results.map((msg: Message) =>
+          msg.id === messageId ? { ...msg, project: newProjectId } : msg
+        )
+      };
+    });
+
+    // Also update selectedMessageDialog if it's the same message
+    if (selectedMessageDialog?.id === messageId) {
+      setSelectedMessageDialog(prev => prev ? { ...prev, project: newProjectId } : null);
+    }
+
     try {
-      await axios.patch(`/messages/${messageId}/`, { project: projectId || null });
-      refetch();
+      await axios.patch(`/messages/${messageId}/`, { project: newProjectId });
     } catch (e) {
-      // ignore
+      // Revert on error
+      refetch();
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le projet",
+        variant: "destructive",
+      });
     }
   };
 
@@ -119,34 +147,38 @@ const MessagesPage = () => {
               <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
               <button onClick={() => refetch()} className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               <input
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
-                placeholder="Rechercher par mot-clé..."
-                className="bg-card border border-border rounded px-3 py-1.5 text-sm flex-1 min-w-[200px]"
+                placeholder="Rechercher..."
+                className="bg-card border border-border rounded px-3 py-1.5 text-sm w-full"
               />
-              <select
-                className="bg-card border border-border rounded px-2 py-1.5 text-sm"
-                value={channelFilter ?? ''}
-                onChange={(e) => setChannelFilter((e.target.value || undefined) as Channel | undefined)}
+              <Select
+                value={channelFilter ?? 'ALL'}
+                onValueChange={(value) => setChannelFilter(value === 'ALL' ? undefined : value as Channel)}
               >
-                <option value="">Tous les canaux</option>
-                <option value="EMAIL">Emails</option>
-                <option value="SMS">SMS</option>
-                <option value="WHATSAPP">WhatsApp</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Tous les canaux" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tous les canaux</SelectItem>
+                  <SelectItem value="EMAIL">Emails</SelectItem>
+                  <SelectItem value="SMS">SMS</SelectItem>
+                  <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
+                </SelectContent>
+              </Select>
               <input
                 value={searchTag}
                 onChange={(e) => setSearchTag(e.target.value)}
                 placeholder="Filtrer par tag"
-                className="bg-card border border-border rounded px-2 py-1.5 text-sm"
+                className="bg-card border border-border rounded px-3 py-1.5 text-sm w-full sm:col-span-2 lg:col-span-1"
               />
             </div>
           </div>
 
           {/* Liste des messages */}
-          {isLoading || isFetching ? (
+          {isLoading ? (
             <div className="text-foreground/70">Chargement…</div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
@@ -172,13 +204,18 @@ const MessagesPage = () => {
             <div className="grid grid-cols-1 gap-3">
               {messages.map((msg) => (
                 <div key={msg.id} className="bg-card border border-border rounded p-3">
-                  <div className="flex items-start justify-between gap-3">
+                  <button
+                    onClick={() => setSelectedMessageDialog(msg)}
+                    className="w-full text-left hover:opacity-80 transition-opacity"
+                  >
+                    <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
                         <span className="px-2 py-0.5 rounded bg-muted/10 border border-border">{msg.channel}</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
+                              onClick={(e) => e.stopPropagation()}
                               className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs"
                               aria-label="Changer le projet"
                               title="Changer le projet"
@@ -196,11 +233,11 @@ const MessagesPage = () => {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" className="bg-card border-border text-foreground">
-                            <DropdownMenuItem onClick={() => handleAssignProject(msg.id, '')} className="cursor-pointer hover:bg-muted">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAssignProject(msg.id, ''); }} className="cursor-pointer hover:bg-muted">
                               Aucun projet
                             </DropdownMenuItem>
                             {projects.map((p) => (
-                              <DropdownMenuItem key={p.id} onClick={() => handleAssignProject(msg.id, p.id)} className="cursor-pointer hover:bg-muted">
+                              <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); handleAssignProject(msg.id, p.id); }} className="cursor-pointer hover:bg-muted">
                                 <span className="mr-2">{getIconByValue(p.icon)}</span>
                                 <span>{p.title || `Projet #${p.id}`}</span>
                               </DropdownMenuItem>
@@ -217,14 +254,17 @@ const MessagesPage = () => {
                         <div className="text-sm">
                           <div className="text-foreground/70 truncate flex items-center gap-1">
                             {msg.sender_contact ? (
-                              <button
-                                onClick={() => setSelectedContactId(msg.sender_contact!.id)}
-                                className="flex items-center gap-1 hover:text-primary transition-colors"
+                              <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedContactId(msg.sender_contact!.id);
+                                }}
+                                className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
                               >
                                 <User className="w-3 h-3" />
                                 <span className="font-medium">{msg.sender_contact.display_name}</span>
                                 <span className="text-xs">({msg.sender})</span>
-                              </button>
+                              </span>
                             ) : (
                               msg.sender
                             )}
@@ -232,24 +272,21 @@ const MessagesPage = () => {
                           <div className="truncate">{msg.body_text || '(SMS)'}</div>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setSelectedMessage(selectedMessage?.id === msg.id ? null : msg)}
-                          className="text-left w-full"
-                        >
+                        <>
                           <div className="font-medium truncate">{msg.subject || '(Sans objet)'}</div>
                           <div className="text-sm text-foreground/70 truncate flex items-center gap-1">
                             {msg.sender_contact ? (
-                              <button
+                              <span
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedContactId(msg.sender_contact!.id);
                                 }}
-                                className="flex items-center gap-1 hover:text-primary transition-colors"
+                                className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
                               >
                                 <User className="w-3 h-3" />
                                 <span className="font-medium">{msg.sender_contact.display_name}</span>
                                 <span className="text-xs ml-1">({msg.sender})</span>
-                              </button>
+                              </span>
                             ) : (
                               msg.sender
                             )}
@@ -257,17 +294,17 @@ const MessagesPage = () => {
                           {msg.recipient_contacts && msg.recipient_contacts.length > 0 && (
                             <div className="text-xs text-foreground/60 mt-1">
                               À: {msg.recipient_contacts.map(c => c.display_name).join(', ')}
-                              {msg.recipients.length > msg.recipient_contacts.length && 
+                              {msg.recipients.length > msg.recipient_contacts.length &&
                                 ` +${msg.recipients.length - msg.recipient_contacts.length} autre(s)`
                               }
                             </div>
                           )}
-                        </button>
+                        </>
                       )}
 
                       {/* Pièces jointes */}
                       {msg.attachments_count > 0 && (
-                        <div className="mt-2 text-xs">
+                        <div className="mt-2 text-xs" onClick={(e) => e.stopPropagation()}>
                           <div className="text-foreground/60 mb-2">Pièces jointes: {msg.attachments_count}</div>
                           <div className="flex flex-wrap gap-2">
                             {Array.isArray(msg.attachments) && msg.attachments.map((att) => {
@@ -275,7 +312,10 @@ const MessagesPage = () => {
                               return (
                                 <div key={att.id} className="flex items-center gap-1">
                                   <button
-                                    onClick={() => handleSaveInDrive(att.id, msg.id, !!isInDrive)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSaveInDrive(att.id, msg.id, !!isInDrive);
+                                    }}
                                     onMouseEnter={() => setHoveredAttachment(att.id)}
                                     onMouseLeave={() => setHoveredAttachment(null)}
                                     className={`p-1 rounded hover:bg-muted/20 transition-colors ${
@@ -298,6 +338,7 @@ const MessagesPage = () => {
                                       href={att.url}
                                       target="_blank"
                                       rel="noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
                                       className="px-2 py-0.5 rounded border border-border hover:bg-muted/10"
                                       title={`Ouvrir ${att.filename}`}
                                     >
@@ -320,17 +361,8 @@ const MessagesPage = () => {
                       
                     </div>
                   </div>
+                </button>
 
-                  {/* Panneau de détail pour EMAIL/WHATSAPP */}
-                  {selectedMessage?.id === msg.id && msg.channel !== 'SMS' && (
-                    <div className="mt-3 border-t border-border pt-3">
-                      {msg.body_html ? (
-                        <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: msg.body_html }} />
-                      ) : (
-                        <pre className="whitespace-pre-wrap text-sm text-foreground/80">{msg.body_text}</pre>
-                      )}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -338,7 +370,17 @@ const MessagesPage = () => {
         </div>
       </div>
       
-      <ContactDetailsModal 
+      <MessageDetailsDialog
+        message={selectedMessageDialog}
+        projects={projects}
+        onClose={() => setSelectedMessageDialog(null)}
+        onSaveInDrive={handleSaveInDrive}
+        attachmentStates={attachmentStates}
+        onContactClick={setSelectedContactId}
+        onAssignProject={handleAssignProject}
+      />
+
+      <ContactDetailsModal
         contactId={selectedContactId}
         onClose={() => setSelectedContactId(null)}
       />
