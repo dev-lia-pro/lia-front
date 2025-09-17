@@ -6,6 +6,7 @@ import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useSearchParams } from 'react-router-dom';
 import axios from '@/api/axios';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -17,6 +18,7 @@ import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
 import { useQueryClient } from '@tanstack/react-query';
 
 const MessagesPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
@@ -28,9 +30,9 @@ const MessagesPage = () => {
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
-  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({ 
-    channel: channelFilter, 
-    tag: searchTag || undefined, 
+  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({
+    channel: channelFilter,
+    tag: searchTag || undefined,
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined
   });
@@ -58,6 +60,19 @@ const MessagesPage = () => {
     initializedRef.current = false;
     setAttachmentStates({});
   }, [channelFilter, searchTag, selected.id]);
+
+  // Ouvrir le message spécifié dans les query params
+  React.useEffect(() => {
+    const messageId = searchParams.get('message');
+    if (messageId && messages.length > 0) {
+      const message = messages.find(m => m.id === parseInt(messageId));
+      if (message) {
+        setSelectedMessageDialog(message);
+        // Nettoyer le query param après ouverture
+        setSearchParams({});
+      }
+    }
+  }, [messages, searchParams, setSearchParams]);
 
   const queryClient = useQueryClient();
 

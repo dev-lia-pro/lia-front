@@ -57,7 +57,7 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
         starts_at: formatLocalDateInput(new Date(event.starts_at), event.is_all_day),
         ends_at: formatLocalDateInput(new Date(event.ends_at), event.is_all_day),
         is_all_day: event.is_all_day || false,
-        provider: event.provider,
+        provider: 'GOOGLE',  // Default to GOOGLE for now, as we don't edit provider
         external_id: event.external_id || '',
         attendees: event.attendees || [],
         project: event.project,

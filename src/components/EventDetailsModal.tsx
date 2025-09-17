@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Check, AlertCircle, Clock as ClockIcon } from 'lucide-react';
+import { Edit, Trash2, Check, AlertCircle, Clock as ClockIcon, Mail, MessageSquare } from 'lucide-react';
 import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import type { Event } from '@/hooks/useEvents';
 
@@ -33,6 +33,21 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   const fmtDate = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
   const fmtTime = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+
+  const getProviderDisplay = (providerType?: string) => {
+    const providers: Record<string, { icon: React.ReactNode; label: string }> = {
+      'GMAIL': { icon: <Mail className="h-4 w-4" />, label: 'Gmail' },
+      'GOOGLE_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Google Calendar' },
+      'SMS': { icon: <MessageSquare className="h-4 w-4" />, label: 'SMS' },
+      'WHATSAPP': { icon: <MessageSquare className="h-4 w-4" />, label: 'WhatsApp' },
+      'OUTLOOK': { icon: <Mail className="h-4 w-4" />, label: 'Outlook' },
+      'OUTLOOK_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Outlook Calendar' },
+    };
+
+    if (!providerType) return null;
+    return providers[providerType] || null;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,7 +104,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             </div>
           )}
 
-          {event.provider === 'GOOGLE' && event.sync_status && (
+          {event.provider_type && (
+            <div className="flex items-center gap-2 text-sm">
+              {getProviderDisplay(event.provider_type)?.icon}
+              <div>Source: {getProviderDisplay(event.provider_type)?.label}</div>
+            </div>
+          )}
+
+          {event.provider_type === 'GOOGLE_CALENDAR' && event.sync_status && (
             <div className="flex items-center gap-2 text-sm">
               {event.sync_status === 'SYNCED' && (
                 <>

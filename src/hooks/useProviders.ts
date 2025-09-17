@@ -75,10 +75,8 @@ export const useProviders = () => {
 
   // Supprimer un provider avec TanStack Query
   const deleteProviderMutation = useMutation({
-    mutationFn: async ({ id, cascade = true }: { id: number; cascade?: boolean }): Promise<void> => {
-      await axios.delete(`/providers/${id}/`, {
-        params: { cascade }
-      });
+    mutationFn: async (id: number): Promise<void> => {
+      await axios.delete(`/providers/${id}/`);
     },
     onSuccess: () => {
       // Invalider et rafraîchir la liste des providers
@@ -127,9 +125,9 @@ export const useProviders = () => {
     }
   };
 
-  const deleteProvider = async (id: number, cascade: boolean = true): Promise<boolean> => {
+  const deleteProvider = async (id: number): Promise<boolean> => {
     try {
-      await deleteProviderMutation.mutateAsync({ id, cascade });
+      await deleteProviderMutation.mutateAsync(id);
       return true;
     } catch (error) {
       return false;

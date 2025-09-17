@@ -9,6 +9,8 @@ export interface Task {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   due_at?: string;
   project?: number;
+  source_message?: number;
+  source_provider_type?: string;
   user: number;
   created_by_ai: boolean;
   position: number;
