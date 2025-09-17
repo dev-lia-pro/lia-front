@@ -66,10 +66,12 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
       // Créer un FormData pour envoyer le fichier audio
       const formData = new FormData();
       formData.append('audio_file', recordedAudioBlobRef.current, 'recording.webm');
+      formData.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone);
       
       console.log('FormData created with audio file:', {
         hasAudioFile: formData.has('audio_file'),
-        audioFileSize: recordedAudioBlobRef.current.size
+        audioFileSize: recordedAudioBlobRef.current.size,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
 
       // Appeler l'API backend avec axios
