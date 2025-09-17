@@ -317,6 +317,10 @@ const SettingsPage = () => {
         url = `/providers/${provider.id}/sync_sms/`;
       } else if (provider.provider_type === 'GOOGLE_CONTACTS') {
         url = `/providers/${provider.id}/sync_contacts/`;
+      } else if (provider.provider_type === 'OUTLOOK_MAIL') {
+        url = `/providers/${provider.id}/sync_emails/`;
+      } else if (provider.provider_type === 'OUTLOOK_CALENDAR') {
+        url = `/providers/${provider.id}/sync_calendar/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE') {
         // Pour Google Drive, on ne lance pas de synchronisation automatique
         // car c'est principalement pour le stockage de fichiers
@@ -371,13 +375,17 @@ const SettingsPage = () => {
       
       // Lancer la synchronisation selon le type de provider
       if (latestProvider.provider_type === 'GMAIL') {
-        axios.post(`/providers/${latestProvider.id}/sync_emails/`, { max: 50 });
+        axios.post(`/providers/${latestProvider.id}/sync_emails/`, {});
       } else if (latestProvider.provider_type === 'GOOGLE_CALENDAR') {
-        axios.post(`/providers/${latestProvider.id}/sync_calendar/`, { days_back: 30, days_ahead: 30 });
+        axios.post(`/providers/${latestProvider.id}/sync_calendar/`, {});
       } else if (latestProvider.provider_type === 'GOOGLE_DRIVE_SMS') {
-        axios.post(`/providers/${latestProvider.id}/sync_sms/`);
+        axios.post(`/providers/${latestProvider.id}/sync_sms/`, {});
       } else if (latestProvider.provider_type === 'GOOGLE_CONTACTS') {
-        axios.post(`/providers/${latestProvider.id}/sync_contacts/`);
+        axios.post(`/providers/${latestProvider.id}/sync_contacts/`, {});
+      } else if (latestProvider.provider_type === 'OUTLOOK_MAIL') {
+        axios.post(`/providers/${latestProvider.id}/sync_emails/`, {});
+      } else if (latestProvider.provider_type === 'OUTLOOK_CALENDAR') {
+        axios.post(`/providers/${latestProvider.id}/sync_calendar/`, {});
       } else if (latestProvider.provider_type === 'GOOGLE_DRIVE') {
         // Pour Google Drive, on ne lance pas de synchronisation automatique
         // car c'est principalement pour le stockage de fichiers
@@ -611,14 +619,14 @@ const SettingsPage = () => {
                 
                 {(!Array.isArray(providers) || providers.length === 0) && !loading && (
                   <div className="text-center py-8">
-                    <p className="text-foreground/70 mb-2">Aucun provider configuré</p>
+                    <p className="text-foreground/70 mb-2">Aucun fournisseur configuré</p>
                   </div>
                 )}
 
                 {loading && providers.length === 0 && (
                   <div className="text-center py-8">
                     <RefreshCw className="w-8 h-8 mx-auto mb-4 animate-spin text-foreground/50" />
-                    <p className="text-foreground/70">Chargement des providers...</p>
+                    <p className="text-foreground/70">Chargement des fournisseurs...</p>
                   </div>
                 )}
               </div>
