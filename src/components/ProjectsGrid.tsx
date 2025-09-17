@@ -96,7 +96,7 @@ export const ProjectsGrid = () => {
           {[...Array(6)].map((_, index) => (
             <div
               key={index}
-              className="flex flex-col items-center gap-3 p-4 bg-navy-card rounded-xl border border-border animate-pulse"
+              className="flex flex-col items-center gap-3 p-4 bg-card rounded-xl border border-border animate-pulse"
             >
               <div className="w-12 h-12 rounded-full bg-border" />
               <div className="w-16 h-4 bg-border rounded" />
@@ -127,11 +127,11 @@ export const ProjectsGrid = () => {
           {projects.map((project) => (
             <div
               key={project.id}
-              className="group relative flex flex-col items-center gap-3 p-4 bg-navy-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98]"
+              className="group relative flex flex-col items-center gap-3 p-4 bg-card rounded-xl border border-border hover:border-gold transition-smooth cursor-pointer active:scale-[0.98]"
               onClick={() => handleProjectClick(project)}
             >
               {/* Icône du projet */}
-              <div className="w-12 h-12 rounded-full border-2 border-gold flex items-center justify-center bg-navy-deep overflow-hidden">
+              <div className="w-12 h-12 rounded-full border-2 border-gold flex items-center justify-center bg-background overflow-hidden">
                 <ProjectIcon icon={project.icon} size="sm" />
               </div>
 
