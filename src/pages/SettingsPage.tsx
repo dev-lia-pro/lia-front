@@ -168,9 +168,9 @@ const SettingsPage = () => {
     }
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (cascade?: boolean) => {
     if (deletingProvider) {
-      const success = await deleteProvider(deletingProvider.id);
+      const success = await deleteProvider(deletingProvider.id, cascade !== undefined ? cascade : true);
       if (success) {
         toast({
           title: "Provider supprimé",
@@ -574,8 +574,9 @@ const SettingsPage = () => {
         onClose={() => setDeletingProvider(null)}
         onConfirm={confirmDelete}
         title="Supprimer le provider"
-        message={`Êtes-vous sûr de vouloir supprimer le provider "${deletingProvider?.name}" ? Cette action est irréversible.`}
-        loading={loading}
+        description={`Êtes-vous sûr de vouloir supprimer le provider "${deletingProvider?.name}" ?`}
+        showCascadeOption={true}
+        cascadeDescription="Supprimer également tous les messages, tâches, événements et contacts associés à ce provider."
       />
       
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />

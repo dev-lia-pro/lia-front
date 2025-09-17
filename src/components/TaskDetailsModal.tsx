@@ -56,9 +56,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-navy-card border-border text-foreground max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-foreground truncate">{task.title}</DialogTitle>
-            <div className="flex items-center gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <DialogTitle className="text-foreground break-words pr-2 flex-1">{task.title}</DialogTitle>
+            <div className="flex items-center gap-2 flex-shrink-0">
               {showEdit && (
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0 border border-border hover:bg-navy-muted" onClick={onEdit} aria-label="Modifier">
                   <Edit className="h-4 w-4" />
