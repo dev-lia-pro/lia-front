@@ -8,10 +8,10 @@ export interface Event {
   starts_at: string;
   ends_at: string;
   is_all_day: boolean;
-  provider: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
+  provider: number | null;  // Now it's the provider ID
+  provider_type?: string;  // The actual provider type string
   external_id?: string;
   attendees: string[];
-  source_message?: number;
   project?: number;
   sync_status?: 'PENDING' | 'SYNCED' | 'FAILED';
   synced_at?: string;
@@ -29,7 +29,6 @@ export interface CreateEventData {
   provider: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
   external_id?: string;
   attendees?: string[];
-  source_message?: number;
   project?: number;
 }
 
@@ -43,7 +42,6 @@ export interface UpdateEventData {
   provider?: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
   external_id?: string;
   attendees?: string[];
-  source_message?: number;
   project?: number | null;
 }
 

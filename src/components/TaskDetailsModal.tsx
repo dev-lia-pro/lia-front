@@ -1,7 +1,8 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Calendar, AlertTriangle } from 'lucide-react';
+import { Edit, Trash2, Calendar, AlertTriangle, Mail, MessageSquare, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import type { Task } from '@/hooks/useTasks';
 
 interface TaskDetailsModalProps {
@@ -50,7 +51,30 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   onDelete,
   deleteLoading = false,
 }) => {
+  const navigate = useNavigate();
+
   if (!task) return null;
+
+  const handleSourceMessageClick = () => {
+    if (task.source_message) {
+      onClose();
+      navigate(`/messages?message=${task.source_message}`);
+    }
+  };
+
+  const getProviderDisplay = (providerType?: string) => {
+    const providers: Record<string, { icon: React.ReactNode; label: string }> = {
+      'GMAIL': { icon: <Mail className="h-4 w-4" />, label: 'Gmail' },
+      'GOOGLE_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Google Calendar' },
+      'SMS': { icon: <MessageSquare className="h-4 w-4" />, label: 'SMS' },
+      'WHATSAPP': { icon: <MessageSquare className="h-4 w-4" />, label: 'WhatsApp' },
+      'OUTLOOK': { icon: <Mail className="h-4 w-4" />, label: 'Outlook' },
+      'OUTLOOK_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Outlook Calendar' },
+    };
+
+    if (!providerType) return null;
+    return providers[providerType] || null;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,6 +113,23 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             <AlertTriangle className="h-4 w-4" />
             <div>Priorité: {getPriorityText(task.priority)}</div>
           </div>
+
+          {task.source_provider_type && (
+            <div className="flex items-center gap-2 text-sm text-foreground/80">
+              {getProviderDisplay(task.source_provider_type)?.icon}
+              <div>Source: {getProviderDisplay(task.source_provider_type)?.label}</div>
+            </div>
+          )}
+
+          {task.source_message && (
+            <button
+              onClick={handleSourceMessageClick}
+              className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>Voir le message source</span>
+            </button>
+          )}
 
           <div className="pt-4 pb-0 border-t border-border flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>Fermer</Button>

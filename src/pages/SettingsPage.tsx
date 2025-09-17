@@ -3,15 +3,17 @@ import { DashboardHeader } from '@/components/DashboardHeader';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Plus, 
-  Trash2, 
+import {
+  Plus,
+  Trash2,
   TestTube,
   Power,
   PowerOff,
   RefreshCw,
   AlertCircle,
-  Settings2
+  Settings2,
+  ArrowRight,
+  ArrowLeftRight
 } from 'lucide-react';
 import type { NavigationTab } from '@/types/navigation';
 import type { Provider } from '@/types/provider';
@@ -25,8 +27,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ProjectsGrid } from '@/components/ProjectsGrid';
 import { AssistantHistory } from '@/components/AssistantHistory';
 import { ContactsSection } from '@/components/ContactsSection';
+import { useQueryClient } from '@tanstack/react-query';
 
 const SettingsPage = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('accueil');
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
@@ -127,7 +131,7 @@ const SettingsPage = () => {
         if (success) {
           toast({
             title: "Provider mis à jour",
-            description: "Le provider a été modifié avec succès.",
+            description: "Le fournisseur a été modifié avec succès.",
           });
           setEditingProvider(null);
           // refresh list after update
@@ -139,7 +143,7 @@ const SettingsPage = () => {
         if (success) {
           toast({
             title: "Provider créé",
-            description: "Le provider a été ajouté avec succès.",
+            description: "Le fournisseur a été ajouté avec succès.",
           });
           setIsAddingProvider(false);
           // refresh list after create
@@ -168,13 +172,13 @@ const SettingsPage = () => {
     }
   };
 
-  const confirmDelete = async (cascade?: boolean) => {
+  const confirmDelete = async () => {
     if (deletingProvider) {
-      const success = await deleteProvider(deletingProvider.id, cascade !== undefined ? cascade : true);
+      const success = await deleteProvider(deletingProvider.id);
       if (success) {
         toast({
           title: "Provider supprimé",
-          description: "Le provider a été supprimé avec succès.",
+          description: "Le fournisseur et toutes ses données associées ont été supprimés.",
         });
         // refresh list after delete
         fetchProviders();
@@ -211,7 +215,7 @@ const SettingsPage = () => {
     if (!provider) {
       toast({
         title: "Erreur",
-        description: "Provider non trouvé",
+        description: "Fournisseur non trouvé",
         variant: "destructive",
       });
       return;
@@ -221,7 +225,81 @@ const SettingsPage = () => {
     if (success) {
       toast({
         title: "Statut modifié",
-        description: "Le statut du provider a été modifié.",
+        description: "Le statut du fournisseur a été modifié.",
+      });
+    }
+  };
+
+  const handleToggleReadOnly = async (providerId: number) => {
+    const provider = providers.find(p => p.id === providerId);
+    if (!provider) {
+      toast({
+        title: "Erreur",
+        description: "Fournisseur non trouvé",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.post(`/providers/${providerId}/toggle-read-only/`);
+      if (response.data.success && response.data.auth_url) {
+        // Ouvrir OAuth dans une popup
+        const width = 600;
+        const height = 700;
+        const left = window.innerWidth / 2 - width / 2;
+        const top = window.innerHeight / 2 - height / 2;
+
+        const authWindow = window.open(
+          response.data.auth_url,
+          'oauthWindow',
+          `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no`
+        );
+
+        // Vérifier si la popup a été bloquée
+        if (!authWindow || authWindow.closed) {
+          toast({
+            title: "Popup bloquée",
+            description: "Veuillez autoriser les popups pour ce site.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Surveiller la fermeture de la popup
+        const checkInterval = setInterval(() => {
+          if (authWindow.closed) {
+            clearInterval(checkInterval);
+            console.log('Popup OAuth fermée, rechargement des providers...');
+
+            // Attendre un peu que le backend soit à jour
+            setTimeout(async () => {
+              try {
+                console.log('Appel de fetchProviders...');
+                // Simplement appeler fetchProviders qui est la fonction de refetch du hook
+                await fetchProviders();
+                console.log('fetchProviders terminé');
+
+                // Aussi invalider le cache pour forcer React Query
+                await queryClient.invalidateQueries({ queryKey: ['providers'] });
+                console.log('Cache invalidé');
+
+                toast({
+                  title: "Synchronisation mise à jour",
+                  description: "Le mode de synchronisation a été modifié.",
+                });
+              } catch (error) {
+                console.error('Erreur lors du rechargement:', error);
+              }
+            }, 2000); // Attendre 2 secondes après fermeture
+          }
+        }, 500); // Vérifier toutes les 500ms
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le mode de synchronisation",
+        variant: "destructive",
       });
     }
   };
@@ -313,7 +391,7 @@ const SettingsPage = () => {
       // Afficher un toast de confirmation
       toast({
         title: "Provider créé et synchronisation lancée",
-        description: `Le provider ${latestProvider.name} a été créé et sa synchronisation est en cours.`,
+        description: `Le fournisseur ${latestProvider.name} a été créé et sa synchronisation est en cours.`,
       });
     }
   
@@ -409,7 +487,7 @@ const SettingsPage = () => {
                               Inactif
                             </span>
                           )}
-                          {provider.config?.read_only && (
+                          {provider.read_only && (
                             <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">
                               Lecture seule
                             </span>
@@ -481,8 +559,8 @@ const SettingsPage = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleToggleActive(provider.id)}
-                        className={provider.is_active 
-                          ? "border-green-500/30 text-green-400 hover:bg-green-500/10" 
+                        className={provider.is_active
+                          ? "border-green-500/30 text-green-400 hover:bg-green-500/10"
                           : "border-gray-500/30 text-gray-400 hover:bg-gray-500/10"
                         }
                         aria-label={provider.is_active ? 'Désactiver' : 'Activer'}
@@ -493,7 +571,30 @@ const SettingsPage = () => {
                           <PowerOff className="w-4 h-4" />
                         )}
                       </Button>
-                      
+
+                      {/* Toggle lecture seule pour les providers qui supportent la bidirectionnalité */}
+                      {(provider.provider_type === 'GOOGLE_CALENDAR' ||
+                        provider.provider_type === 'OUTLOOK_CALENDAR' ||
+                        provider.provider_type === 'GOOGLE_CONTACTS') && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleToggleReadOnly(provider.id)}
+                          className={provider.read_only
+                            ? "border-orange-500/30 text-orange-400 hover:bg-orange-500/10"
+                            : "border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                          }
+                          aria-label={provider.read_only ? 'Mode lecture/écriture' : 'Mode lecture seule'}
+                          title={provider.read_only ? 'Activer synchronisation bidirectionnelle' : 'Désactiver synchronisation bidirectionnelle'}
+                        >
+                          {provider.read_only ? (
+                            <ArrowRight className="w-4 h-4" />
+                          ) : (
+                            <ArrowLeftRight className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+
                       {/* Bouton d'édition supprimé */}
                       
                       <Button
@@ -573,10 +674,8 @@ const SettingsPage = () => {
         isOpen={!!deletingProvider}
         onClose={() => setDeletingProvider(null)}
         onConfirm={confirmDelete}
-        title="Supprimer le provider"
-        description={`Êtes-vous sûr de vouloir supprimer le provider "${deletingProvider?.name}" ?`}
-        showCascadeOption={true}
-        cascadeDescription="Supprimer également tous les messages, tâches, événements et contacts associés à ce provider."
+        title="Supprimer le fournisseur"
+        description={`Êtes-vous sûr de vouloir supprimer le fournisseur "${deletingProvider?.name}" ? Cette action supprimera également tous les messages, tâches, événements et contacts associés.`}
       />
       
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
@@ -610,7 +709,7 @@ const SettingsPage = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog de configuration du provider */}
+      {/* Dialog de configuration du fournisseur */}
       <Dialog open={!!configuringProvider} onOpenChange={(open) => {
         if (!open) {
           setConfiguringProvider(null);
@@ -624,7 +723,7 @@ const SettingsPage = () => {
               Configuration de {configuringProvider?.name}
             </DialogTitle>
             <DialogDescription className="text-foreground/70">
-              Personnalisez les paramètres avancés du provider
+              Personnalisez les paramètres avancés du fournisseur
             </DialogDescription>
           </DialogHeader>
           

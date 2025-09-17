@@ -7,6 +7,7 @@ export interface Provider {
   provider_type: ProviderType;
   provider_type_display: string;
   is_active: boolean;
+  read_only: boolean;
   credentials_json: Record<string, any>;
   token_json: Record<string, any>;
   config: Record<string, any>;
@@ -20,6 +21,7 @@ export interface ProviderCreate {
   name: string;
   provider_type: ProviderType;
   is_active: boolean;
+  read_only?: boolean;
   credentials_json: Record<string, any>;
   token_json: Record<string, any>;
   config: Record<string, any>;
@@ -28,6 +30,7 @@ export interface ProviderCreate {
 export interface ProviderUpdate {
   name?: string;
   is_active?: boolean;
+  read_only?: boolean;
   credentials_json?: Record<string, any>;
   token_json?: Record<string, any>;
   config?: Record<string, any>;
