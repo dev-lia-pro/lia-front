@@ -267,53 +267,64 @@ const MessagesPage = () => {
 
                       {msg.channel === 'SMS' ? (
                         <div className="text-sm">
-                          <div className="text-foreground/70 truncate flex items-center gap-1">
+                          <div className="text-foreground/70 flex items-start gap-1">
+                            <span className="text-xs text-foreground/50 shrink-0">De:</span>
                             {msg.sender_contact ? (
                               <span
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedContactId(msg.sender_contact!.id);
                                 }}
-                                className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                                className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer truncate"
                               >
                                 <User className="w-3 h-3" />
                                 <span className="font-medium">{msg.sender_contact.display_name}</span>
                                 <span className="text-xs">({msg.sender})</span>
                               </span>
                             ) : (
-                              msg.sender
+                              <span className="truncate">{msg.sender}</span>
                             )}
                           </div>
-                          <div className="truncate">{msg.body_text || '(SMS)'}</div>
+                          <div className="truncate mt-1">{msg.body_text || '(SMS)'}</div>
                         </div>
                       ) : (
                         <>
                           <div className="font-medium truncate">{msg.subject || '(Sans objet)'}</div>
-                          <div className="text-sm text-foreground/70 truncate flex items-center gap-1">
+                          <div className="text-sm text-foreground/70 flex items-start gap-1 mt-1">
+                            <span className="text-xs text-foreground/50 shrink-0">De:</span>
                             {msg.sender_contact ? (
                               <span
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedContactId(msg.sender_contact!.id);
                                 }}
-                                className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                                className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer truncate"
                               >
                                 <User className="w-3 h-3" />
                                 <span className="font-medium">{msg.sender_contact.display_name}</span>
                                 <span className="text-xs ml-1">({msg.sender})</span>
                               </span>
                             ) : (
-                              msg.sender
+                              <span className="truncate">{msg.sender}</span>
                             )}
                           </div>
-                          {msg.recipient_contacts && msg.recipient_contacts.length > 0 && (
-                            <div className="text-xs text-foreground/60 mt-1">
-                              À: {msg.recipient_contacts.map(c => c.display_name).join(', ')}
-                              {msg.recipients.length > msg.recipient_contacts.length &&
-                                ` +${msg.recipients.length - msg.recipient_contacts.length} autre(s)`
-                              }
+                          {(msg.recipient_contacts && msg.recipient_contacts.length > 0) || msg.recipients.length > 0 ? (
+                            <div className="text-xs text-foreground/60 mt-1 flex items-start gap-1">
+                              <span className="text-foreground/50 shrink-0">À:</span>
+                              <span className="truncate">
+                                {msg.recipient_contacts && msg.recipient_contacts.length > 0 ? (
+                                  <>
+                                    {msg.recipient_contacts.map(c => c.display_name).join(', ')}
+                                    {msg.recipients.length > msg.recipient_contacts.length &&
+                                      ` +${msg.recipients.length - msg.recipient_contacts.length} autre(s)`
+                                    }
+                                  </>
+                                ) : (
+                                  msg.recipients.join(', ')
+                                )}
+                              </span>
                             </div>
-                          )}
+                          ) : null}
                         </>
                       )}
 

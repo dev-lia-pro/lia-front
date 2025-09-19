@@ -10,7 +10,7 @@ import {
   X, User, Paperclip, Calendar, Tag, Mail, Phone, MessageSquare,
   AlertCircle, Clock, CheckCircle, Flag, Info, Edit,
   Download, Eye, Cloud, CloudOff, ChevronDown, ChevronUp,
-  Building, Briefcase, ExternalLink, Code
+  Building, Briefcase, ExternalLink, Code, Copy, Check
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getIconByValue } from '@/config/icons';
@@ -124,6 +124,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
 }) => {
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = React.useState(false);
+  const [copiedId, setCopiedId] = React.useState(false);
 
   if (!message) return null;
 
@@ -382,9 +383,28 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
             {showTechnicalDetails && (
               <div className="mt-3 space-y-3 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">ID externe :</span>
-                    <span className="ml-2 font-mono">{message.external_id}</span>
+                    <div className="flex items-center gap-1 max-w-[200px] sm:max-w-[300px]">
+                      <span className="font-mono truncate" title={message.external_id}>
+                        {message.external_id}
+                      </span>
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(message.external_id || '');
+                          setCopiedId(true);
+                          setTimeout(() => setCopiedId(false), 2000);
+                        }}
+                        className="p-1 hover:bg-muted rounded transition-colors shrink-0"
+                        title="Copier l'ID"
+                      >
+                        {copiedId ? (
+                          <Check className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   {message.ingestion_source && (
                     <div>
