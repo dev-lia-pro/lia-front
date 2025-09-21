@@ -98,9 +98,48 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           )}
 
           {!!event.attendees?.length && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4" />
+                <div>{event.attendees.length} participant(s)</div>
+              </div>
+              {/* Show more details if available in metadata */}
+              {event.provider_metadata?.attendee_details && (
+                <div className="ml-6 text-xs space-y-1">
+                  {event.provider_metadata.attendee_details.slice(0, 3).map((attendee, i) => (
+                    <div key={i} className="text-muted-foreground">
+                      {attendee.name || attendee.email}
+                    </div>
+                  ))}
+                  {event.provider_metadata.attendee_details.length > 3 && (
+                    <div className="text-muted-foreground">
+                      +{event.provider_metadata.attendee_details.length - 3} autres
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Show organizer if available in metadata */}
+          {event.provider_metadata?.organizer && (
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4" />
-              <div>{event.attendees.length} participant(s)</div>
+              <div>Organisateur: {event.provider_metadata.organizer}</div>
+            </div>
+          )}
+
+          {/* Show online meeting info if available */}
+          {event.provider_metadata?.is_online_meeting && event.provider_metadata?.online_meeting_url && (
+            <div className="flex items-center gap-2 text-sm">
+              <a
+                href={event.provider_metadata.online_meeting_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                Rejoindre la réunion en ligne
+              </a>
             </div>
           )}
 

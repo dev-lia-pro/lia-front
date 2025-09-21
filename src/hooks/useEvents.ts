@@ -11,7 +11,26 @@ export interface Event {
   provider: number | null;  // Now it's the provider ID
   provider_type?: string;  // The actual provider type string
   external_id?: string;
-  attendees: string[];
+  attendees: string[];  // Always an array of email strings
+  provider_metadata?: {  // Provider-specific metadata (Outlook, Google, etc.)
+    organizer?: string;
+    attendee_details?: Array<{
+      email: string;
+      name: string;
+      status: string;
+      type: string;
+    }>;
+    categories?: string[];
+    importance?: string;
+    is_cancelled?: boolean;
+    is_online_meeting?: boolean;
+    online_meeting_url?: string;
+    response_status?: string;
+    sensitivity?: string;
+    show_as?: string;
+    recurrence?: any;
+    series_master_id?: string;
+  };
   project?: number;
   sync_status?: 'PENDING' | 'SYNCED' | 'FAILED';
   synced_at?: string;
