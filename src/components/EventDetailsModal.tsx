@@ -150,12 +150,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             </div>
           )}
 
-          {event.provider_type === 'GOOGLE_CALENDAR' && event.sync_status && (
+          {(event.provider_type === 'GOOGLE_CALENDAR' || event.provider_type === 'OUTLOOK_CALENDAR') && event.sync_status && (
             <div className="flex items-center gap-2 text-sm">
               {event.sync_status === 'SYNCED' && (
                 <>
                   <Check className="h-4 w-4 text-green-500" />
-                  <div className="text-green-500">Synchronisé avec Google Calendar</div>
+                  <div className="text-green-500">
+                    Synchronisé avec {event.provider_type === 'GOOGLE_CALENDAR' ? 'Google Calendar' : 'Outlook Calendar'}
+                  </div>
                 </>
               )}
               {event.sync_status === 'PENDING' && (
