@@ -77,6 +77,8 @@ const SettingsPage = () => {
         return '📧';
       case 'OUTLOOK_CALENDAR':
         return '📅';
+      case 'OUTLOOK_CONTACTS':
+        return '👥';
       default:
         return '🔗';
     }
@@ -98,6 +100,8 @@ const SettingsPage = () => {
         return 'Outlook Mail';
       case 'OUTLOOK_CALENDAR':
         return 'Outlook Calendar';
+      case 'OUTLOOK_CONTACTS':
+        return 'Outlook Contacts';
       default:
         return type;
     }
@@ -119,6 +123,8 @@ const SettingsPage = () => {
         return 'text-indigo-400';
       case 'OUTLOOK_CALENDAR':
         return 'text-pink-400';
+      case 'OUTLOOK_CONTACTS':
+        return 'text-cyan-400';
       default:
         return 'text-gray-400';
     }
@@ -321,6 +327,8 @@ const SettingsPage = () => {
         url = `/providers/${provider.id}/sync_emails/`;
       } else if (provider.provider_type === 'OUTLOOK_CALENDAR') {
         url = `/providers/${provider.id}/sync_calendar/`;
+      } else if (provider.provider_type === 'OUTLOOK_CONTACTS') {
+        url = `/providers/${provider.id}/sync_contacts/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE') {
         // Pour Google Drive, on ne lance pas de synchronisation automatique
         // car c'est principalement pour le stockage de fichiers
@@ -583,7 +591,8 @@ const SettingsPage = () => {
                       {/* Toggle lecture seule pour les providers qui supportent la bidirectionnalité */}
                       {(provider.provider_type === 'GOOGLE_CALENDAR' ||
                         provider.provider_type === 'OUTLOOK_CALENDAR' ||
-                        provider.provider_type === 'GOOGLE_CONTACTS') && (
+                        provider.provider_type === 'GOOGLE_CONTACTS' ||
+                        provider.provider_type === 'OUTLOOK_CONTACTS') && (
                         <Button
                           size="sm"
                           variant="outline"
