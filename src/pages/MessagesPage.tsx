@@ -8,10 +8,11 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSearchParams } from 'react-router-dom';
 import axios from '@/api/axios';
+import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cloud, CloudOff, User } from 'lucide-react';
+import { Cloud, CloudOff, User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ContactDetailsModal } from '@/components/ContactDetailsModal';
 import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
@@ -27,6 +28,7 @@ const MessagesPage = () => {
   const [selectedMessageDialog, setSelectedMessageDialog] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
+  const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
@@ -104,6 +106,55 @@ const MessagesPage = () => {
         title: "Erreur",
         description: "Impossible de modifier le projet",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadAttachment = async (messageId: number, attachmentId: number, filename: string) => {
+    console.log('handleDownloadAttachment called:', { messageId, attachmentId, filename });
+
+    // Ajouter l'attachment à l'état de téléchargement
+    setDownloadingAttachments(prev => new Set(prev).add(attachmentId));
+
+    try {
+      // Construire l'URL relative pour le téléchargement (avec slash final requis par Django)
+      const url = `/messages/${messageId}/attachments/${attachmentId}/download/`;
+      console.log('Downloading from URL:', url);
+
+      // Télécharger le fichier avec axios (inclut l'authentification automatiquement)
+      const response = await axios.get(url, {
+        responseType: 'blob', // Important pour télécharger les fichiers binaires
+      });
+      console.log('Download response received:', response.status);
+
+      // Créer un blob URL à partir de la réponse
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Créer un élément anchor pour déclencher le téléchargement
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Nettoyer l'URL blob
+      window.URL.revokeObjectURL(blobUrl);
+      console.log('Download completed successfully');
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+      toast({
+        title: "Erreur de téléchargement",
+        description: "Impossible de télécharger le fichier",
+        variant: "destructive",
+      });
+    } finally {
+      // Retirer l'attachment de l'état de téléchargement
+      setDownloadingAttachments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(attachmentId);
+        return newSet;
       });
     }
   };
@@ -360,16 +411,21 @@ const MessagesPage = () => {
                                     })()}
                                   </button>
                                   {att.url ? (
-                                    <a
-                                      href={att.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="px-2 py-0.5 rounded border border-border hover:bg-muted/10"
-                                      title={`Ouvrir ${att.filename}`}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log('Button clicked for attachment:', att.id, att.filename);
+                                        handleDownloadAttachment(msg.id, att.id, att.filename);
+                                      }}
+                                      className="px-2 py-0.5 rounded border border-border hover:bg-muted/10 cursor-pointer inline-flex items-center gap-1"
+                                      title={`Télécharger ${att.filename}`}
+                                      disabled={downloadingAttachments.has(att.id)}
                                     >
+                                      {downloadingAttachments.has(att.id) && (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      )}
                                       {att.filename}
-                                    </a>
+                                    </button>
                                   ) : (
                                     <span
                                       className="px-2 py-0.5 rounded border border-border text-foreground/50"

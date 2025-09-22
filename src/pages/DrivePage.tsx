@@ -5,6 +5,7 @@ import type { NavigationTab } from '@/types/navigation';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
 import axios from '@/api/axios';
+import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
 import { Cloud, CloudOff, Download, Search, FolderOpen, HardDrive, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -105,9 +106,36 @@ const DrivePage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleOpenFile = (attachment: Attachment) => {
+  const handleOpenFile = async (attachment: Attachment) => {
     if (attachment.url) {
-      window.open(attachment.url, '_blank');
+      try {
+        // Construire l'URL relative pour le téléchargement (avec slash final requis par Django)
+        const url = `/messages/${attachment.message.id}/attachments/${attachment.id}/download/`;
+
+        // Télécharger le fichier avec axios (inclut l'authentification automatiquement)
+        const response = await axios.get(url, {
+          responseType: 'blob', // Important pour télécharger les fichiers binaires
+        });
+
+        // Créer un blob URL à partir de la réponse
+        const blob = new Blob([response.data], { type: response.headers['content-type'] });
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Ouvrir dans un nouvel onglet
+        window.open(blobUrl, '_blank');
+
+        // Nettoyer l'URL blob après un délai
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+        }, 1000);
+      } catch (error) {
+        console.error('Erreur lors de l\'ouverture du fichier:', error);
+        toast({
+          title: "Erreur d'ouverture",
+          description: "Impossible d'ouvrir le fichier",
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Fichier indisponible",

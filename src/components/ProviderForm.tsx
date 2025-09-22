@@ -51,6 +51,10 @@ const getDefaultConfig = (providerType: string) => {
         sync_groups: true,
         auto_create_from_messages: true
       };
+    case 'OUTLOOK_CONTACTS':
+      return {
+        sync_interval: 3600
+      };
     case 'OUTLOOK_MAIL':
       return {
         days_back: 10,
@@ -135,6 +139,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return '📧';
       case 'OUTLOOK_CALENDAR':
         return '📅';
+      case 'OUTLOOK_CONTACTS':
+        return '👥';
       default:
         return '🔗';
     }
@@ -156,6 +162,8 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return 'Outlook Mail';
       case 'OUTLOOK_CALENDAR':
         return 'Outlook Calendar';
+      case 'OUTLOOK_CONTACTS':
+        return 'Outlook Contacts';
       default:
         return type;
     }
@@ -372,8 +380,10 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         </div>
 
         {/* Option Lecture seule */}
-        {(formData.provider_type === 'GOOGLE_CALENDAR' || 
-          formData.provider_type === 'GOOGLE_CONTACTS') && (
+        {(formData.provider_type === 'GOOGLE_CALENDAR' ||
+          formData.provider_type === 'GOOGLE_CONTACTS' ||
+          formData.provider_type === 'OUTLOOK_CALENDAR' ||
+          formData.provider_type === 'OUTLOOK_CONTACTS') && (
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="readOnly" 
