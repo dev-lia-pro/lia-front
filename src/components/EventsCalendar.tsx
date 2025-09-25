@@ -282,15 +282,18 @@ export const EventsCalendar: React.FC = () => {
           const dayEnd = endOfDay(day);
           const dayEvents = sortedEvents.filter((ev) => {
             if (ev.is_all_day) {
-              // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+              // Le backend envoie maintenant les dates dans le timezone de l'utilisateur
               const eventStart = new Date(ev.starts_at);
               const eventEnd = new Date(ev.ends_at);
-              // Utiliser uniquement la date de début pour les événements all-day
-              // car ends_at est à 23:59:59 du même jour
-              const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+
+              // Extraire juste la partie date (sans l'heure)
+              const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+              const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+
               const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-              // Un événement all-day n'apparaît que sur son jour de début
-              return currentDay.getTime() === eventStartDay.getTime();
+
+              // L'événement apparaît sur tous les jours entre startDate et endDate (inclus)
+              return currentDay >= startDate && currentDay <= endDate;
             } else {
               const s = new Date(ev.starts_at);
               const e = new Date(ev.ends_at);
@@ -423,15 +426,18 @@ export const EventsCalendar: React.FC = () => {
                 const dayEnd = endOfDay(day);
                 const dayEvents = sortedEvents.filter((ev) => {
                   if (ev.is_all_day) {
-                    // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+                    // Le backend envoie maintenant les dates dans le timezone de l'utilisateur
                     const eventStart = new Date(ev.starts_at);
                     const eventEnd = new Date(ev.ends_at);
-                    // Utiliser uniquement la date de début pour les événements all-day
-                    // car ends_at est à 23:59:59 du même jour
-                    const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+
+                    // Extraire juste la partie date (sans l'heure)
+                    const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+                    const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+
                     const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-                    // Un événement all-day n'apparaît que sur son jour de début
-                    return currentDay.getTime() === eventStartDay.getTime();
+
+                    // L'événement apparaît sur tous les jours entre startDate et endDate (inclus)
+                    return currentDay >= startDate && currentDay <= endDate;
                   } else {
                     const s = new Date(ev.starts_at);
                     const e = new Date(ev.ends_at);
@@ -550,15 +556,18 @@ export const EventsCalendar: React.FC = () => {
       const dayEnd = endOfDay(day);
       const dayEvents = sortedEvents.filter((ev) => {
         if (ev.is_all_day) {
-          // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+          // Le backend envoie maintenant les dates dans le timezone de l'utilisateur
           const eventStart = new Date(ev.starts_at);
           const eventEnd = new Date(ev.ends_at);
-          // Utiliser uniquement la date de début pour les événements all-day
-          // car ends_at est à 23:59:59 du même jour
-          const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+
+          // Extraire juste la partie date (sans l'heure)
+          const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+          const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+
           const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-          // Un événement all-day n'apparaît que sur son jour de début
-          return currentDay.getTime() === eventStartDay.getTime();
+
+          // L'événement apparaît sur tous les jours entre startDate et endDate (inclus)
+          return currentDay >= startDate && currentDay <= endDate;
         } else {
           const s = new Date(ev.starts_at);
           const e = new Date(ev.ends_at);
@@ -576,15 +585,18 @@ export const EventsCalendar: React.FC = () => {
           const dayEnd = endOfDay(day);
           const dayEvents = sortedEvents.filter((ev) => {
             if (ev.is_all_day) {
-              // Pour les événements toute la journée, on compare les dates sans tenir compte de l'heure
+              // Le backend envoie maintenant les dates dans le timezone de l'utilisateur
               const eventStart = new Date(ev.starts_at);
               const eventEnd = new Date(ev.ends_at);
-              // Utiliser uniquement la date de début pour les événements all-day
-              // car ends_at est à 23:59:59 du même jour
-              const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+
+              // Extraire juste la partie date (sans l'heure)
+              const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+              const endDate = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+
               const currentDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-              // Un événement all-day n'apparaît que sur son jour de début
-              return currentDay.getTime() === eventStartDay.getTime();
+
+              // L'événement apparaît sur tous les jours entre startDate et endDate (inclus)
+              return currentDay >= startDate && currentDay <= endDate;
             } else {
               const s = new Date(ev.starts_at);
               const e = new Date(ev.ends_at);

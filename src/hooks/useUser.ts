@@ -18,6 +18,7 @@ interface User {
   subscription_id: string;
   has_security_code: boolean;
   has_full_profile: boolean;
+  timezone?: string;
 }
 
 interface UpdateUserData {
@@ -29,6 +30,7 @@ interface UpdateUserData {
   zip_code?: string;
   city?: string;
   country?: string;
+  timezone?: string;
 }
 
 export const useUser = () => {

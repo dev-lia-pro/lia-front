@@ -3,17 +3,20 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/FormField';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Globe } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { GROUPED_TIMEZONES } from '@/constants/timezones';
 import type { NavigationTab } from '@/types/navigation';
 
 const UserProfile = () => {
   const { user, loading, error, updating, updateUser } = useUser();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [timezone, setTimezone] = useState('Europe/Paris');
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
 
@@ -22,6 +25,7 @@ const UserProfile = () => {
     if (user) {
       setFirstName(user.first_name || '');
       setLastName(user.last_name || '');
+      setTimezone(user.timezone || 'Europe/Paris');
     }
   }, [user]);
 
@@ -41,6 +45,7 @@ const UserProfile = () => {
     const success = await updateUser({
       first_name: firstName.trim(),
       last_name: lastName.trim(),
+      timezone: timezone,
     });
 
     console.log('Update success:', success);
@@ -114,7 +119,8 @@ const UserProfile = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Prénom, Nom et Timezone sur une ligne responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <FormField
                     id="firstName"
                     label="Prénom"
@@ -137,7 +143,43 @@ const UserProfile = () => {
                       placeholder: "Votre nom"
                     }}
                   />
+
+                  {/* Timezone selector */}
+                  <div className="space-y-2">
+                    <label htmlFor="timezone" className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      Fuseau horaire
+                    </label>
+                    <Select value={timezone} onValueChange={setTimezone}>
+                      <SelectTrigger className="w-full bg-navy-muted border-border text-foreground">
+                        <SelectValue placeholder="Sélectionnez votre fuseau horaire" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-navy-card border-border max-h-[400px]">
+                        {Object.entries(GROUPED_TIMEZONES).map(([region, timezones]) => (
+                          <SelectGroup key={region}>
+                            <SelectLabel className="text-muted-foreground font-semibold">{region}</SelectLabel>
+                            {timezones.map((tz) => (
+                              <SelectItem
+                                key={tz.value}
+                                value={tz.value}
+                                className="text-foreground hover:bg-navy-muted cursor-pointer"
+                              >
+                                <div className="flex justify-between items-center w-full">
+                                  <span>{tz.label}</span>
+                                  <span className="text-xs text-muted-foreground ml-4">{tz.offset}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Le fuseau horaire sera utilisé pour l'affichage de vos événements et rendez-vous.
+                </p>
 
                 {error && (
                   <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">

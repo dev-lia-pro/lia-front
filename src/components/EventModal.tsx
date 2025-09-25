@@ -77,11 +77,9 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
         starts_at: formatLocalDateInput(base),
         ends_at: formatLocalDateInput(end),
         is_all_day: false,
-        provider: 'GOOGLE',
-        external_id: '',
         attendees: [],
         project: undefined,
-      });
+      } as CreateEventData);
       setAttendeesInput('');
       setSelectedProject('none');
     }
@@ -137,41 +135,33 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.starts_at || !formData.ends_at) {
       return;
     }
 
-    // Convertir les dates locales (datetime-local) en ISO UTC pour l'API
-    let startsUtc: string;
-    let endsUtc: string;
-    
-    if (formData.is_all_day) {
-      // Pour les événements all-day, on envoie le début et la fin de journée en UTC
-      const startDate = new Date(formData.starts_at);
-      startDate.setHours(0, 0, 0, 0);
-      startsUtc = startDate.toISOString();
-      
-      const endDate = new Date(formData.ends_at);
-      endDate.setHours(23, 59, 59, 999);
-      endsUtc = endDate.toISOString();
-    } else {
-      startsUtc = new Date(formData.starts_at).toISOString();
-      endsUtc = new Date(formData.ends_at).toISOString();
-    }
-
-    const submitData = event 
+    // Envoyer les dates telles que saisies par l'utilisateur (heure locale)
+    // Le backend gérera la conversion vers UTC selon le timezone de l'utilisateur
+    const submitData = event
       ? ({
-          ...formData,
+          // Pour l'update, n'envoyer que les champs modifiables
           id: event.id,
-          starts_at: startsUtc,
-          ends_at: endsUtc,
+          title: formData.title,
+          location: formData.location,
+          starts_at: formData.starts_at,
+          ends_at: formData.ends_at,
+          is_all_day: formData.is_all_day,
+          attendees: formData.attendees,
           project: selectedProject !== 'none' ? parseInt(selectedProject) : undefined,
         } as UpdateEventData)
       : ({
-          ...formData,
-          starts_at: startsUtc,
-          ends_at: endsUtc,
+          // Pour la création, n'envoyer que les champs nécessaires
+          title: formData.title,
+          location: formData.location,
+          starts_at: formData.starts_at,
+          ends_at: formData.ends_at,
+          is_all_day: formData.is_all_day,
+          attendees: formData.attendees,
           project: selectedProject !== 'none' ? parseInt(selectedProject) : undefined,
         } as CreateEventData);
 
