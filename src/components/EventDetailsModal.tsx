@@ -83,12 +83,19 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4" />
-            <div>
-              {fmtTime(starts)} — {fmtTime(ends)}
+          {event.is_all_day ? (
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4" />
+              <div>Toute la journée</div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4" />
+              <div>
+                {fmtTime(starts)} — {fmtTime(ends)}
+              </div>
+            </div>
+          )}
 
           {event.location && (
             <div className="flex items-center gap-2 text-sm">
