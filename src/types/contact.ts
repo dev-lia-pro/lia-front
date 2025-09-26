@@ -110,6 +110,8 @@ export interface ContactStatistics {
   with_email: number;
   with_phone: number;
   from_google: number;
+  from_icloud: number;
+  from_outlook: number;
   local: number;
   persons: number;
   entities: number;

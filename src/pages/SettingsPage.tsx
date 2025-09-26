@@ -79,6 +79,15 @@ const SettingsPage = () => {
         return '📅';
       case 'OUTLOOK_CONTACTS':
         return '👥';
+      case 'ICLOUD_MAIL':
+      case 'APPLE_MAIL':
+        return '📧';
+      case 'ICLOUD_CALENDAR':
+      case 'APPLE_CALENDAR':
+        return '📅';
+      case 'ICLOUD_CONTACTS':
+      case 'APPLE_CONTACTS':
+        return '👥';
       default:
         return '🔗';
     }
@@ -102,6 +111,15 @@ const SettingsPage = () => {
         return 'Outlook Calendar';
       case 'OUTLOOK_CONTACTS':
         return 'Outlook Contacts';
+      case 'ICLOUD_MAIL':
+      case 'APPLE_MAIL':
+        return 'iCloud Mail';
+      case 'ICLOUD_CALENDAR':
+      case 'APPLE_CALENDAR':
+        return 'iCloud Calendar';
+      case 'ICLOUD_CONTACTS':
+      case 'APPLE_CONTACTS':
+        return 'iCloud Contacts';
       default:
         return type;
     }
@@ -125,6 +143,15 @@ const SettingsPage = () => {
         return 'text-pink-400';
       case 'OUTLOOK_CONTACTS':
         return 'text-cyan-400';
+      case 'ICLOUD_MAIL':
+      case 'APPLE_MAIL':
+        return 'text-gray-300';
+      case 'ICLOUD_CALENDAR':
+      case 'APPLE_CALENDAR':
+        return 'text-gray-300';
+      case 'ICLOUD_CONTACTS':
+      case 'APPLE_CONTACTS':
+        return 'text-gray-300';
       default:
         return 'text-gray-400';
     }
@@ -328,6 +355,12 @@ const SettingsPage = () => {
       } else if (provider.provider_type === 'OUTLOOK_CALENDAR') {
         url = `/providers/${provider.id}/sync_calendar/`;
       } else if (provider.provider_type === 'OUTLOOK_CONTACTS') {
+        url = `/providers/${provider.id}/sync_contacts/`;
+      } else if (provider.provider_type === 'ICLOUD_MAIL' || provider.provider_type === 'APPLE_MAIL') {
+        url = `/providers/${provider.id}/sync_emails/`;
+      } else if (provider.provider_type === 'ICLOUD_CALENDAR' || provider.provider_type === 'APPLE_CALENDAR') {
+        url = `/providers/${provider.id}/sync_calendar/`;
+      } else if (provider.provider_type === 'ICLOUD_CONTACTS' || provider.provider_type === 'APPLE_CONTACTS') {
         url = `/providers/${provider.id}/sync_contacts/`;
       } else if (provider.provider_type === 'GOOGLE_DRIVE') {
         // Pour Google Drive, on ne lance pas de synchronisation automatique

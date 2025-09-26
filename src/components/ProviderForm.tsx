@@ -68,6 +68,23 @@ const getDefaultConfig = (providerType: string) => {
         days_ahead: 365,
         read_only: true
       };
+    case 'ICLOUD_MAIL':
+      return {
+        days_back: 10,
+        max_results: 50,
+        imap_server: 'imap.mail.me.com',
+        imap_port: 993
+      };
+    case 'ICLOUD_CALENDAR':
+      return {
+        calendar_id: 'primary',
+        days_back: 365,
+        days_ahead: 365
+      };
+    case 'ICLOUD_CONTACTS':
+      return {
+        sync_interval: 3600
+      };
     default:
       return {};
   }
@@ -81,7 +98,11 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
   onSuccess,
   loading = false
 }) => {
-  const [step, setStep] = useState<'type' | 'config'>('type');
+  const [step, setStep] = useState<'type' | 'config' | 'icloud-auth'>('type');
+  const [iCloudCredentials, setICloudCredentials] = useState({
+    apple_id: '',
+    app_password: ''
+  });
   const [formData, setFormData] = useState<ProviderCreate>({
     name: '',
     provider_type: 'GMAIL',
@@ -141,9 +162,19 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return '📅';
       case 'OUTLOOK_CONTACTS':
         return '👥';
+      case 'ICLOUD_MAIL':
+        return '📧';
+      case 'ICLOUD_CALENDAR':
+        return '📅';
+      case 'ICLOUD_CONTACTS':
+        return '👥';
       default:
         return '🔗';
     }
+  };
+
+  const isICloudProvider = (type: string) => {
+    return type === 'ICLOUD_MAIL' || type === 'ICLOUD_CALENDAR' || type === 'ICLOUD_CONTACTS';
   };
 
   const getProviderTypeLabel = (type: string) => {
@@ -164,6 +195,12 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         return 'Outlook Calendar';
       case 'OUTLOOK_CONTACTS':
         return 'Outlook Contacts';
+      case 'ICLOUD_MAIL':
+        return 'iCloud Mail';
+      case 'ICLOUD_CALENDAR':
+        return 'iCloud Calendar';
+      case 'ICLOUD_CONTACTS':
+        return 'iCloud Contacts';
       default:
         return type;
     }
@@ -172,8 +209,16 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
   const handleOAuthAuth = async () => {
     setIsAuthenticating(true);
     setAuthError(null);
-    
+
     try {
+      // Vérifier si c'est un provider iCloud
+      if (isICloudProvider(formData.provider_type)) {
+        // Pour iCloud, on ouvre un formulaire de credentials au lieu d'OAuth
+        setStep('icloud-auth');
+        setIsAuthenticating(false);
+        return;
+      }
+
       // Demander l'URL d'autorisation au backend
       const { data } = await axios.post('/providers/start_oauth/', {
         name: formData.name,
@@ -321,6 +366,143 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
     }
   };
 
+  const handleICloudAuth = async () => {
+    if (!iCloudCredentials.apple_id || !iCloudCredentials.app_password) {
+      setErrors({ icloud: 'Apple ID et App Password sont requis' });
+      return;
+    }
+
+    setIsAuthenticating(true);
+    setAuthError(null);
+
+    try {
+      // Envoyer les credentials au backend
+      const { data } = await axios.post('/providers/icloud/auth/', {
+        name: formData.name,
+        provider_type: formData.provider_type,
+        apple_id: iCloudCredentials.apple_id,
+        app_password: iCloudCredentials.app_password,
+        read_only: readOnly
+      });
+
+      // Provider créé avec succès
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erreur d'authentification iCloud";
+      setAuthError(errorMessage);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  // Étape iCloud Auth
+  if (step === 'icloud-auth') {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-4">
+          <h4 className="text-lg font-medium text-foreground">
+            Authentification iCloud
+          </h4>
+          <p className="text-sm text-foreground/70 mt-2">
+            {getProviderTypeIcon(formData.provider_type)} {formData.name}
+          </p>
+        </div>
+
+        <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <p className="text-sm text-foreground/80">
+            Pour connecter votre compte iCloud, vous devez générer un mot de passe d'application :
+          </p>
+          <ol className="list-decimal ml-5 mt-2 text-sm text-foreground/70">
+            <li>Connectez-vous à <a href="https://appleid.apple.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">appleid.apple.com</a></li>
+            <li>Dans "Connexion et sécurité", sélectionnez "Mots de passe d'app"</li>
+            <li>Créez un nouveau mot de passe pour "LIA"</li>
+            <li>Copiez le mot de passe généré ci-dessous</li>
+          </ol>
+        </div>
+
+        <div>
+          <Label htmlFor="apple_id" className="text-sm text-foreground/70">
+            Apple ID (Email) *
+          </Label>
+          <input
+            id="apple_id"
+            type="email"
+            value={iCloudCredentials.apple_id}
+            onChange={(e) => setICloudCredentials({ ...iCloudCredentials, apple_id: e.target.value })}
+            placeholder="votre@icloud.com"
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="app_password" className="text-sm text-foreground/70">
+            Mot de passe d'application *
+          </Label>
+          <input
+            id="app_password"
+            type="password"
+            value={iCloudCredentials.app_password}
+            onChange={(e) => setICloudCredentials({ ...iCloudCredentials, app_password: e.target.value })}
+            placeholder="xxxx-xxxx-xxxx-xxxx"
+            className="w-full mt-1 p-2 bg-card border border-border rounded-md text-foreground text-sm"
+          />
+          <p className="text-xs text-foreground/50 mt-1">
+            Mot de passe spécifique à l'application généré depuis appleid.apple.com
+          </p>
+        </div>
+
+        {/* Erreur d'authentification */}
+        {authError && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p className="text-red-400 text-sm">{authError}</p>
+          </div>
+        )}
+
+        {errors.icloud && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <p className="text-red-400 text-sm">{errors.icloud}</p>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            onClick={handleICloudAuth}
+            disabled={isAuthenticating || !iCloudCredentials.apple_id || !iCloudCredentials.app_password}
+            className="border border-border bg-card hover:bg-muted text-foreground/80"
+          >
+            {isAuthenticating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Authentification...
+              </>
+            ) : (
+              'Connecter'
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setStep('type')}
+            className="border-border text-foreground hover:bg-muted"
+          >
+            Retour
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="border-border text-foreground hover:bg-muted"
+          >
+            Annuler
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Étape 1: Sélection du type et nom (pour la création)
   if (step === 'type' && !isEditing) {
     return (
@@ -383,7 +565,9 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
         {(formData.provider_type === 'GOOGLE_CALENDAR' ||
           formData.provider_type === 'GOOGLE_CONTACTS' ||
           formData.provider_type === 'OUTLOOK_CALENDAR' ||
-          formData.provider_type === 'OUTLOOK_CONTACTS') && (
+          formData.provider_type === 'OUTLOOK_CONTACTS' ||
+          formData.provider_type === 'ICLOUD_CALENDAR' ||
+          formData.provider_type === 'ICLOUD_CONTACTS') && (
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="readOnly" 
