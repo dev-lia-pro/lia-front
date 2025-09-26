@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Calendar, AlertTriangle, Mail, MessageSquare, ExternalLink } from 'lucide-react';
+import { Edit, Trash2, Calendar, AlertTriangle, Mail, MessageSquare, ExternalLink, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Task } from '@/hooks/useTasks';
 
@@ -70,6 +70,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       'WHATSAPP': { icon: <MessageSquare className="h-4 w-4" />, label: 'WhatsApp' },
       'OUTLOOK': { icon: <Mail className="h-4 w-4" />, label: 'Outlook' },
       'OUTLOOK_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Outlook Calendar' },
+      'ICLOUD_MAIL': { icon: <Mail className="h-4 w-4" />, label: 'iCloud Mail' },
+      'ICLOUD_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'iCloud Calendar' },
+      'ICLOUD_CONTACTS': { icon: <Users className="h-4 w-4" />, label: 'iCloud Contacts' },
     };
 
     if (!providerType) return null;

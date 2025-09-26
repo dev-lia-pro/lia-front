@@ -168,7 +168,7 @@ export const ContactsSection: React.FC = () => {
       
       {/* Statistiques */}
       {statistics && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           <div className="bg-muted/50 rounded-lg p-3 text-center">
             <div className="text-2xl font-bold">{statistics.total}</div>
             <div className="text-xs text-muted-foreground">Total</div>
@@ -184,6 +184,14 @@ export const ContactsSection: React.FC = () => {
           <div className="bg-muted/50 rounded-lg p-3 text-center">
             <div className="text-2xl font-bold">{statistics.from_google}</div>
             <div className="text-xs text-muted-foreground">Google</div>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold">{statistics.from_icloud}</div>
+            <div className="text-xs text-muted-foreground">iCloud</div>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold">{statistics.from_outlook}</div>
+            <div className="text-xs text-muted-foreground">Outlook</div>
           </div>
         </div>
       )}
