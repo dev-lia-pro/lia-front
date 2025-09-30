@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
+import { NotificationBell } from '@/components/NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,8 +113,9 @@ export const DashboardHeader = () => {
         </div>
       </div>
       
-      {/* Profile Menu */}
+      {/* Notification & Profile Menu */}
       <div className="flex items-center gap-2">
+        <NotificationBell />
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore";
 import {Index} from "./pages";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import NotFound from "./pages/NotFound";
 import LoginEmailPage1 from "./pages/LoginEmailPage1";
 import LoginEmailPage2 from "./pages/LoginEmailPage2";
@@ -31,10 +32,11 @@ const App = () => {
   return (
     <ThemeProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-        <Routes>
+        <NotificationProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+          <Routes>
           {/* Routes protégées - nécessitent une authentification */}
           <Route path="/" element={
             <ProtectedRoute>
@@ -105,6 +107,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </NotificationProvider>
       </TooltipProvider>
     </ThemeProvider>
   );
