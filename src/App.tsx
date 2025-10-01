@@ -21,9 +21,13 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import OAuthSuccess from "./pages/OAuthSuccess";
 import OAuthError from "./pages/OAuthError";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 
 const App = () => {
   const { initializeAuth } = useAuthStore();
+
+  // Initialize push notifications for native platforms
+  usePushNotifications();
 
   useEffect(() => {
     initializeAuth();
