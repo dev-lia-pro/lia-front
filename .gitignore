@@ -25,3 +25,30 @@ dist-ssr
 .zsh_history
 
 .env
+.env.mobile
+.env.production
+
+# Capacitor
+.capacitor
+
+# Android
+android/app/build/
+android/app/release/
+android/app/debug/
+android/.gradle/
+android/local.properties
+android/gradle.properties
+*.keystore
+*.jks
+
+# iOS
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+*.ipa
+*.dSYM.zip
+*.mobileprovision
+*.p12
+*.cer
+ExportOptions.plist
