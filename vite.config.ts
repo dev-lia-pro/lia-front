@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Use relative paths for mobile builds
+  base: mode === 'mobile' ? '' : '/',
   plugins: [
     react(),
     mode === 'development' &&
@@ -17,6 +19,17 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  // Optimize for mobile
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: mode === 'mobile' ? undefined : {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+        },
+      },
     },
   },
 }));
