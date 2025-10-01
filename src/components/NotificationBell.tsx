@@ -44,7 +44,7 @@ export const NotificationBell: React.FC = () => {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const response = await axios.get('/api/notifications/', {
+      const response = await axios.get('/notifications/', {
         params: { is_read: false, limit: 20 }
       });
       return response.data.results as NotificationItem[];
@@ -56,7 +56,7 @@ export const NotificationBell: React.FC = () => {
   // Mark notification as read mutation
   const markReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
-      await axios.post(`/api/notifications/${notificationId}/mark-read/`);
+      await axios.post(`/notifications/${notificationId}/mark-read/`);
       markAsRead(notificationId);
     },
     onSuccess: () => {
@@ -71,7 +71,7 @@ export const NotificationBell: React.FC = () => {
       if (notifications) {
         await Promise.all(
           notifications.filter(n => !n.is_read).map(n =>
-            axios.post(`/api/notifications/${n.id}/mark-read/`)
+            axios.post(`/notifications/${n.id}/mark-read/`)
           )
         );
       }

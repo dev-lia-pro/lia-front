@@ -8,3 +8,4 @@ export { useProjects } from './useProjects';
 export { useProviders } from './useProviders';
 export { useTasks } from './useTasks';
 export { useUser } from './useUser';
+export { usePushNotifications } from './usePushNotifications';
