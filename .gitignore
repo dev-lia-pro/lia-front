@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dev-dist
 *.local
 
 # Editor directories and files
@@ -37,7 +38,6 @@ android/app/release/
 android/app/debug/
 android/.gradle/
 android/local.properties
-android/gradle.properties
 *.keystore
 *.jks
 

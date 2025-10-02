@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import axios from '@/api/axios';  
+import axios from '@/api/axios';
+import InstallPWA from '@/components/InstallPWA';  
 
 const LoginEmailPage1 = () => {
   const [email, setEmail] = useState('');
@@ -98,10 +99,12 @@ const LoginEmailPage1 = () => {
           type="submit"
           onClick={handleSubmit}
           disabled={isLoading}
-          className="mb-6 w-full rounded-lg bg-primary p-4 text-sm text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 transition-smooth"
+          className="mb-6 w-full rounded-lg bg-primary p-4 text-sm text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-50 transition-smooth border border-transparent"
         >
           {isLoading ? 'Envoi en cours...' : 'Envoyer le code'}
         </Button>
+
+        <InstallPWA />
       </div>
     </div>
   );

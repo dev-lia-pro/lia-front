@@ -5,6 +5,10 @@ import './index.css'
 import './styles/drag.css'
 import { QueryProvider } from './providers/QueryProvider'
 import { PostHogProvider } from 'posthog-js/react'
+import { registerSW } from 'virtual:pwa-register'
+
+// Register service worker for PWA
+registerSW({ immediate: true })
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 

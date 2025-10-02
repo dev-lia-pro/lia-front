@@ -1,0 +1,111 @@
+name: Android Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK/AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create production .env file
+        run: |
+          echo "VITE_BASE_API_URL=${{ secrets.VITE_BASE_API_URL }}" > .env.mobile
+          echo "VITE_WS_URL=${{ secrets.VITE_WS_URL }}" >> .env.mobile
+          echo "VITE_PUBLIC_POSTHOG_KEY=${{ secrets.VITE_PUBLIC_POSTHOG_KEY }}" >> .env.mobile
+          echo "VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }}" >> .env.mobile
+
+      - name: Build frontend for mobile
+        run: npm run build:mobile
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        working-directory: android
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Build Release APK/AAB
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: android
+        env:
+          MYAPP_RELEASE_STORE_FILE: ${{ secrets.ANDROID_KEYSTORE_FILE }}
+          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # Decode keystore from base64
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > app/lia-release.keystore
+
+          # Build release APK and AAB
+          ./gradlew assembleRelease bundleRelease
+
+      - name: Upload Debug APK
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+      - name: Upload Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload Release AAB
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # Optional: Upload to Play Store
+      # - name: Upload to Play Store
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   uses: r0adkll/upload-google-play@v1
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+      #     packageName: com.lia.app
+      #     releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+      #     track: production
+      #     status: completed
