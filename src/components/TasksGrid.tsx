@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { TaskModal } from './TaskModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import TaskDetailsModal from './TaskDetailsModal';
@@ -12,29 +12,34 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
- 
+import { useSearchParams } from 'react-router-dom';
+
 
 interface TasksGridProps {
   includeUrgent?: boolean;
   urgentOnlyFilter?: boolean; // Force le filtre urgent
   showToggles?: boolean; // Affiche les toggles (défaut: true)
   disableUrgentBackground?: boolean; // Désactive le fond rouge des tâches urgentes
+  taskIdFromUrl?: string | null; // ID de la tâche à ouvrir depuis l'URL
 }
 
-export const TasksGrid: React.FC<TasksGridProps> = ({ 
-  includeUrgent = false, 
-  urgentOnlyFilter = false, 
+export const TasksGrid: React.FC<TasksGridProps> = ({
+  includeUrgent = false,
+  urgentOnlyFilter = false,
   showToggles = true,
-  disableUrgentBackground = false 
+  disableUrgentBackground = false,
+  taskIdFromUrl = null
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [createDefaultStatus, setCreateDefaultStatus] = useState<Task['status']>('TODO');
-  
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
   const { projects } = useProjects();
   const { selected } = useProjectStore();
   const isMobile = useIsMobile();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [showDone, setShowDone] = useState(true);
   const [urgentOnly, setUrgentOnly] = useState(urgentOnlyFilter);
@@ -146,7 +151,19 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
   const handleDeleteTaskClick = useCallback((task: Task) => {
     setDeletingTask(task);
   }, []);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Ouvrir la tâche spécifiée dans les query params
+  useEffect(() => {
+    if (taskIdFromUrl) {
+      const allTasks = [...tasksTodo, ...tasksInProgress, ...tasksDone];
+      const task = allTasks.find(t => t.id === parseInt(taskIdFromUrl));
+      if (task) {
+        setSelectedTask(task);
+        // Nettoyer le query param après ouverture
+        setSearchParams({});
+      }
+    }
+  }, [taskIdFromUrl, tasksTodo, tasksInProgress, tasksDone, setSearchParams]);
 
   const handleAssignProject = useCallback(async (taskId: number, projectId: number | '') => {
     try {

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from '../api/axios';
+import { Bell, Loader2 } from 'lucide-react';
+import { useNotifications as useNotificationContext } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,94 +11,66 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import type { NotificationItem } from '@/hooks/useNotifications';
 
-interface NotificationItem {
-  id: number;
-  type: string;
-  title: string;
-  message: string;
-  related_message?: number;
-  related_task?: number;
-  related_event?: number;
-  action_url?: string;
-  icon?: string;
-  priority?: string;
-  is_read: boolean;
-  created_at: string;
-}
+const ITEMS_PER_PAGE = 20;
 
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { unreadCount, markAsRead, markAllAsRead, isConnected } = useNotifications();
+  const { unreadCount, isConnected } = useNotificationContext();
   const [isOpen, setIsOpen] = useState(false);
+  const [readFilter, setReadFilter] = useState<'all' | 'unread'>('unread');
+  const [page, setPage] = useState(0);
 
-  // Fetch notifications from API
-  const { data: notifications, isLoading } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => {
-      const response = await axios.get('/notifications/', {
-        params: { is_read: false, limit: 20 }
-      });
-      return response.data.results as NotificationItem[];
-    },
-    enabled: isOpen,
-    refetchInterval: isOpen ? 30000 : false, // Refresh every 30s when open
-  });
-
-  // Mark notification as read mutation
-  const markReadMutation = useMutation({
-    mutationFn: async (notificationId: number) => {
-      await axios.post(`/notifications/${notificationId}/mark-read/`);
-      markAsRead(notificationId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
-
-  // Mark all as read mutation
-  const markAllReadMutation = useMutation({
-    mutationFn: async () => {
-      // Call all notifications mark-read endpoints
-      if (notifications) {
-        await Promise.all(
-          notifications.filter(n => !n.is_read).map(n =>
-            axios.post(`/notifications/${n.id}/mark-read/`)
-          )
-        );
-      }
-      markAllAsRead();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
+  const {
+    notifications,
+    totalCount,
+    hasNext,
+    isLoading,
+    isFetching,
+    markAsRead,
+    markAllAsRead,
+    isMarkingAllAsRead,
+  } = useNotifications({
+    is_read: readFilter === 'unread' ? false : undefined,
+    limit: ITEMS_PER_PAGE,
+    offset: page * ITEMS_PER_PAGE,
   });
 
   const handleNotificationClick = (notification: NotificationItem) => {
     // Mark as read
     if (!notification.is_read) {
-      markReadMutation.mutate(notification.id);
+      markAsRead(notification.id);
     }
 
-    // Navigate based on action URL or related items
-    if (notification.action_url) {
-      navigate(notification.action_url);
-    } else if (notification.related_message) {
-      navigate(`/messages/${notification.related_message}`);
+    // Navigate based on related items (priority) or fallback to action URL
+    // Frontend controls routing - backend only provides data
+    if (notification.related_message) {
+      navigate(`/messages?message=${notification.related_message}`);
     } else if (notification.related_task) {
-      navigate(`/tasks/${notification.related_task}`);
+      navigate(`/tasks?task=${notification.related_task}`);
     } else if (notification.related_event) {
-      navigate(`/calendar/events/${notification.related_event}`);
+      navigate(`/events?event=${notification.related_event}`);
+    } else if (notification.action_url) {
+      // Fallback for special cases (external links, custom pages)
+      navigate(notification.action_url);
     }
 
     setIsOpen(false);
+  };
+
+  const handleLoadMore = () => {
+    setPage(page + 1);
+  };
+
+  const handleFilterChange = (filter: 'all' | 'unread') => {
+    setReadFilter(filter);
+    setPage(0); // Reset pagination
   };
 
   const getNotificationIcon = (icon?: string): string => {
@@ -134,100 +105,151 @@ export const NotificationBell: React.FC = () => {
           variant="ghost"
           size="icon"
           className="relative"
-          aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} non lues)` : ''}`}
+          aria-label={`Notifications${unreadCount > 0 ? ` - ${unreadCount} notification${unreadCount > 1 ? 's' : ''} non lue${unreadCount > 1 ? 's' : ''}` : ''}`}
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]"
+            <span
+              className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-red-500 dark:bg-red-600 text-white text-[10px] font-semibold tabular-nums ring-2 ring-background shadow-sm transition-transform hover:scale-110"
+              aria-hidden="true"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
-            </Badge>
+            </span>
           )}
           {isConnected && (
-            <span className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+            <span
+              className="absolute bottom-0 right-0 h-2 w-2 bg-green-500 rounded-full animate-pulse"
+              aria-label="Connecté en temps réel"
+            />
           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-96">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>Notifications</span>
-          {notifications && notifications.length > 0 && (
+        <DropdownMenuLabel className="flex items-start justify-between pb-2">
+          <span className="pt-1">Notifications</span>
+          {notifications.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => markAllReadMutation.mutate()}
-              className="text-xs"
+              onClick={() => markAllAsRead()}
+              disabled={isMarkingAllAsRead}
+              className="text-xs h-7 -mt-1"
             >
-              Tout marquer comme lu
+              {isMarkingAllAsRead ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  Marquage...
+                </>
+              ) : (
+                'Tout marquer comme lu'
+              )}
             </Button>
           )}
         </DropdownMenuLabel>
+
+        {/* Filter Toggle */}
+        <div className="px-2 pb-2">
+          <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+            <Button
+              variant={readFilter === 'unread' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleFilterChange('unread')}
+              className="flex-1 h-7 text-xs"
+            >
+              Non lues
+            </Button>
+            <Button
+              variant={readFilter === 'all' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => handleFilterChange('all')}
+              className="flex-1 h-7 text-xs"
+            >
+              Toutes
+            </Button>
+          </div>
+        </div>
+
         <DropdownMenuSeparator />
+
         <ScrollArea className="h-96">
-          {isLoading ? (
+          {isLoading && page === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Chargement...
             </div>
-          ) : notifications && notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                onClick={() => handleNotificationClick(notification)}
-                className={cn(
-                  "flex items-start gap-3 p-4 cursor-pointer hover:bg-accent",
-                  !notification.is_read && "bg-accent/50"
-                )}
-              >
-                <span className="text-2xl mt-0.5">
-                  {getNotificationIcon(notification.icon)}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className={cn("font-semibold text-sm", getPriorityColor(notification.priority))}>
-                    {notification.title}
-                  </p>
-                  {notification.message && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {notification.message}
-                    </p>
+          ) : notifications.length > 0 ? (
+            <>
+              {notifications.map((notification) => (
+                <DropdownMenuItem
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
+                  className={cn(
+                    "flex items-start gap-3 p-4 cursor-pointer transition-colors",
+                    !notification.is_read
+                      ? "bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 border-l-4 border-blue-500"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
                   )}
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {formatDistanceToNow(new Date(notification.created_at), {
-                      addSuffix: true,
-                      locale: fr
-                    })}
-                  </p>
+                >
+                  <span className="text-2xl mt-0.5">
+                    {getNotificationIcon(notification.icon)}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "font-semibold text-sm",
+                      !notification.is_read && "text-blue-900 dark:text-blue-100",
+                      getPriorityColor(notification.priority)
+                    )}>
+                      {notification.title}
+                    </p>
+                    {notification.message && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {notification.message}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatDistanceToNow(new Date(notification.created_at), {
+                        addSuffix: true,
+                        locale: fr
+                      })}
+                    </p>
+                  </div>
+                  {!notification.is_read && (
+                    <div className="h-2 w-2 bg-blue-500 rounded-full mt-2 animate-pulse shadow-sm shadow-blue-500" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+
+              {/* Load More Button */}
+              {hasNext && (
+                <div className="p-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLoadMore}
+                    disabled={isFetching}
+                    className="w-full text-xs"
+                  >
+                    {isFetching ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                        Chargement...
+                      </>
+                    ) : (
+                      `Charger plus (${totalCount - notifications.length} restantes)`
+                    )}
+                  </Button>
                 </div>
-                {!notification.is_read && (
-                  <div className="h-2 w-2 bg-blue-500 rounded-full mt-2" />
-                )}
-              </DropdownMenuItem>
-            ))
+              )}
+            </>
           ) : (
             <div className="p-8 text-center">
               <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm font-medium">Aucune notification</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Vous êtes à jour !
+                {readFilter === 'unread' ? 'Vous êtes à jour !' : 'Aucune notification pour le moment'}
               </p>
             </div>
           )}
         </ScrollArea>
-        {notifications && notifications.length > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                navigate('/notifications');
-                setIsOpen(false);
-              }}
-              className="text-center justify-center text-sm font-medium"
-            >
-              Voir toutes les notifications
-            </DropdownMenuItem>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
