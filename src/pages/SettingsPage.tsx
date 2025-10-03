@@ -58,7 +58,8 @@ const SettingsPage = () => {
     clearError,
     fetchProviders,
     fetchTypes,
-    refreshProviders
+    refreshProviders,
+    invalidateProviderData
   } = useProviders();
 
   const getProviderIcon = (type: string) => {
@@ -313,8 +314,8 @@ const SettingsPage = () => {
                 await fetchProviders();
                 console.log('fetchProviders terminé');
 
-                // Aussi invalider le cache pour forcer React Query
-                await queryClient.invalidateQueries({ queryKey: ['providers'] });
+                // Invalider tous les caches de données après le toggle read-only
+                invalidateProviderData();
                 console.log('Cache invalidé');
 
                 toast({
@@ -372,6 +373,10 @@ const SettingsPage = () => {
         return;
       }
       const { data } = await axios.post(url, {});
+
+      // Invalider tous les caches de données après la synchronisation
+      invalidateProviderData();
+
       toast({
         title: 'Synchronisation lancée',
         description: typeof data?.status === 'string' ? `Statut: ${data.status}` : 'Les données vont être synchronisées en arrière-plan.',
@@ -397,16 +402,19 @@ const SettingsPage = () => {
   // Fonction spécifique pour gérer le succès OAuth
   const handleOAuthSuccess = async () => {
     console.log('handleOAuthSuccess appelé!'); // Debug
-    
+
     // Rafraîchir la liste des providers avec TanStack Query
     console.log('Rafraîchissement de la liste des providers...'); // Debug
     const updatedProviders = await refreshProviders();
     console.log('Liste des providers après rafraîchissement:', updatedProviders); // Debug
-    
+
+    // Invalider tous les caches de données après création OAuth
+    invalidateProviderData();
+
     // Identifier le nouveau provider (probablement le plus récemment créé)
     // On peut utiliser l'ID le plus élevé comme approximation
-    const latestProvider = updatedProviders.length > 0 
-      ? updatedProviders.reduce((latest, current) => 
+    const latestProvider = updatedProviders.length > 0
+      ? updatedProviders.reduce((latest, current) =>
           (current.id > latest.id) ? current : latest
         )
       : null;
