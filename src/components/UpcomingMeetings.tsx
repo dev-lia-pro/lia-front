@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EventModal } from './EventModal';
@@ -13,13 +13,19 @@ import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useProjects } from '@/hooks/useProjects';
 import { getIconByValue } from '@/config/icons';
+import { useSearchParams } from 'react-router-dom';
 
-export const UpcomingMeetings = () => {
+interface UpcomingMeetingsProps {
+  eventIdFromUrl?: string | null;
+}
+
+export const UpcomingMeetings: React.FC<UpcomingMeetingsProps> = ({ eventIdFromUrl = null }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [selectedDetailEvent, setSelectedDetailEvent] = useState<Event | null>(null);
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Utiliser un seul hook avec des filtres optimisés
   const { selected } = useProjectStore();
   const filters = useMemo(() => {
@@ -61,6 +67,18 @@ export const UpcomingMeetings = () => {
 
   // Combiner les événements du jour et à venir, en priorisant ceux du jour
   const allEvents = [...todayEvents, ...upcomingEvents];
+
+  // Ouvrir l'événement spécifié dans les query params
+  useEffect(() => {
+    if (eventIdFromUrl && events.length > 0) {
+      const event = events.find(e => e.id === parseInt(eventIdFromUrl));
+      if (event) {
+        setSelectedDetailEvent(event);
+        // Nettoyer le query param après ouverture
+        setSearchParams({});
+      }
+    }
+  }, [eventIdFromUrl, events, setSearchParams]);
 
   const handleCreateEvent = async (data: CreateEventData) => {
     try {
