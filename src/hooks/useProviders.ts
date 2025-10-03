@@ -11,6 +11,17 @@ import type {
 export const useProviders = () => {
   const queryClient = useQueryClient();
 
+  // Fonction helper pour invalider tous les caches de données dépendantes des providers
+  const invalidateProviderData = () => {
+    queryClient.invalidateQueries({ queryKey: ['providers'] });
+    queryClient.invalidateQueries({ queryKey: ['messages'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+    queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    queryClient.invalidateQueries({ queryKey: ['contact-duplicates'] });
+    queryClient.invalidateQueries({ queryKey: ['contact-statistics'] });
+  };
+
   // Récupérer les providers avec TanStack Query
   const {
     data: providersData,
@@ -50,8 +61,8 @@ export const useProviders = () => {
       return response.data;
     },
     onSuccess: (newProvider) => {
-      // Invalider et rafraîchir la liste des providers
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      // Invalider tous les caches de données dépendantes
+      invalidateProviderData();
     },
     onError: (error: unknown) => {
       console.error('Erreur lors de la création du provider:', error);
@@ -79,8 +90,8 @@ export const useProviders = () => {
       await axios.delete(`/providers/${id}/`);
     },
     onSuccess: () => {
-      // Invalider et rafraîchir la liste des providers
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      // Invalider tous les caches de données dépendantes
+      invalidateProviderData();
     },
     onError: (error: unknown) => {
       console.error('Erreur lors de la suppression du provider:', error);
@@ -168,6 +179,8 @@ export const useProviders = () => {
     deleteProviderMutation,
     refreshProvidersMutation: undefined, // Supprimer la mutation de rafraîchissement
     // Exposer la fonction de rafraîchissement
-    refreshProviders
+    refreshProviders,
+    // Exposer la fonction d'invalidation des caches
+    invalidateProviderData
   };
 };
