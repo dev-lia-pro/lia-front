@@ -3,6 +3,7 @@ import { DashboardHeader } from '@/components/DashboardHeader';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
+import { useMessageThreads, useThreadMessages } from '@/hooks/useMessageThreads';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -12,15 +13,20 @@ import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cloud, CloudOff, User, Loader2 } from 'lucide-react';
+import { Cloud, CloudOff, User, Loader2, List, Layers } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ContactDetailsModal } from '@/components/ContactDetailsModal';
 import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
+import { MessageThreadItem } from '@/components/MessageThreadItem';
 import { useQueryClient } from '@tanstack/react-query';
+
+type ViewMode = 'list' | 'threads';
 
 const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
+  const [viewMode, setViewMode] = React.useState<ViewMode>('threads'); // Par défaut: vue threads
+  const [expandedThreadId, setExpandedThreadId] = React.useState<string | null>(null);
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
   const [searchKeyword, setSearchKeyword] = React.useState<string>('');
@@ -32,14 +38,29 @@ const MessagesPage = () => {
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
-  const { messages, isLoading, isFetching, totalCount, refetch } = useMessages({
+
+  // Hook pour la vue liste (classique)
+  const { messages, isLoading: isLoadingMessages, isFetching, totalCount, refetch } = useMessages({
     channel: channelFilter,
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined
   });
+
+  // Hook pour la vue threads
+  const { threads, isLoading: isLoadingThreads, refetch: refetchThreads } = useMessageThreads({
+    channel: channelFilter,
+    tag: searchTag || undefined,
+    project: selected.id ?? undefined,
+  });
+
+  // Hook pour charger les messages d'un thread expansé
+  const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(expandedThreadId);
+
   const { projects } = useProjects();
   const { toast } = useToast();
+
+  const isLoading = viewMode === 'list' ? isLoadingMessages : isLoadingThreads;
 
   // Initialiser l'état des attachments seulement une fois au chargement initial
   React.useEffect(() => {
@@ -211,7 +232,41 @@ const MessagesPage = () => {
           <div className="flex flex-col gap-3 mb-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
-              <button onClick={() => refetch()} className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80">Rafraîchir</button>
+              <div className="flex gap-2">
+                {/* Toggle vue liste/threads */}
+                <div className="flex border border-border rounded overflow-hidden">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`px-3 py-1 text-sm flex items-center gap-1 transition-colors ${
+                      viewMode === 'list'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card text-foreground/80 hover:bg-muted'
+                    }`}
+                    title="Vue liste"
+                  >
+                    <List className="w-4 h-4" />
+                    <span className="hidden sm:inline">Liste</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('threads')}
+                    className={`px-3 py-1 text-sm flex items-center gap-1 transition-colors ${
+                      viewMode === 'threads'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card text-foreground/80 hover:bg-muted'
+                    }`}
+                    title="Vue threads"
+                  >
+                    <Layers className="w-4 h-4" />
+                    <span className="hidden sm:inline">Threads</span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => viewMode === 'list' ? refetch() : refetchThreads()}
+                  className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80"
+                >
+                  Rafraîchir
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               <input
@@ -243,10 +298,18 @@ const MessagesPage = () => {
             </div>
           </div>
 
-          {/* Liste des messages */}
+          {/* Liste des messages ou threads */}
           {isLoading ? (
             <div className="text-foreground/70">Chargement…</div>
-          ) : messages.length === 0 ? (
+          ) : viewMode === 'threads' && threads.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
+                <Layers className="w-8 h-8 text-foreground/50" />
+              </div>
+              <p className="text-foreground/70 mb-2">Aucune conversation pour le moment</p>
+              <p className="text-sm text-foreground/50">Vos conversations apparaîtront ici</p>
+            </div>
+          ) : viewMode === 'list' && messages.length === 0 ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
                 <svg className="w-8 h-8 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,17 +319,28 @@ const MessagesPage = () => {
               <p className="text-foreground/70 mb-2">Aucun message pour le moment</p>
               <p className="text-sm text-foreground/50">Vos messages apparaîtront ici</p>
             </div>
-          ) : messages.length === 0 && debouncedSearchKeyword ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
-                <svg className="w-8 h-8 text-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <p className="text-foreground/70 mb-2">Aucun message trouvé</p>
-              <p className="text-sm text-foreground/50">Essayez avec d'autres mots-clés</p>
+          ) : viewMode === 'threads' ? (
+            // Vue threads
+            <div className="grid grid-cols-1 gap-3">
+              {threads.map((thread) => (
+                <MessageThreadItem
+                  key={thread.thread_id}
+                  thread={thread}
+                  isExpanded={expandedThreadId === thread.thread_id}
+                  onToggleExpand={() => {
+                    setExpandedThreadId(prev => prev === thread.thread_id ? null : thread.thread_id);
+                  }}
+                  onMessageClick={setSelectedMessageDialog}
+                  onContactClick={setSelectedContactId}
+                  onAssignProject={handleAssignProject}
+                  projects={projects}
+                  threadMessages={expandedThreadId === thread.thread_id ? threadMessages : undefined}
+                  isLoadingMessages={isLoadingThreadMessages}
+                />
+              ))}
             </div>
           ) : (
+            // Vue liste classique
             <div className="grid grid-cols-1 gap-3">
               {messages.map((msg) => (
                 <div key={msg.id} className="bg-card border border-border rounded p-3">
