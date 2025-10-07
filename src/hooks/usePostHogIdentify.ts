@@ -7,9 +7,9 @@ export const usePostHogIdentify = () => {
   const { user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    // Ne pas identifier en environnement local
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocal || !posthog) {
+    // Ne pas identifier si PostHog n'est pas activé
+    const isPostHogEnabled = import.meta.env.VITE_ENABLE_POSTHOG === 'true';
+    if (!isPostHogEnabled || !posthog) {
       return;
     }
 
