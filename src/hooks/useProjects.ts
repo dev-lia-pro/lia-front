@@ -7,6 +7,7 @@ export interface Project {
   description: string;
   icon: string;
   user: number;
+  is_archived: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -20,6 +21,7 @@ export interface CreateProjectData {
   title: string;
   description: string;
   icon: string;
+  is_archived?: boolean;
 }
 
 export interface UpdateProjectData extends CreateProjectData {
@@ -34,7 +36,9 @@ export const useProjects = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: [PROJECTS_QUERY_KEY],
     queryFn: async (): Promise<PaginatedResponse<Project>> => {
-      const response = await axios.get('/projects/');
+      const response = await axios.get('/projects/', {
+        params: { show_archived: 'true' }
+      });
       return response.data;
     },
   });
@@ -72,6 +76,16 @@ export const useProjects = () => {
     },
   });
 
+  const toggleArchiveProject = useMutation({
+    mutationFn: async ({ id, isArchived }: { id: number; isArchived: boolean }): Promise<Project> => {
+      const response = await axios.patch(`/projects/${id}/`, { is_archived: isArchived });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROJECTS_QUERY_KEY] });
+    },
+  });
+
   return {
     projects,
     totalCount,
@@ -80,5 +94,6 @@ export const useProjects = () => {
     createProject,
     updateProject,
     deleteProject,
+    toggleArchiveProject,
   };
 };

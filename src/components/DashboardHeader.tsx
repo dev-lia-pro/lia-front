@@ -91,7 +91,7 @@ export const DashboardHeader = () => {
                   <div className="text-base font-medium">Tous les projets</div>
                 </div>
               </DropdownMenuItem>
-              {projects?.map((p) => (
+              {projects?.filter(p => !p.is_archived).map((p) => (
                 <DropdownMenuItem
                   key={p.id}
                   onClick={() => setSelected({ id: p.id, title: p.title })}
