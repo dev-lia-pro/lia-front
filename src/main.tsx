@@ -31,6 +31,7 @@ if (isLocal) {
           capture_exceptions: true,
           debug: import.meta.env.MODE === "development",
           disable_session_recording: false,
+          person_profiles: 'identified_only',
         }}
       >
         <QueryProvider>
