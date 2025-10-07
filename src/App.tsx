@@ -22,12 +22,16 @@ import PublicRoute from "./components/PublicRoute";
 import OAuthSuccess from "./pages/OAuthSuccess";
 import OAuthError from "./pages/OAuthError";
 import { usePushNotifications } from "./hooks/usePushNotifications";
+import { usePostHogIdentify } from "./hooks/usePostHogIdentify";
 
 const App = () => {
   const { initializeAuth } = useAuthStore();
 
   // Initialize push notifications for native platforms
   usePushNotifications();
+
+  // Identifier l'utilisateur dans PostHog
+  usePostHogIdentify();
 
   useEffect(() => {
     initializeAuth();
