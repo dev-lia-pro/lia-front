@@ -10,17 +10,9 @@ import { registerSW } from 'virtual:pwa-register'
 // Register service worker for PWA
 registerSW({ immediate: true })
 
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const isPostHogEnabled = import.meta.env.VITE_ENABLE_POSTHOG === 'true';
 
-if (isLocal) {
-  createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <QueryProvider>
-        <App />
-      </QueryProvider>
-    </React.StrictMode>
-  );
-} else {
+if (isPostHogEnabled) {
   createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <PostHogProvider
@@ -38,6 +30,14 @@ if (isLocal) {
           <App />
         </QueryProvider>
       </PostHogProvider>
+    </React.StrictMode>
+  );
+} else {
+  createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <QueryProvider>
+        <App />
+      </QueryProvider>
     </React.StrictMode>
   );
 }
