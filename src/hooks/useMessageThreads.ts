@@ -49,7 +49,9 @@ export const useThreadMessages = (threadId: string | null) => {
     queryKey: [THREADS_KEY, 'messages', threadId],
     queryFn: async (): Promise<ThreadMessagesResponse> => {
       if (!threadId) throw new Error('Thread ID is required');
-      const res = await axios.get(`/messages/threads/${encodeURIComponent(threadId)}/`);
+      const params = new URLSearchParams();
+      params.append('thread_id', threadId);
+      const res = await axios.get(`/messages/thread-details/?${params.toString()}`);
       return res.data;
     },
     enabled: !!threadId, // Ne lance la requête que si threadId est défini
