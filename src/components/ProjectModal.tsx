@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Plus, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ModalActions } from './ModalActions';
 import { Project, CreateProjectData, UpdateProjectData } from '../hooks/useProjects';
-import { ICON_PACK } from '../config/icons';
+import { ICON_PACK, ICON_CATEGORIES, type IconCategory } from '../config/icons';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -26,6 +26,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<IconCategory>('all');
 
   const isEditing = !!project;
 
@@ -41,11 +43,31 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
       setDescription('');
       setSelectedIcon('');
     }
-  }, [project, isOpen]); // Ajouter isOpen pour réinitialiser quand la modale s'ouvre
+    // Réinitialiser la recherche à chaque ouverture
+    setSearchQuery('');
+    setSelectedCategory('all');
+  }, [project, isOpen]);
+
+  // Filtrer les icônes selon la recherche et la catégorie
+  const filteredIcons = useMemo(() => {
+    return ICON_PACK.filter(icon => {
+      // Filtrer par catégorie
+      const matchesCategory = selectedCategory === 'all' || icon.category === selectedCategory;
+
+      // Filtrer par recherche (nom, value, keywords)
+      const searchLower = searchQuery.toLowerCase().trim();
+      const matchesSearch = searchLower === '' ||
+        icon.name.toLowerCase().includes(searchLower) ||
+        icon.value.toLowerCase().includes(searchLower) ||
+        icon.keywords?.some(keyword => keyword.toLowerCase().includes(searchLower));
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [searchQuery, selectedCategory]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim() || !selectedIcon) {
       return;
     }
@@ -71,13 +93,19 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         setDescription('');
         setSelectedIcon('');
       }
+      setSearchQuery('');
+      setSelectedCategory('all');
       onClose();
     }
   };
 
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isEditing ? (
@@ -89,9 +117,15 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
               </>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {isEditing
+              ? 'Modifier les paramètres du projet : titre, description et icône'
+              : 'Créer un nouveau projet en définissant un titre, une description optionnelle et en choisissant une icône'
+            }
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 flex-1 overflow-y-auto px-1 py-1">
           {/* Titre */}
           <div className="space-y-2">
             <label htmlFor="title" className="text-sm font-medium text-foreground">
@@ -123,27 +157,86 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
           </div>
 
           {/* Sélecteur d'icône */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <label className="text-sm font-medium text-foreground">
               Icône *
             </label>
-            <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto overflow-x-hidden pt-2">
-              {ICON_PACK.map((iconOption) => (
+
+            {/* Barre de recherche */}
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Rechercher une icône..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+                disabled={isLoading}
+              />
+              {searchQuery && (
                 <button
-                  key={iconOption.value}
                   type="button"
-                  onClick={() => setSelectedIcon(iconOption.value)}
-                  className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg transition-all duration-200 hover:scale-[1.02] transform-gpu will-change-transform p-1 overflow-hidden ${
-                    selectedIcon === iconOption.value
-                      ? 'border-gold bg-gold/10'
-                      : 'border-border hover:border-gold/50'
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  disabled={isLoading}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Filtres par catégorie */}
+            <div className="flex flex-wrap gap-2">
+              {ICON_CATEGORIES.map((category) => (
+                <button
+                  key={category.value}
+                  type="button"
+                  onClick={() => setSelectedCategory(category.value)}
+                  className={`px-3 py-1 text-xs rounded-full border transition-all ${
+                    selectedCategory === category.value
+                      ? 'bg-gold/10 border-gold text-gold'
+                      : 'border-border hover:border-gold/50 text-foreground/70 hover:text-foreground'
                   }`}
                   disabled={isLoading}
                 >
-                  {iconOption.icon}
+                  {category.label}
                 </button>
               ))}
             </div>
+
+            {/* Compteur de résultats */}
+            <div className="text-xs text-muted-foreground">
+              {filteredIcons.length} icône{filteredIcons.length > 1 ? 's' : ''} trouvée{filteredIcons.length > 1 ? 's' : ''}
+            </div>
+
+            {/* Grille d'icônes */}
+            <div className="grid grid-cols-10 gap-2 max-h-80 overflow-y-auto overflow-x-hidden pt-2 pr-2">
+              {filteredIcons.map((iconOption) => {
+                const IconComponent = iconOption.icon;
+                return (
+                  <button
+                    key={iconOption.value}
+                    type="button"
+                    onClick={() => setSelectedIcon(iconOption.value)}
+                    className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all duration-200 hover:scale-105 transform-gpu will-change-transform ${
+                      selectedIcon === iconOption.value
+                        ? 'border-gold bg-gold/10'
+                        : 'border-border hover:border-gold/50'
+                    }`}
+                    disabled={isLoading}
+                    title={iconOption.name}
+                  >
+                    <IconComponent size={20} strokeWidth={2} className="text-foreground" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {filteredIcons.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                Aucune icône trouvée pour "{searchQuery}"
+              </div>
+            )}
           </div>
 
           {/* Boutons d'action */}
