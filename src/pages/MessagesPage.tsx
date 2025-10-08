@@ -362,7 +362,10 @@ const MessagesPage = () => {
                             >
                               {msg.project ? (
                                 <>
-                                  <span>{getIconByValue((projects.find(p => p.id === msg.project)?.icon) || '')}</span>
+                                  {(() => {
+                                    const IconComponent = getIconByValue((projects.find(p => p.id === msg.project)?.icon) || '');
+                                    return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                                  })()}
                                   <span className="truncate max-w-[160px]">
                                     {projects.find(p => p.id === msg.project)?.title || `Projet #${msg.project}`}
                                   </span>
@@ -376,12 +379,15 @@ const MessagesPage = () => {
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAssignProject(msg.id, ''); }} className="cursor-pointer hover:bg-muted">
                               Aucun projet
                             </DropdownMenuItem>
-                            {projects.map((p) => (
-                              <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); handleAssignProject(msg.id, p.id); }} className="cursor-pointer hover:bg-muted">
-                                <span className="mr-2">{getIconByValue(p.icon)}</span>
-                                <span>{p.title || `Projet #${p.id}`}</span>
-                              </DropdownMenuItem>
-                            ))}
+                            {projects.map((p) => {
+                              const IconComponent = getIconByValue(p.icon);
+                              return (
+                                <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); handleAssignProject(msg.id, p.id); }} className="cursor-pointer hover:bg-muted">
+                                  <span className="mr-2">{IconComponent ? <IconComponent className="w-4 h-4" /> : null}</span>
+                                  <span>{p.title || `Projet #${p.id}`}</span>
+                                </DropdownMenuItem>
+                              );
+                            })}
                           </DropdownMenuContent>
                         </DropdownMenu>
                         {Array.isArray(msg.tags) && msg.tags.map((t) => (

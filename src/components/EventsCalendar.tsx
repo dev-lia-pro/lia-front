@@ -340,7 +340,10 @@ export const EventsCalendar: React.FC = () => {
                               <button className="px-1.5 py-0.5 rounded bg-muted/10 border border-border text-[10px] hover:bg-muted/20" onClick={(e) => e.stopPropagation()}>
                                 {ev.project ? (
                                   <>
-                                    <span className="mr-1">{getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '')}</span>
+                                    {(() => {
+                                      const IconComponent = getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '');
+                                      return IconComponent ? <span className="mr-1 inline-block"><IconComponent className="w-3 h-3" /></span> : null;
+                                    })()}
                                     <span className="truncate max-w-[90px] align-middle">{projects.find(p => p.id === ev.project)?.title || `Projet #${ev.project}`}</span>
                                   </>
                                 ) : (
@@ -350,12 +353,15 @@ export const EventsCalendar: React.FC = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenuItem onClick={() => handleAssignEventProject(ev.id, '')} className="cursor-pointer hover:bg-navy-muted">Aucun projet</DropdownMenuItem>
-                              {projects.map((p) => (
-                                <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
-                                  <span className="mr-2">{getIconByValue(p.icon)}</span>
-                                  <span>{p.title}</span>
-                                </DropdownMenuItem>
-                              ))}
+                              {projects.map((p) => {
+                                const IconComponent = getIconByValue(p.icon);
+                                return (
+                                  <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                                    <span className="mr-2">{IconComponent ? <IconComponent className="w-4 h-4" /> : null}</span>
+                                    <span>{p.title}</span>
+                                  </DropdownMenuItem>
+                                );
+                              })}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -487,7 +493,10 @@ export const EventsCalendar: React.FC = () => {
                                     <button className="px-1.5 py-0.5 rounded bg-muted/10 border border-border text-[10px] hover:bg-muted/20" onClick={(e) => e.stopPropagation()}>
                                       {ev.project ? (
                                         <>
-                                          <span className="mr-1">{getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '')}</span>
+                                          {(() => {
+                                            const IconComponent = getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '');
+                                            return IconComponent ? <span className="mr-1 inline-block"><IconComponent className="w-3 h-3" /></span> : null;
+                                          })()}
                                           <span className="truncate max-w-[80px] align-middle">{projects.find(p => p.id === ev.project)?.title || `Projet #${ev.project}`}</span>
                                         </>
                                       ) : (
@@ -640,7 +649,10 @@ export const EventsCalendar: React.FC = () => {
                               <button className="px-2 py-0.5 rounded bg-muted/10 border border-border text-xs hover:bg-muted/20 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                                 {ev.project ? (
                                   <>
-                                    <span className="mr-1">{getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '')}</span>
+                                    {(() => {
+                                      const IconComponent = getIconByValue((projects.find(p => p.id === ev.project)?.icon) || '');
+                                      return IconComponent ? <span className="mr-1 inline-block"><IconComponent className="w-3 h-3" /></span> : null;
+                                    })()}
                                     <span className="truncate max-w-[160px] align-middle">{projects.find(p => p.id === ev.project)?.title || `Projet #${ev.project}`}</span>
                                   </>
                                 ) : (
@@ -650,12 +662,15 @@ export const EventsCalendar: React.FC = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="bg-navy-card border-border text-foreground" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenuItem onClick={() => handleAssignEventProject(ev.id, '')} className="cursor-pointer hover:bg-navy-muted">Aucun projet</DropdownMenuItem>
-                              {projects.map((p) => (
-                                <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
-                                  <span className="mr-2">{getIconByValue(p.icon)}</span>
-                                  <span>{p.title}</span>
-                                </DropdownMenuItem>
-                              ))}
+                              {projects.map((p) => {
+                                const IconComponent = getIconByValue(p.icon);
+                                return (
+                                  <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(ev.id, p.id)} className="cursor-pointer hover:bg-navy-muted">
+                                    <span className="mr-2">{IconComponent ? <IconComponent className="w-4 h-4" /> : null}</span>
+                                    <span>{p.title}</span>
+                                  </DropdownMenuItem>
+                                );
+                              })}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
