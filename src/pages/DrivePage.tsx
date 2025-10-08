@@ -312,14 +312,17 @@ const DrivePage = () => {
                         <span className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border">
                           {attachment.message.channel}
                         </span>
-                        {attachment.project && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1">
-                            <span>{getIconByValue(attachment.project.icon)}</span>
-                            <span className="truncate max-w-[120px]">
-                              {attachment.project.title}
+                        {attachment.project && (() => {
+                          const IconComponent = getIconByValue(attachment.project.icon);
+                          return (
+                            <span className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1">
+                              {IconComponent && <IconComponent className="w-4 h-4" />}
+                              <span className="truncate max-w-[120px]">
+                                {attachment.project.title}
+                              </span>
                             </span>
-                          </span>
-                        )}
+                          );
+                        })()}
                         <span className="text-xs text-foreground/50 ml-auto">
                           {new Date(attachment.created_at).toLocaleDateString('fr-FR')}
                         </span>

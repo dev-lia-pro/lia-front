@@ -171,7 +171,10 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                     >
                       {project ? (
                         <>
-                          <span>{getIconByValue(project.icon || '')}</span>
+                          {(() => {
+                            const IconComponent = getIconByValue(project.icon || '');
+                            return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                          })()}
                           <span>{project.title}</span>
                         </>
                       ) : (
@@ -184,12 +187,15 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAssignProject(message.id, ''); }} className="cursor-pointer hover:bg-muted">
                       Aucun projet
                     </DropdownMenuItem>
-                    {projects.map((p) => (
-                      <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); onAssignProject(message.id, p.id); }} className="cursor-pointer hover:bg-muted">
-                        <span className="mr-2">{getIconByValue(p.icon)}</span>
-                        <span>{p.title || `Projet #${p.id}`}</span>
-                      </DropdownMenuItem>
-                    ))}
+                    {projects.map((p) => {
+                      const IconComponent = getIconByValue(p.icon);
+                      return (
+                        <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); onAssignProject(message.id, p.id); }} className="cursor-pointer hover:bg-muted">
+                          <span className="mr-2">{IconComponent ? <IconComponent className="w-4 h-4" /> : null}</span>
+                          <span>{p.title || `Projet #${p.id}`}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {Array.isArray(message.tags) && message.tags.map((tag) => (

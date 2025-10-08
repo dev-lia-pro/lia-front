@@ -66,7 +66,10 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                     >
                       {lastMessage.project ? (
                         <>
-                          <span>{getIconByValue((projects.find(p => p.id === lastMessage.project)?.icon) || '')}</span>
+                          {(() => {
+                            const IconComponent = getIconByValue((projects.find(p => p.id === lastMessage.project)?.icon) || '');
+                            return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                          })()}
                           <span className="truncate max-w-[160px]">
                             {projects.find(p => p.id === lastMessage.project)?.title || `Projet #${lastMessage.project}`}
                           </span>
@@ -80,12 +83,15 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onAssignProject(lastMessage.id, ''); }} className="cursor-pointer hover:bg-muted">
                       Aucun projet
                     </DropdownMenuItem>
-                    {projects.map((p) => (
-                      <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); onAssignProject(lastMessage.id, p.id); }} className="cursor-pointer hover:bg-muted">
-                        <span className="mr-2">{getIconByValue(p.icon)}</span>
-                        <span>{p.title || `Projet #${p.id}`}</span>
-                      </DropdownMenuItem>
-                    ))}
+                    {projects.map((p) => {
+                      const IconComponent = getIconByValue(p.icon);
+                      return (
+                        <DropdownMenuItem key={p.id} onClick={(e) => { e.stopPropagation(); onAssignProject(lastMessage.id, p.id); }} className="cursor-pointer hover:bg-muted">
+                          <span className="mr-2">{IconComponent ? <IconComponent className="w-4 h-4" /> : null}</span>
+                          <span>{p.title || `Projet #${p.id}`}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <span className="ml-auto">

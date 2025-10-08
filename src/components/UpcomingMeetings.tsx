@@ -280,7 +280,10 @@ export const UpcomingMeetings: React.FC<UpcomingMeetingsProps> = ({ eventIdFromU
                           >
                             {event.project ? (
                               <>
-                                <span>{getIconByValue((projects.find(p => p.id === event.project)?.icon) || '')}</span>
+                                {(() => {
+                                  const IconComponent = getIconByValue((projects.find(p => p.id === event.project)?.icon) || '');
+                                  return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                                })()}
                                 <span className="truncate max-w-[160px]">{projects.find(p => p.id === event.project)?.title || `Projet #${event.project}`}</span>
                               </>
                             ) : (
@@ -292,12 +295,15 @@ export const UpcomingMeetings: React.FC<UpcomingMeetingsProps> = ({ eventIdFromU
                           <DropdownMenuItem onClick={() => handleAssignEventProject(event.id, '')} className="cursor-pointer hover:bg-foreground/10">
                             Aucun projet
                           </DropdownMenuItem>
-                          {projects.map((p) => (
-                            <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(event.id, p.id)} className="cursor-pointer hover:bg-foreground/10">
-                              <span className="mr-2">{getIconByValue(p.icon)}</span>
-                              <span>{p.title}</span>
-                            </DropdownMenuItem>
-                          ))}
+                          {projects.map((p) => {
+                            const IconComponent = getIconByValue(p.icon);
+                            return (
+                              <DropdownMenuItem key={p.id} onClick={() => handleAssignEventProject(event.id, p.id)} className="cursor-pointer hover:bg-foreground/10">
+                                <span className="mr-2">{IconComponent ? <IconComponent className="w-4 h-4" /> : null}</span>
+                                <span>{p.title}</span>
+                              </DropdownMenuItem>
+                            );
+                          })}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
