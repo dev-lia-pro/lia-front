@@ -1,5 +1,6 @@
 import React from 'react';
 import { getIconByValue } from '../config/icons';
+import { FolderOpen } from 'lucide-react';
 
 interface ProjectIconProps {
   icon: string;
@@ -7,22 +8,32 @@ interface ProjectIconProps {
   className?: string;
 }
 
-export const ProjectIcon: React.FC<ProjectIconProps> = ({ 
-  icon, 
+export const ProjectIcon: React.FC<ProjectIconProps> = ({
+  icon,
   size = 'md',
-  className = '' 
+  className = ''
 }) => {
-  const iconEmoji = getIconByValue(icon);
-  
-  const sizeClasses = {
-    sm: 'w-8 h-8 text-lg flex-shrink-0',
-    md: 'w-12 h-12 text-2xl flex-shrink-0',
-    lg: 'w-16 h-16 text-3xl flex-shrink-0',
+  const IconComponent = getIconByValue(icon);
+
+  // Tailles adaptées pour les icônes vectorielles Lucide
+  const sizeMap = {
+    sm: 16,  // 16px pour les petites icônes
+    md: 24,  // 24px pour les moyennes icônes
+    lg: 32,  // 32px pour les grandes icônes
   };
 
+  const iconSize = sizeMap[size];
+
+  // Si l'icône n'existe pas, afficher une icône par défaut
+  const Icon = IconComponent || FolderOpen;
+
   return (
-    <div className={`${sizeClasses[size]} ${className} flex items-center justify-center leading-none text-center`}>
-      <span className="inline-block align-middle">{iconEmoji}</span>
+    <div className={`flex items-center justify-center ${className}`}>
+      <Icon
+        size={iconSize}
+        className="text-foreground"
+        strokeWidth={2}
+      />
     </div>
   );
 };
