@@ -247,6 +247,35 @@ export const AddMetaProviderDialog: React.FC<AddMetaProviderDialogProps> = ({
                 </div>
               </div>
 
+              {/* Aide SMS (Drive) */}
+              {selectedServices.includes('GOOGLE_DRIVE_SMS') && (
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-sm text-blue-400 mb-2 font-medium">
+                    Configuration SMS (Drive)
+                  </p>
+                  <p className="text-sm text-foreground/80 mb-2">
+                    Pour synchroniser vos SMS via Google Drive, vous devez installer l'application SMS Backup & Restore :
+                  </p>
+                  <ol className="list-decimal ml-5 text-xs space-y-1 text-foreground/70">
+                    <li>
+                      Téléchargez{' '}
+                      <a
+                        href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 underline hover:text-blue-300"
+                      >
+                        SMS Backup & Restore
+                      </a>
+                      {' '}depuis le Google Play Store
+                    </li>
+                    <li>Configurez l'application pour sauvegarder vos SMS sur Google Drive dans le dossier "SMS"</li>
+                    <li>Lors de la connexion, accordez les permissions d'écriture complètes sur Google Drive</li>
+                    <li>L-IA lira automatiquement les fichiers de sauvegarde depuis le dossier SMS</li>
+                  </ol>
+                </div>
+              )}
+
               <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
                 <p className="text-sm text-blue-400">
                   {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} sélectionné{selectedServices.length > 1 ? 's' : ''}.
