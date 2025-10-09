@@ -55,7 +55,7 @@ All colors MUST be HSL.
 
   /* Default to dark theme */
   :root {
-    /* LIA Dark Theme - Deep Navy & Gold */
+    /* L-IA Dark Theme - Deep Navy & Gold */
     --background: 216 52% 11%; /* #0B1B2B deep navy blue */
     --foreground: 0 0% 100%; /* white text */
 
@@ -86,7 +86,7 @@ All colors MUST be HSL.
 
     --radius: 0.75rem; /* more rounded for iOS feel */
     
-    /* Custom LIA colors */
+    /* Custom L-IA colors */
     --navy-deep: 216 52% 11%; /* #0B1B2B */
     --navy-card: 216 45% 15%;
     --navy-muted: 216 30% 20%;
@@ -117,7 +117,7 @@ All colors MUST be HSL.
   }
 
   .light {
-    /* LIA Light Theme - Clean & Professional */
+    /* L-IA Light Theme - Clean & Professional */
     --background: 0 0% 98%; /* off-white background */
     --foreground: 216 52% 11%; /* dark navy text */
 
@@ -146,7 +146,7 @@ All colors MUST be HSL.
     --input: 216 15% 90%;
     --ring: 45 85% 45%;
     
-    /* Custom LIA colors */
+    /* Custom L-IA colors */
     --navy-deep: 216 52% 11%;
     --navy-card: 0 0% 100%;
     --navy-muted: 216 20% 95%;
@@ -266,7 +266,7 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  /* LIA Custom Utilities */
+  /* L-IA Custom Utilities */
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-card { box-shadow: var(--shadow-card); }
   .shadow-glow { box-shadow: var(--shadow-glow); }

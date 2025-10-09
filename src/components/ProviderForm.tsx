@@ -43,7 +43,7 @@ const getDefaultConfig = (providerType: string) => {
       };
     case 'GOOGLE_DRIVE':
       return {
-        folder_name: 'LIA'
+        folder_name: 'L-IA'
       };
     case 'GOOGLE_CONTACTS':
       return {
@@ -417,7 +417,7 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           <ol className="list-decimal ml-5 mt-2 text-sm text-foreground/70">
             <li>Connectez-vous à <a href="https://appleid.apple.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">appleid.apple.com</a></li>
             <li>Dans "Connexion et sécurité", sélectionnez "Mots de passe d'app"</li>
-            <li>Créez un nouveau mot de passe pour "LIA"</li>
+            <li>Créez un nouveau mot de passe pour "L-IA"</li>
             <li>Copiez le mot de passe généré ci-dessous</li>
           </ol>
         </div>
