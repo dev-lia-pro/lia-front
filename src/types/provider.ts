@@ -3,13 +3,12 @@ export type ProviderType = 'GMAIL' | 'GOOGLE_CALENDAR' | 'GOOGLE_DRIVE_SMS' | 'G
 export interface Provider {
   id: number;
   user: number;
+  meta_provider: number;
   name: string;
   provider_type: ProviderType;
   provider_type_display: string;
   is_active: boolean;
   read_only: boolean;
-  credentials_json: Record<string, any>;
-  token_json: Record<string, any>;
   config: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -18,21 +17,17 @@ export interface Provider {
 }
 
 export interface ProviderCreate {
+  meta_provider: number;
   name: string;
   provider_type: ProviderType;
   is_active: boolean;
   read_only?: boolean;
-  credentials_json: Record<string, any>;
-  token_json: Record<string, any>;
   config: Record<string, any>;
 }
 
 export interface ProviderUpdate {
   name?: string;
   is_active?: boolean;
-  read_only?: boolean;
-  credentials_json?: Record<string, any>;
-  token_json?: Record<string, any>;
   config?: Record<string, any>;
 }
 
