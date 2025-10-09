@@ -266,7 +266,7 @@ export const AddMetaProviderDialog: React.FC<AddMetaProviderDialogProps> = ({
                 <ol className="list-decimal ml-5 text-xs space-y-1 text-foreground/70">
                   <li>Visitez <a href="https://appleid.apple.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">appleid.apple.com</a></li>
                   <li>Sélectionnez "Mots de passe d'app" dans "Connexion et sécurité"</li>
-                  <li>Créez un nouveau mot de passe pour "LIA"</li>
+                  <li>Créez un nouveau mot de passe pour "L-IA"</li>
                   <li>Copiez-le ci-dessous</li>
                 </ol>
               </div>

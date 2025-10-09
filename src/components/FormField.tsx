@@ -19,7 +19,7 @@ interface FormFieldProps {
 }
 
 export const FormField = ({ id, label, required, error, type, inputProps, textareaProps, selectProps }: FormFieldProps) => {
-  // Design system unifié avec le thème LIA (navy et gold)
+  // Design system unifié avec le thème L-IA (navy et gold)
   const baseClassName = "h-12 rounded-lg border-border bg-navy-muted text-foreground placeholder-muted-foreground focus:border-gold focus:ring-1 focus:ring-gold focus:outline-none transition-smooth";
   const textareaBaseClassName = "min-h-[80px] rounded-lg border-border bg-navy-muted text-foreground placeholder-muted-foreground focus:border-gold focus:ring-1 focus:ring-gold focus:outline-none transition-smooth";
   const errorClassName = error ? 'border-destructive focus:border-destructive focus:ring-destructive' : '';
