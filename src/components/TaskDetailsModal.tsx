@@ -2,8 +2,12 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Calendar, AlertTriangle, Mail, MessageSquare, ExternalLink, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import type { Task } from '@/hooks/useTasks';
+import { useMessage } from '@/hooks/useMessages';
+import { useProjects } from '@/hooks/useProjects';
+import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
+import axios from '@/api/axios';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskDetailsModalProps {
   isOpen: boolean;
@@ -51,14 +55,78 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   onDelete,
   deleteLoading = false,
 }) => {
-  const navigate = useNavigate();
+  const [showSourceMessage, setShowSourceMessage] = React.useState(false);
+  const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
+  const { toast } = useToast();
+  const { projects } = useProjects();
+
+  // Récupérer le message source
+  const { message: sourceMessage, isLoading: isLoadingMessage } = useMessage(
+    showSourceMessage && task?.source_message ? task.source_message : null
+  );
 
   if (!task) return null;
 
   const handleSourceMessageClick = () => {
-    if (task.source_message) {
-      onClose();
-      navigate(`/messages?message=${task.source_message}`);
+    setShowSourceMessage(true);
+  };
+
+  const handleCloseSourceMessage = () => {
+    setShowSourceMessage(false);
+  };
+
+  const handleSaveInDrive = async (attachmentId: number, messageId: number, isCurrentlyInDrive: boolean) => {
+    setAttachmentStates(prev => ({
+      ...prev,
+      [attachmentId]: !isCurrentlyInDrive
+    }));
+
+    try {
+      const response = await axios.post(`/messages/${messageId}/attachments/${attachmentId}/save_in_drive/`, {
+        google_drive_backup: !isCurrentlyInDrive
+      });
+
+      if (response.data.success) {
+        toast({
+          title: isCurrentlyInDrive ? "Fichier supprimé de Google Drive" : "Fichier stocké dans Google Drive",
+          description: response.data.message,
+        });
+      } else {
+        setAttachmentStates(prev => ({
+          ...prev,
+          [attachmentId]: isCurrentlyInDrive
+        }));
+      }
+    } catch (error: any) {
+      setAttachmentStates(prev => ({
+        ...prev,
+        [attachmentId]: isCurrentlyInDrive
+      }));
+
+      const errorMessage = error.response?.data?.error || "Une erreur est survenue";
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAssignProject = async (messageId: number, projectId: number | '') => {
+    const newProjectId = projectId === '' ? null : projectId;
+
+    try {
+      await axios.patch(`/messages/${messageId}/`, { project: newProjectId });
+      toast({
+        title: "Projet modifié",
+        description: "Le projet du message a été mis à jour",
+      });
+    } catch (e) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le projet",
+        variant: "destructive",
+      });
     }
   };
 
@@ -80,6 +148,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-navy-card border-border text-foreground max-w-md">
         <DialogHeader>
@@ -140,6 +209,20 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Dialog du message source */}
+    {showSourceMessage && sourceMessage && (
+      <MessageDetailsDialog
+        message={sourceMessage}
+        projects={projects}
+        onClose={handleCloseSourceMessage}
+        onSaveInDrive={handleSaveInDrive}
+        attachmentStates={attachmentStates}
+        onContactClick={() => {}} // Pas de gestion des contacts dans ce contexte
+        onAssignProject={handleAssignProject}
+      />
+    )}
+  </>
   );
 };
 
