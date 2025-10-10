@@ -21,6 +21,7 @@ export interface Message {
   project?: number | null;
   channel: Channel;
   external_id: string;
+  thread_id?: string | null;
   subject: string;
   sender: string;
   recipients: string[];
