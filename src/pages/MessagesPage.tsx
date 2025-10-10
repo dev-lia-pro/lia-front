@@ -60,6 +60,16 @@ const MessagesPage = () => {
   // Hook pour charger les messages d'un thread quand la dialog est ouverte
   const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(currentThreadId);
 
+  // Trouver l'index du message sélectionné dans le thread une fois chargé
+  React.useEffect(() => {
+    if (threadMessages.length > 0 && selectedMessageDialog) {
+      const index = threadMessages.findIndex(m => m.id === selectedMessageDialog.id);
+      if (index !== -1 && index !== currentMessageIndex) {
+        setCurrentMessageIndex(index);
+      }
+    }
+  }, [threadMessages, selectedMessageDialog]);
+
   const { projects } = useProjects();
   const { toast } = useToast();
 
@@ -367,7 +377,17 @@ const MessagesPage = () => {
               {messages.map((msg) => (
                 <div key={msg.id} className="bg-card border border-border rounded p-3">
                   <button
-                    onClick={() => setSelectedMessageDialog(msg)}
+                    onClick={() => {
+                      setSelectedMessageDialog(msg);
+                      // Charger le thread si disponible
+                      if (msg.thread_id) {
+                        setCurrentThreadId(msg.thread_id);
+                        setCurrentMessageIndex(0); // Réinitialiser l'index
+                      } else {
+                        setCurrentThreadId(null);
+                        setCurrentMessageIndex(0);
+                      }
+                    }}
                     className="w-full text-left hover:opacity-80 transition-opacity"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -563,7 +583,7 @@ const MessagesPage = () => {
         onContactClick={setSelectedContactId}
         onAssignProject={handleAssignProject}
         threadId={currentThreadId}
-        threadMessageCount={currentThreadId ? threads.find(t => t.thread_id === currentThreadId)?.message_count || 1 : 1}
+        threadMessageCount={currentThreadId ? (threadMessages.length || threads.find(t => t.thread_id === currentThreadId)?.message_count || 1) : 1}
         threadMessages={threadMessages}
         isLoadingThreadMessages={isLoadingThreadMessages}
         currentMessageIndex={currentMessageIndex}

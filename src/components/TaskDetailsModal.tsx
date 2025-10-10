@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Calendar, AlertTriangle, Mail, MessageSquare, ExternalLink, Users } from 'lucide-react';
 import type { Task } from '@/hooks/useTasks';
 import { useMessage } from '@/hooks/useMessages';
+import { useThreadMessages } from '@/hooks/useMessageThreads';
 import { useProjects } from '@/hooks/useProjects';
 import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
 import axios from '@/api/axios';
@@ -57,6 +58,8 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 }) => {
   const [showSourceMessage, setShowSourceMessage] = React.useState(false);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
+  const [currentThreadId, setCurrentThreadId] = React.useState<string | null>(null);
+  const [currentMessageIndex, setCurrentMessageIndex] = React.useState(0);
   const { toast } = useToast();
   const { projects } = useProjects();
 
@@ -64,6 +67,28 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   const { message: sourceMessage, isLoading: isLoadingMessage } = useMessage(
     showSourceMessage && task?.source_message ? task.source_message : null
   );
+
+  // Charger les messages du thread si disponible
+  const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(currentThreadId);
+
+  // Quand le message source est chargé, définir le thread_id
+  React.useEffect(() => {
+    if (sourceMessage?.thread_id) {
+      setCurrentThreadId(sourceMessage.thread_id);
+    } else {
+      setCurrentThreadId(null);
+    }
+  }, [sourceMessage]);
+
+  // Trouver l'index du message sélectionné dans le thread une fois chargé
+  React.useEffect(() => {
+    if (threadMessages.length > 0 && sourceMessage) {
+      const index = threadMessages.findIndex(m => m.id === sourceMessage.id);
+      if (index !== -1 && index !== currentMessageIndex) {
+        setCurrentMessageIndex(index);
+      }
+    }
+  }, [threadMessages, sourceMessage]);
 
   if (!task) return null;
 
@@ -73,6 +98,15 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   const handleCloseSourceMessage = () => {
     setShowSourceMessage(false);
+    setCurrentThreadId(null);
+    setCurrentMessageIndex(0);
+  };
+
+  // Handler pour naviguer entre les messages d'un thread
+  const handleNavigateMessage = (index: number) => {
+    if (threadMessages && threadMessages[index]) {
+      setCurrentMessageIndex(index);
+    }
   };
 
   const handleSaveInDrive = async (attachmentId: number, messageId: number, isCurrentlyInDrive: boolean) => {
@@ -220,6 +254,12 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         attachmentStates={attachmentStates}
         onContactClick={() => {}} // Pas de gestion des contacts dans ce contexte
         onAssignProject={handleAssignProject}
+        threadId={currentThreadId}
+        threadMessageCount={currentThreadId ? threadMessages.length || 1 : 1}
+        threadMessages={threadMessages}
+        isLoadingThreadMessages={isLoadingThreadMessages}
+        currentMessageIndex={currentMessageIndex}
+        onNavigateMessage={handleNavigateMessage}
       />
     )}
   </>
