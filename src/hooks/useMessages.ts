@@ -84,4 +84,17 @@ export const useMessages = (filters?: MessageFilters) => {
   return { messages, totalCount, isLoading, isFetching, error, refetch };
 };
 
+export const useMessage = (id?: number | null) => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [MESSAGES_KEY, id],
+    queryFn: async (): Promise<Message> => {
+      const res = await axios.get(`/messages/${id}/`);
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  return { message: data ?? null, isLoading, error, refetch };
+};
+
 
