@@ -2,15 +2,24 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogClose
 } from '@/components/ui/dialog';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
   X, User, Paperclip, Calendar, Tag, Mail, Phone, MessageSquare,
   AlertCircle, Clock, CheckCircle, Flag, Info, Edit,
   Download, Eye, Cloud, CloudOff, ChevronDown, ChevronUp,
-  Building, Briefcase, ExternalLink, Code, Copy, Check
+  Building, Briefcase, ExternalLink, Code, Copy, Check,
+  ChevronLeft, ChevronRight, List
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getIconByValue } from '@/config/icons';
@@ -26,6 +35,13 @@ interface MessageDetailsDialogProps {
   attachmentStates: Record<number, boolean>;
   onContactClick: (contactId: number) => void;
   onAssignProject: (messageId: number, projectId: number | '') => Promise<void>;
+  // Thread navigation props
+  threadId?: string | null;
+  threadMessageCount?: number;
+  threadMessages?: Message[];
+  isLoadingThreadMessages?: boolean;
+  currentMessageIndex?: number;
+  onNavigateMessage?: (index: number) => void;
 }
 
 interface ContactInfo {
@@ -120,13 +136,24 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
   onSaveInDrive,
   attachmentStates,
   onContactClick,
-  onAssignProject
+  onAssignProject,
+  threadId,
+  threadMessageCount = 1,
+  threadMessages = [],
+  isLoadingThreadMessages = false,
+  currentMessageIndex = 0,
+  onNavigateMessage,
 }) => {
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [showTechnicalDetails, setShowTechnicalDetails] = React.useState(false);
   const [copiedId, setCopiedId] = React.useState(false);
+  const [showThreadTimeline, setShowThreadTimeline] = React.useState(false);
 
   if (!message) return null;
+
+  const hasMultipleMessages = threadMessageCount > 1;
+  const canNavigatePrev = currentMessageIndex > 0;
+  const canNavigateNext = currentMessageIndex < threadMessages.length - 1;
 
   const project = projects.find(p => p.id === message.project);
   const actionLabel = {
@@ -144,9 +171,9 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
 
   return (
     <Dialog open={!!message} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-5xl h-[95vh] sm:h-[90vh] p-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[95vw] max-w-5xl h-[95vh] sm:h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <DialogHeader className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border shrink-0">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <DialogTitle className="text-lg sm:text-xl font-semibold mb-2">
@@ -211,7 +238,102 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
               <span className="sr-only">Fermer</span>
             </DialogClose>
           </div>
-        </DialogHeader>
+        </div>
+
+        {/* Thread Navigation Bar */}
+        {hasMultipleMessages && (
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border bg-muted/5 shrink-0 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onNavigateMessage?.(currentMessageIndex - 1)}
+                disabled={!canNavigatePrev}
+                className="h-8"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">Précédent</span>
+              </Button>
+
+              <span className="text-sm text-muted-foreground px-2">
+                Message <span className="font-medium">{currentMessageIndex + 1}</span> sur <span className="font-medium">{threadMessageCount}</span>
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onNavigateMessage?.(currentMessageIndex + 1)}
+                disabled={!canNavigateNext}
+                className="h-8"
+              >
+                <span className="hidden sm:inline mr-1">Suivant</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <Sheet open={showThreadTimeline} onOpenChange={setShowThreadTimeline}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8">
+                    <List className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Voir la conversation</span>
+                    <span className="sm:hidden">Timeline</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[90vw] sm:w-[400px]">
+                  <SheetHeader>
+                    <SheetTitle>Conversation ({threadMessageCount} messages)</SheetTitle>
+                  </SheetHeader>
+                  <ScrollArea className="h-[calc(100vh-8rem)] mt-4">
+                    {isLoadingThreadMessages ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="text-sm text-muted-foreground">Chargement...</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 pr-4">
+                        {threadMessages.map((msg, index) => (
+                          <button
+                            key={msg.id}
+                            onClick={() => {
+                              onNavigateMessage?.(index);
+                              setShowThreadTimeline(false);
+                            }}
+                            className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                              index === currentMessageIndex
+                                ? 'bg-primary/10 border-primary'
+                                : 'bg-card border-border hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-muted-foreground">
+                                {msg.sender_contact?.display_name || msg.sender}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(msg.received_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {msg.subject && msg.channel === 'EMAIL' && (
+                              <div className="text-sm font-medium truncate mb-1">
+                                {msg.subject}
+                              </div>
+                            )}
+                            <div className="text-sm text-muted-foreground line-clamp-2">
+                              {msg.body_text || '(Message vide)'}
+                            </div>
+                            {msg.attachments_count > 0 && (
+                              <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                                <Paperclip className="w-3 h-3" />
+                                {msg.attachments_count} pièce{msg.attachments_count > 1 ? 's' : ''} jointe{msg.attachments_count > 1 ? 's' : ''}
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {/* Section des correspondants */}
@@ -375,79 +497,79 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
               </div>
             </div>
           )}
+        </div>
 
-          {/* Détails techniques (accordéon) */}
-          <div className="px-3 sm:px-6 py-2 sm:py-3 border-t border-border">
-            <button
-              onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
-            >
-              {showTechnicalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              <span>Détails techniques</span>
-            </button>
+        {/* Détails techniques (accordéon) - Fixé en bas de la dialog */}
+        <div className="px-3 sm:px-6 py-2 sm:py-3 border-t border-border shrink-0">
+          <button
+            onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+          >
+            {showTechnicalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <span>Détails techniques</span>
+          </button>
 
-            {showTechnicalDetails && (
-              <div className="mt-3 space-y-3 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">ID externe :</span>
-                    <div className="flex items-center gap-1 max-w-[200px] sm:max-w-[300px]">
-                      <span className="font-mono truncate" title={message.external_id}>
-                        {message.external_id}
-                      </span>
-                      <button
-                        onClick={async () => {
-                          await navigator.clipboard.writeText(message.external_id || '');
-                          setCopiedId(true);
-                          setTimeout(() => setCopiedId(false), 2000);
-                        }}
-                        className="p-1 hover:bg-muted rounded transition-colors shrink-0"
-                        title="Copier l'ID"
-                      >
-                        {copiedId ? (
-                          <Check className="w-3 h-3 text-green-500" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  {message.ingestion_source && (
-                    <div>
-                      <span className="text-muted-foreground">Source :</span>
-                      <span className="ml-2">{message.ingestion_source}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-muted-foreground">Synchronisé le :</span>
-                    <span className="ml-2">{formatMessageDate(message.created_at)}</span>
-                  </div>
-                  {message.processed && (
-                    <div>
-                      <span className="text-muted-foreground">Traité :</span>
-                      <span className="ml-2 text-green-500">✓ Oui</span>
-                      {message.processed_at && (
-                        <span className="ml-1 text-muted-foreground">
-                          ({formatMessageDate(message.processed_at)})
-                        </span>
+          {showTechnicalDetails && (
+            <div className="mt-3 space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">ID externe :</span>
+                  <div className="flex items-center gap-1 max-w-[200px] sm:max-w-[300px]">
+                    <span className="font-mono truncate" title={message.external_id}>
+                      {message.external_id}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(message.external_id || '');
+                        setCopiedId(true);
+                        setTimeout(() => setCopiedId(false), 2000);
+                      }}
+                      className="p-1 hover:bg-muted rounded transition-colors shrink-0"
+                      title="Copier l'ID"
+                    >
+                      {copiedId ? (
+                        <Check className="w-3 h-3 text-green-500" />
+                      ) : (
+                        <Copy className="w-3 h-3 text-muted-foreground" />
                       )}
-                    </div>
-                  )}
+                    </button>
+                  </div>
                 </div>
-
-                {message.raw_headers && Object.keys(message.raw_headers).length > 0 && (
-                  <details className="mt-3">
-                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-                      Headers bruts ({Object.keys(message.raw_headers).length} entrées)
-                    </summary>
-                    <pre className="mt-2 p-2 bg-muted/10 rounded text-xs font-mono overflow-x-auto">
-                      {JSON.stringify(message.raw_headers, null, 2)}
-                    </pre>
-                  </details>
+                {message.ingestion_source && (
+                  <div>
+                    <span className="text-muted-foreground">Source :</span>
+                    <span className="ml-2">{message.ingestion_source}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-muted-foreground">Synchronisé le :</span>
+                  <span className="ml-2">{formatMessageDate(message.created_at)}</span>
+                </div>
+                {message.processed && (
+                  <div>
+                    <span className="text-muted-foreground">Traité :</span>
+                    <span className="ml-2 text-green-500">✓ Oui</span>
+                    {message.processed_at && (
+                      <span className="ml-1 text-muted-foreground">
+                        ({formatMessageDate(message.processed_at)})
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+
+              {message.raw_headers && Object.keys(message.raw_headers).length > 0 && (
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+                    Headers bruts ({Object.keys(message.raw_headers).length} entrées)
+                  </summary>
+                  <pre className="mt-2 p-2 bg-muted/10 rounded text-xs font-mono overflow-x-auto">
+                    {JSON.stringify(message.raw_headers, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

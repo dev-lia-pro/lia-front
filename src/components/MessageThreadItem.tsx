@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronRight, User } from 'lucide-react';
+import { User, MessageCircle } from 'lucide-react';
 import type { MessageThread } from '@/hooks/useMessageThreads';
 import type { Message } from '@/hooks/useMessages';
 import { getIconByValue } from '@/config/icons';
@@ -7,45 +7,35 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 interface MessageThreadItemProps {
   thread: MessageThread;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
-  onMessageClick: (message: Message) => void;
+  onThreadClick: (thread: MessageThread) => void;
   onContactClick: (contactId: number) => void;
   onAssignProject: (messageId: number, projectId: number | '') => void;
   projects: Array<{ id: number; title: string; icon: string }>;
-  threadMessages?: Message[];
-  isLoadingMessages?: boolean;
 }
 
 export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
   thread,
-  isExpanded,
-  onToggleExpand,
-  onMessageClick,
+  onThreadClick,
   onContactClick,
   onAssignProject,
   projects,
-  threadMessages,
-  isLoadingMessages,
 }) => {
   const lastMessage = thread.last_message;
 
   return (
     <div className="bg-card border border-border rounded">
-      {/* Thread header - toujours visible */}
+      {/* Thread header */}
       <div className="p-3">
         <button
-          onClick={onToggleExpand}
+          onClick={() => onThreadClick(thread)}
           className="w-full text-left hover:opacity-80 transition-opacity"
         >
           <div className="flex items-start gap-3">
-            <div className="pt-1">
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-foreground/60" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-foreground/60" />
-              )}
-            </div>
+            {thread.message_count > 1 && (
+              <div className="pt-1">
+                <MessageCircle className="w-4 h-4 text-primary/60" />
+              </div>
+            )}
 
             <div className="flex-1 min-w-0">
               {/* Métadonnées du thread */}
@@ -53,9 +43,11 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                 <span className="px-2 py-0.5 rounded bg-muted/10 border border-border">
                   {thread.channel}
                 </span>
-                <span className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
-                  {thread.message_count} message{thread.message_count > 1 ? 's' : ''}
-                </span>
+                {thread.message_count > 1 && (
+                  <span className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
+                    {thread.message_count} messages
+                  </span>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -153,53 +145,6 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
           </div>
         </button>
       </div>
-
-      {/* Messages du thread (quand expansé) */}
-      {isExpanded && (
-        <div className="border-t border-border px-3 pb-3">
-          {isLoadingMessages ? (
-            <div className="py-4 text-center text-sm text-foreground/60">
-              Chargement des messages...
-            </div>
-          ) : threadMessages && threadMessages.length > 0 ? (
-            <div className="space-y-2 mt-3">
-              {threadMessages.map((msg, index) => (
-                <div
-                  key={msg.id}
-                  className="bg-muted/5 border border-border/50 rounded p-2 hover:bg-muted/10 transition-colors cursor-pointer"
-                  onClick={() => onMessageClick(msg)}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-xs text-foreground/60">
-                      {msg.sender_contact?.display_name || msg.sender}
-                    </div>
-                    <div className="text-xs text-foreground/50">
-                      {new Date(msg.received_at).toLocaleString()}
-                    </div>
-                  </div>
-                  {msg.subject && msg.channel === 'EMAIL' && (
-                    <div className="text-sm font-medium truncate mb-1">
-                      {msg.subject}
-                    </div>
-                  )}
-                  <div className="text-sm text-foreground/70 line-clamp-2">
-                    {msg.body_text || '(Message vide)'}
-                  </div>
-                  {msg.attachments_count > 0 && (
-                    <div className="text-xs text-foreground/50 mt-1">
-                      📎 {msg.attachments_count} pièce{msg.attachments_count > 1 ? 's' : ''} jointe{msg.attachments_count > 1 ? 's' : ''}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-4 text-center text-sm text-foreground/60">
-              Aucun message dans ce thread
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

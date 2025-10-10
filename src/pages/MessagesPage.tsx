@@ -26,7 +26,6 @@ const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
   const [viewMode, setViewMode] = React.useState<ViewMode>('threads'); // Par défaut: vue threads
-  const [expandedThreadId, setExpandedThreadId] = React.useState<string | null>(null);
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
   const [searchKeyword, setSearchKeyword] = React.useState<string>('');
@@ -38,6 +37,10 @@ const MessagesPage = () => {
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
+
+  // Thread state for dialog
+  const [currentThreadId, setCurrentThreadId] = React.useState<string | null>(null);
+  const [currentMessageIndex, setCurrentMessageIndex] = React.useState(0);
 
   // Hook pour la vue liste (classique)
   const { messages, isLoading: isLoadingMessages, isFetching, totalCount, refetch } = useMessages({
@@ -54,8 +57,8 @@ const MessagesPage = () => {
     project: selected.id ?? undefined,
   });
 
-  // Hook pour charger les messages d'un thread expansé
-  const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(expandedThreadId);
+  // Hook pour charger les messages d'un thread quand la dialog est ouverte
+  const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(currentThreadId);
 
   const { projects } = useProjects();
   const { toast } = useToast();
@@ -98,6 +101,31 @@ const MessagesPage = () => {
   }, [messages, searchParams, setSearchParams]);
 
   const queryClient = useQueryClient();
+
+  // Handler pour ouvrir un thread
+  const handleThreadClick = (thread: any) => {
+    // Définir le thread actuel pour charger les messages
+    setCurrentThreadId(thread.thread_id);
+    // Ouvrir la dialog avec le dernier message
+    setSelectedMessageDialog(thread.last_message);
+    // Réinitialiser l'index à 0 (premier message sera chargé)
+    setCurrentMessageIndex(0);
+  };
+
+  // Handler pour naviguer entre les messages d'un thread
+  const handleNavigateMessage = (index: number) => {
+    if (threadMessages && threadMessages[index]) {
+      setCurrentMessageIndex(index);
+      setSelectedMessageDialog(threadMessages[index]);
+    }
+  };
+
+  // Handler pour fermer la dialog
+  const handleCloseDialog = () => {
+    setSelectedMessageDialog(null);
+    setCurrentThreadId(null);
+    setCurrentMessageIndex(0);
+  };
 
   const handleAssignProject = async (messageId: number, projectId: number | '') => {
     const newProjectId = projectId === '' ? null : projectId;
@@ -326,16 +354,10 @@ const MessagesPage = () => {
                 <MessageThreadItem
                   key={thread.thread_id}
                   thread={thread}
-                  isExpanded={expandedThreadId === thread.thread_id}
-                  onToggleExpand={() => {
-                    setExpandedThreadId(prev => prev === thread.thread_id ? null : thread.thread_id);
-                  }}
-                  onMessageClick={setSelectedMessageDialog}
+                  onThreadClick={handleThreadClick}
                   onContactClick={setSelectedContactId}
                   onAssignProject={handleAssignProject}
                   projects={projects}
-                  threadMessages={expandedThreadId === thread.thread_id ? threadMessages : undefined}
-                  isLoadingMessages={isLoadingThreadMessages}
                 />
               ))}
             </div>
@@ -535,11 +557,17 @@ const MessagesPage = () => {
       <MessageDetailsDialog
         message={selectedMessageDialog}
         projects={projects}
-        onClose={() => setSelectedMessageDialog(null)}
+        onClose={handleCloseDialog}
         onSaveInDrive={handleSaveInDrive}
         attachmentStates={attachmentStates}
         onContactClick={setSelectedContactId}
         onAssignProject={handleAssignProject}
+        threadId={currentThreadId}
+        threadMessageCount={currentThreadId ? threads.find(t => t.thread_id === currentThreadId)?.message_count || 1 : 1}
+        threadMessages={threadMessages}
+        isLoadingThreadMessages={isLoadingThreadMessages}
+        currentMessageIndex={currentMessageIndex}
+        onNavigateMessage={handleNavigateMessage}
       />
 
       <ContactDetailsModal
