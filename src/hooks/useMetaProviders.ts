@@ -211,6 +211,7 @@ export const useMetaProviders = (params?: { category?: CategoryType; active?: bo
     mutationFn: (id: number) => metaProvidersApi.toggleActive(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['metaProviders'] });
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
     },
     onError: (error: any) => {
       toast({
