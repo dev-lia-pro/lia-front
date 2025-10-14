@@ -14,6 +14,9 @@ export interface NotificationItem {
   priority?: string;
   is_read: boolean;
   created_at: string;
+  grouped_items?: number[];
+  count?: number;
+  group_key?: string;
 }
 
 export interface UseNotificationsFilters {

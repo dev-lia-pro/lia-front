@@ -50,7 +50,22 @@ export const NotificationBell: React.FC = () => {
 
     // Navigate based on related items (priority) or fallback to action URL
     // Frontend controls routing - backend only provides data
-    if (notification.related_message) {
+
+    // Handle grouped notifications (multiple messages/tasks/events)
+    if (notification.grouped_items && notification.grouped_items.length > 0) {
+      const ids = notification.grouped_items.join(',');
+      // Determine the type based on notification type or action_url
+      if (notification.action_url?.includes('/tasks')) {
+        navigate(`/tasks?ids=${ids}`);
+      } else if (notification.action_url?.includes('/events')) {
+        navigate(`/events?ids=${ids}`);
+      } else {
+        // Default to messages for NEW_MESSAGE, NEW_SMS, URGENT_MESSAGE types
+        navigate(`/messages?ids=${ids}`);
+      }
+    }
+    // Single related items
+    else if (notification.related_message) {
       navigate(`/messages?message=${notification.related_message}`);
     } else if (notification.related_task) {
       navigate(`/tasks?task=${notification.related_task}`);

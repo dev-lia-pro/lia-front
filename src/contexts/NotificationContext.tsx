@@ -17,6 +17,9 @@ interface Notification {
   is_read: boolean;
   created_at: string;
   updated_at?: string;
+  grouped_items?: number[];
+  count?: number;
+  group_key?: string;
 }
 
 interface NotificationContextType {

@@ -61,11 +61,12 @@ export interface MessageFilters {
   channel?: Channel;
   tag?: string;
   search?: string;
+  ids?: string; // Comma-separated message IDs for filtering
 }
 
 const MESSAGES_KEY = 'messages';
 
-export const useMessages = (filters?: MessageFilters) => {
+export const useMessages = (filters?: MessageFilters, options?: { enabled?: boolean }) => {
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [MESSAGES_KEY, filters],
     queryFn: async (): Promise<PaginatedResponse<Message>> => {
@@ -74,9 +75,11 @@ export const useMessages = (filters?: MessageFilters) => {
       if (filters?.channel) params.append('channel', filters.channel);
       if (filters?.tag) params.append('tag', filters.tag);
       if (filters?.search) params.append('search', filters.search);
+      if (filters?.ids) params.append('ids', filters.ids);
       const res = await axios.get(`/messages/?${params.toString()}`);
       return res.data;
     },
+    enabled: options?.enabled ?? true,
   });
 
   const messages = data?.results ?? [];

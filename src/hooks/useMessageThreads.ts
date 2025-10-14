@@ -18,7 +18,7 @@ export interface ThreadsResponse {
 
 const THREADS_KEY = 'message-threads';
 
-export const useMessageThreads = (filters?: MessageFilters) => {
+export const useMessageThreads = (filters?: MessageFilters, options?: { enabled?: boolean }) => {
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [THREADS_KEY, filters],
     queryFn: async (): Promise<ThreadsResponse> => {
@@ -26,9 +26,11 @@ export const useMessageThreads = (filters?: MessageFilters) => {
       if (filters?.project) params.append('project', String(filters.project));
       if (filters?.channel) params.append('channel', filters.channel);
       if (filters?.tag) params.append('tag', filters.tag);
+      if (filters?.ids) params.append('ids', filters.ids);
       const res = await axios.get(`/messages/threads/?${params.toString()}`);
       return res.data;
     },
+    enabled: options?.enabled ?? true,
   });
 
   const threads = data?.results ?? [];

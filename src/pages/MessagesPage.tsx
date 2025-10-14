@@ -25,7 +25,7 @@ type ViewMode = 'list' | 'threads';
 const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
-  const [viewMode, setViewMode] = React.useState<ViewMode>('threads'); // Par défaut: vue threads
+  const [viewMode, setViewMode] = React.useState<ViewMode>('threads'); // Par défaut: vue conversations
   const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
   const [searchTag, setSearchTag] = React.useState<string>('');
   const [searchKeyword, setSearchKeyword] = React.useState<string>('');
@@ -38,24 +38,30 @@ const MessagesPage = () => {
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
 
+  // Filter by IDs from notification
+  const idsParam = searchParams.get('ids');
+  const [filteredIds, setFilteredIds] = React.useState<string | undefined>(idsParam || undefined);
+
   // Thread state for dialog
   const [currentThreadId, setCurrentThreadId] = React.useState<string | null>(null);
   const [currentMessageIndex, setCurrentMessageIndex] = React.useState(0);
 
-  // Hook pour la vue liste (classique)
+  // Hook pour la vue liste (classique) - seulement si en mode 'list'
   const { messages, isLoading: isLoadingMessages, isFetching, totalCount, refetch } = useMessages({
     channel: channelFilter,
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
-    search: debouncedSearchKeyword || undefined
-  });
+    search: debouncedSearchKeyword || undefined,
+    ids: filteredIds,
+  }, { enabled: viewMode === 'list' });
 
-  // Hook pour la vue threads
+  // Hook pour la vue conversations - seulement si en mode 'threads'
   const { threads, isLoading: isLoadingThreads, refetch: refetchThreads } = useMessageThreads({
     channel: channelFilter,
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
-  });
+    ids: filteredIds,
+  }, { enabled: viewMode === 'threads' });
 
   // Hook pour charger les messages d'un thread quand la dialog est ouverte
   const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(currentThreadId);
@@ -97,10 +103,38 @@ const MessagesPage = () => {
     setAttachmentStates({});
   }, [channelFilter, searchTag, selected.id]);
 
-  // Ouvrir le message spécifié dans les query params
+  // Gérer les query params (ids pour filtrer, message pour ouvrir un message spécifique)
   React.useEffect(() => {
+    const idsParam = searchParams.get('ids');
     const messageId = searchParams.get('message');
-    if (messageId && messages.length > 0) {
+
+    if (idsParam) {
+      const ids = idsParam.split(',').filter(id => id.trim());
+
+      if (ids.length === 1) {
+        // Un seul message : ouvrir directement la dialog
+        if (messages.length > 0) {
+          const message = messages.find(m => m.id === parseInt(ids[0]));
+          if (message) {
+            setSelectedMessageDialog(message);
+            // Charger le thread si disponible
+            if (message.thread_id) {
+              setCurrentThreadId(message.thread_id);
+              setCurrentMessageIndex(0);
+            } else {
+              setCurrentThreadId(null);
+              setCurrentMessageIndex(0);
+            }
+            // Nettoyer le query param après ouverture
+            setSearchParams({});
+          }
+        }
+      } else {
+        // Plusieurs messages : filtrer par IDs depuis une notification groupée
+        setFilteredIds(idsParam);
+      }
+    } else if (messageId && messages.length > 0) {
+      // Ouvrir un message spécifique
       const message = messages.find(m => m.id === parseInt(messageId));
       if (message) {
         setSelectedMessageDialog(message);
@@ -271,7 +305,7 @@ const MessagesPage = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Boîte de réception</h3>
               <div className="flex gap-2">
-                {/* Toggle vue liste/threads */}
+                {/* Toggle vue liste/conversations */}
                 <div className="flex border border-border rounded overflow-hidden">
                   <button
                     onClick={() => setViewMode('list')}
@@ -292,10 +326,10 @@ const MessagesPage = () => {
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-foreground/80 hover:bg-muted'
                     }`}
-                    title="Vue threads"
+                    title="Vue conversations"
                   >
                     <Layers className="w-4 h-4" />
-                    <span className="hidden sm:inline">Threads</span>
+                    <span className="hidden sm:inline">Conversations</span>
                   </button>
                 </div>
                 <button
@@ -334,9 +368,42 @@ const MessagesPage = () => {
                 className="bg-card border border-border rounded px-3 py-1.5 text-sm w-full sm:col-span-2 lg:col-span-1"
               />
             </div>
+
+            {/* Indicateur de filtre actif */}
+            {filteredIds && (
+              <div className="bg-muted/50 border border-border rounded p-3 flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-foreground/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  <div>
+                    <p className="font-medium text-sm text-foreground">
+                      Vue filtrée
+                    </p>
+                    <p className="text-xs text-foreground/70">
+                      {(() => {
+                        const count = filteredIds.split(',').length;
+                        return count === 1
+                          ? '1 message sélectionné depuis une notification'
+                          : `${count} messages sélectionnés depuis une notification`;
+                      })()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setFilteredIds(undefined);
+                    setSearchParams({});
+                  }}
+                  className="px-3 py-1.5 bg-primary text-primary-foreground rounded text-sm font-medium transition-colors hover:opacity-90"
+                >
+                  Afficher tous les messages
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Liste des messages ou threads */}
+          {/* Liste des messages ou conversations */}
           {isLoading ? (
             <div className="text-foreground/70">Chargement…</div>
           ) : viewMode === 'threads' && threads.length === 0 ? (
@@ -358,7 +425,7 @@ const MessagesPage = () => {
               <p className="text-sm text-foreground/50">Vos messages apparaîtront ici</p>
             </div>
           ) : viewMode === 'threads' ? (
-            // Vue threads
+            // Vue conversations
             <div className="grid grid-cols-1 gap-3">
               {threads.map((thread) => (
                 <MessageThreadItem
