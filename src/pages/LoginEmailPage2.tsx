@@ -164,6 +164,11 @@ const LoginEmailPage2 = () => {
                   ref={(el) => (inputRefs.current[index] = el)}
                   type="text"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
+                  data-bwignore
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleInputChange(index, e.target.value)}
