@@ -47,7 +47,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
 
-  const { token, isAuthenticated } = useAuthStore();
+  const { accessToken: token, isAuthenticated } = useAuthStore();
 
   const connect = useCallback(() => {
     if (!isAuthenticated || !token) {

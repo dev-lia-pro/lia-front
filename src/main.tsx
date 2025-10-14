@@ -5,10 +5,12 @@ import './index.css'
 import './styles/drag.css'
 import { QueryProvider } from './providers/QueryProvider'
 import { PostHogProvider } from 'posthog-js/react'
-import { registerSW } from 'virtual:pwa-register'
+// TEMPORARILY DISABLED: VitePWA conflict with firebase-messaging-sw.js
+// import { registerSW } from 'virtual:pwa-register'
 
 // Register service worker for PWA
-registerSW({ immediate: true })
+// TEMPORARILY DISABLED: Firebase service worker is registered in usePushNotifications hook
+// registerSW({ immediate: true })
 
 const isPostHogEnabled = import.meta.env.VITE_ENABLE_POSTHOG === 'true';
 

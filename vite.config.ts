@@ -16,55 +16,57 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
-      manifest: {
-        name: 'Lia - Assistant Personnel IA',
-        short_name: 'Lia',
-        description: 'Votre assistant personnel alimenté par l\'IA pour gérer vos emails, SMS, tâches et calendriers',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/api\./i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
-            }
-          }
-        ]
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module'
-      }
-    })
+    // TEMPORARILY DISABLED VitePWA to avoid conflict with firebase-messaging-sw.js
+    // Will re-enable and merge both service workers later
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+    //   manifest: {
+    //     name: 'Lia - Assistant Personnel IA',
+    //     short_name: 'Lia',
+    //     description: 'Votre assistant personnel alimenté par l\'IA pour gérer vos emails, SMS, tâches et calendriers',
+    //     theme_color: '#ffffff',
+    //     background_color: '#ffffff',
+    //     display: 'standalone',
+    //     orientation: 'portrait',
+    //     start_url: '/',
+    //     scope: '/',
+    //     icons: [
+    //       {
+    //         src: 'pwa-192x192.png',
+    //         sizes: '192x192',
+    //         type: 'image/png',
+    //         purpose: 'any'
+    //       },
+    //       {
+    //         src: 'pwa-512x512.png',
+    //         sizes: '512x512',
+    //         type: 'image/png',
+    //         purpose: 'any'
+    //       }
+    //     ]
+    //   },
+    //   workbox: {
+    //     globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+    //     runtimeCaching: [
+    //       {
+    //         urlPattern: /^https:\/\/api\./i,
+    //         handler: 'NetworkFirst',
+    //         options: {
+    //           cacheName: 'api-cache',
+    //           expiration: {
+    //             maxEntries: 50,
+    //             maxAgeSeconds: 60 * 60 * 24 // 24 hours
+    //           }
+    //         }
+    //       }
+    //     ]
+    //   },
+    //   devOptions: {
+    //     enabled: true,
+    //     type: 'module'
+    //   }
+    // })
   ].filter(Boolean),
   resolve: {
     alias: {
