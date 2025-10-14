@@ -85,7 +85,7 @@ export const DashboardHeader = () => {
                 className="cursor-pointer hover:bg-foreground/10 items-center"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 min-w-[28px] max-w-[28px] rounded-full border border-border flex items-center justify-center bg-navy-deep aspect-square">
+                  <div className="w-7 h-7 min-w-[28px] max-w-[28px] rounded-full border border-border flex items-center justify-center bg-secondary aspect-square">
                     <span className="text-sm leading-none">⭐</span>
                   </div>
                   <div className="text-base font-medium">Tous les projets</div>
@@ -98,7 +98,7 @@ export const DashboardHeader = () => {
                   className="cursor-pointer hover:bg-foreground/10 items-center"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 min-w-[28px] max-w-[28px] rounded-full border border-border flex items-center justify-center bg-navy-deep overflow-hidden aspect-square">
+                    <div className="w-7 h-7 min-w-[28px] max-w-[28px] rounded-full border border-border flex items-center justify-center bg-secondary overflow-hidden aspect-square">
                       <ProjectIcon icon={p.icon} size="sm" className="!w-7 !h-7" />
                     </div>
                     <div className="text-base font-medium">{p.title}</div>
