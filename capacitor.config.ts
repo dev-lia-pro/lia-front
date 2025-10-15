@@ -28,6 +28,20 @@ const config: CapacitorConfig = {
       resize: 'native',
       style: 'dark',
     },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
+  // iOS-specific configuration
+  ios: {
+    // iOS build configuration
+    // Note: GoogleService-Info.plist must be added manually in Xcode
+    // See docs/IOS_FIREBASE_SETUP.md for setup instructions
+  },
+  // Android-specific configuration
+  android: {
+    // Android build configuration
+    // google-services.json is already configured
   },
 };
 

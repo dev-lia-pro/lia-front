@@ -1,4 +1,4 @@
-package com.lia.app;
+package pro.lia.app;
 
 import com.getcapacitor.BridgeActivity;
 
