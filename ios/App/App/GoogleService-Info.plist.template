@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	IMPORTANT: Ce fichier est un TEMPLATE
+	Téléchargez le vrai fichier GoogleService-Info.plist depuis Firebase Console
+
+	Étapes:
+	1. Aller sur https://console.firebase.google.com/project/lia-pro
+	2. Ajouter une app iOS avec Bundle ID: com.lia.app
+	3. Télécharger GoogleService-Info.plist
+	4. Remplacer ce fichier template par le fichier téléchargé
+	5. Ajouter le fichier au projet Xcode (Add Files to "App"...)
+
+	Voir docs/IOS_FIREBASE_SETUP.md pour plus de détails
+	-->
+
+	<key>CLIENT_ID</key>
+	<string>VOTRE_CLIENT_ID_ICI.apps.googleusercontent.com</string>
+
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.VOTRE_CLIENT_ID_ICI</string>
+
+	<key>API_KEY</key>
+	<string>VOTRE_API_KEY_ICI</string>
+
+	<key>GCM_SENDER_ID</key>
+	<string>1005775339351</string>
+
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+
+	<key>BUNDLE_ID</key>
+	<string>com.lia.app</string>
+
+	<key>PROJECT_ID</key>
+	<string>lia-pro</string>
+
+	<key>STORAGE_BUCKET</key>
+	<string>lia-pro.firebasestorage.app</string>
+
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
+
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1005775339351:ios:VOTRE_APP_ID_ICI</string>
+</dict>
+</plist>

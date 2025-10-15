@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	Entitlements pour l'application Lia
+
+	Ce fichier définit les capacités (capabilities) de l'application iOS.
+
+	Documentation:
+	- Push Notifications: https://developer.apple.com/documentation/usernotifications
+	- App Groups: https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_security_application-groups
+	-->
+
+	<!-- Push Notifications -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<!--
+	Valeurs possibles:
+	- development: Pour les builds de développement (Xcode)
+	- production: Pour les builds de production (App Store)
+
+	Xcode gère automatiquement ce changement selon le type de build.
+	-->
+
+	<!-- App Groups (optionnel - pour partager des données entre l'app et les extensions) -->
+	<!--
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.lia.app</string>
+	</array>
+	-->
+
+	<!-- Associated Domains (optionnel - pour les liens universels) -->
+	<!--
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:lia.app</string>
+		<string>applinks:www.lia.app</string>
+	</array>
+	-->
+
+	<!-- Keychain Sharing (optionnel - pour partager le trousseau entre apps) -->
+	<!--
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.lia.app</string>
+	</array>
+	-->
+</dict>
+</plist>

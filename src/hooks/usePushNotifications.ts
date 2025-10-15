@@ -1,3 +1,21 @@
+/**
+ * Push Notifications Hook
+ *
+ * Gère les notifications push sur toutes les plateformes :
+ * - iOS: Via APNs (Apple Push Notification service) + Firebase Cloud Messaging
+ * - Android: Via Firebase Cloud Messaging (FCM)
+ * - Web: Via Firebase Cloud Messaging + Service Workers
+ *
+ * Configuration requise pour iOS:
+ * 1. GoogleService-Info.plist dans ios/App/App/
+ * 2. Push Notifications capability activée dans Xcode
+ * 3. Certificat APNs (.p8) uploadé dans Firebase Console
+ * 4. App.entitlements avec aps-environment
+ * 5. Tests sur device réel (simulateur ne supporte pas les notifications)
+ *
+ * Voir docs/IOS_FIREBASE_SETUP.md pour la configuration complète
+ */
+
 import { useEffect, useState } from 'react';
 import { PushNotifications, Token, ActionPerformed, PushNotificationSchema } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
@@ -80,22 +98,32 @@ export const usePushNotifications = () => {
 
   // Initialize Native Push Notifications (iOS/Android)
   const initializeNativePushNotifications = async () => {
-    console.log('Initializing Native Push Notifications...');
+    const platform = Capacitor.getPlatform();
+    console.log(`Initializing Native Push Notifications for ${platform}...`);
 
     try {
+      // Check if push notifications are available on this device
+      const checkResult = await PushNotifications.checkPermissions();
+      console.log('Current permission status:', checkResult);
+
       // Request permission to use push notifications
       const permResult = await PushNotifications.requestPermissions();
+      console.log('Permission request result:', permResult);
 
       if (permResult.receive === 'granted') {
         setPermissionStatus('granted');
-        // Register with Apple / Google to receive push via APNS/FCM
+        console.log(`✅ Push notifications permission granted on ${platform}`);
+
+        // Register with Apple (APNs) / Google (FCM) to receive push
         await PushNotifications.register();
+        console.log(`📱 Registered for push notifications on ${platform}`);
       } else {
         setPermissionStatus('denied');
-        console.log('Push notification permission denied');
+        console.warn(`❌ Push notification permission denied on ${platform}`);
       }
     } catch (error) {
-      console.error('Error initializing native push notifications:', error);
+      console.error(`Error initializing native push notifications on ${platform}:`, error);
+      setPermissionStatus('denied');
     }
   };
 
@@ -158,11 +186,11 @@ export const usePushNotifications = () => {
       const registrationListener = PushNotifications.addListener(
         'registration',
         async (token: Token) => {
-          console.log('Push registration success, token:', token.value);
-          setPushToken(token.value);
-
-          // Determine platform (ios or android)
           const platform = Capacitor.getPlatform() === 'ios' ? 'ios' : 'android';
+          console.log(`✅ Push registration success on ${platform}`);
+          console.log('FCM/APNs Token:', token.value);
+
+          setPushToken(token.value);
           await registerTokenWithBackend(token.value, platform);
         }
       );
@@ -171,8 +199,21 @@ export const usePushNotifications = () => {
       const registrationErrorListener = PushNotifications.addListener(
         'registrationError',
         (error: any) => {
-          console.error('Error on registration:', error);
+          const platform = Capacitor.getPlatform();
+          console.error(`❌ Push notification registration error on ${platform}:`, error);
+
+          // iOS-specific error handling
+          if (platform === 'ios') {
+            console.error('iOS Setup checklist:');
+            console.error('1. GoogleService-Info.plist added to Xcode project?');
+            console.error('2. Push Notifications capability enabled in Xcode?');
+            console.error('3. APNs certificate uploaded to Firebase Console?');
+            console.error('4. Testing on a real device (not simulator)?');
+            console.error('5. App.entitlements contains aps-environment?');
+          }
+
           setIsRegistered(false);
+          setPermissionStatus('denied');
         }
       );
 
