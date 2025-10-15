@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.github.triplet.play'
 
 android {
     namespace "pro.lia.app"
@@ -7,8 +8,9 @@ android {
         applicationId "pro.lia.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Auto-increment versionCode from CI/CD or use 1 for local builds
+        versionCode System.getenv("VERSION_CODE")?.toInteger() ?: 1
+        versionName System.getenv("VERSION_NAME") ?: "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,26 +20,39 @@ android {
     }
     signingConfigs {
         release {
-            // TODO: Configure release signing
-            // 1. Generate keystore: keytool -genkey -v -keystore lia-release.keystore -alias lia -keyalg RSA -keysize 2048 -validity 10000
-            // 2. Store keystore file in android/app/lia-release.keystore
-            // 3. Create keystore.properties with: storePassword, keyPassword, keyAlias, storeFile
-            // 4. Uncomment below and configure
+            // CI/CD signing configuration using environment variables
+            // For local development, you can create a keystore.properties file
+            def keystoreFile = System.getenv("KEYSTORE_FILE")
+            def keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+            def keyAlias = System.getenv("KEY_ALIAS")
+            def keyPassword = System.getenv("KEY_PASSWORD")
 
-            // if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
-            //     storeFile file(MYAPP_RELEASE_STORE_FILE)
-            //     storePassword MYAPP_RELEASE_STORE_PASSWORD
-            //     keyAlias MYAPP_RELEASE_KEY_ALIAS
-            //     keyPassword MYAPP_RELEASE_KEY_PASSWORD
-            // }
+            if (keystoreFile && file(keystoreFile).exists()) {
+                storeFile file(keystoreFile)
+                storePassword keystorePassword
+                keyAlias keyAlias
+                keyPassword keyPassword
+            } else {
+                // Fallback for local development (optional)
+                def keystorePropertiesFile = rootProject.file("keystore.properties")
+                if (keystorePropertiesFile.exists()) {
+                    def keystoreProperties = new Properties()
+                    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+                    storeFile file(keystoreProperties['storeFile'])
+                    storePassword keystoreProperties['storePassword']
+                    keyAlias keystoreProperties['keyAlias']
+                    keyPassword keystoreProperties['keyPassword']
+                }
+            }
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // signingConfig signingConfigs.release
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
@@ -66,6 +81,28 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+// Gradle Play Publisher configuration for automated Play Store deployment
+play {
+    // Service account credentials for Play Store API
+    def serviceAccountJsonFile = System.getenv("PLAY_SERVICE_ACCOUNT_JSON")
+    if (serviceAccountJsonFile && file(serviceAccountJsonFile).exists()) {
+        serviceAccountCredentials.set(file(serviceAccountJsonFile))
+    }
+
+    // Deployment track: internal, alpha, beta, or production
+    // Use "internal" for automatic CI/CD deployments (no Google review required)
+    track.set(System.getenv("PLAY_TRACK") ?: "internal")
+
+    // Release status: completed, draft, halted, inProgress
+    releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED)
+
+    // Use App Bundle format (required by Play Store)
+    defaultToAppBundles.set(true)
+
+    // Automatically generate release notes from git commits (optional)
+    // You can customize this in the GitHub Actions workflow
+}
 
 try {
     def servicesJSON = file('google-services.json')
