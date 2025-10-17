@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.lia.app',
+  appId: 'pro.lia.app',
   appName: 'Lia',
   webDir: 'dist',
   bundledWebRuntime: false,
