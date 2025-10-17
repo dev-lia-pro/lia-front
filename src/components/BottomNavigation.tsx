@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  Mail, 
+import {
+  Home,
+  Mail,
   Calendar,
   CheckSquare,
   Cloud,
-  Settings 
+  Settings
 } from 'lucide-react';
 import type { NavigationTab } from '@/types/navigation';
 
@@ -30,12 +30,12 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
   const handleTabClick = (e: React.MouseEvent, tab: NavigationTab, path: string) => {
     e.preventDefault();
     console.log('Navigation clicked:', tab, path);
-    
+
     // Navigation directe
     if (path !== location.pathname) {
       navigate(path);
     }
-    
+
     // Callback optionnel
     if (onTabChange) {
       onTabChange(tab);
@@ -51,7 +51,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
         {navItems.map((item) => {
           const IconComponent = item.icon;
           const isActive = currentTab === item.id;
-          
+
           return (
             <button
               key={item.id}
@@ -59,10 +59,10 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
               className="flex flex-col items-center justify-center gap-1 transition-smooth animate-press sm:flex-col relative cursor-pointer"
               type="button"
             >
-              <IconComponent 
-                className={`w-6 h-6 sm:w-5 sm:h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} 
+              <IconComponent
+                className={`w-6 h-6 sm:w-5 sm:h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
               />
-              <span 
+              <span
                 className={`hidden sm:block text-sm font-medium ${
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}

@@ -14,5 +14,6 @@ export {
   useConversation,
   useCreateConversation,
   useSendMessage,
+  useSendAudioMessage,
   useDeleteConversation,
 } from './useConversations';

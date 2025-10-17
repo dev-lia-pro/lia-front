@@ -13,7 +13,7 @@ interface UseAudioRecordingReturn {
   sendRecordedAudio: () => Promise<void>;
 }
 
-export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRecordingReturn => {
+export const useAudioRecording = (onAudioRecorded?: (audioBlob: Blob) => void, onResult?: (text: string) => void): UseAudioRecordingReturn => {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -302,11 +302,18 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
         if (audioBlob.size > 0) {
           recordedAudioBlobRef.current = audioBlob;
           console.log(`Recording stopped successfully, blob size: ${audioBlob.size} bytes`);
-          
-          // Envoyer automatiquement après un court délai
-          setTimeout(() => {
-            sendRecordedAudio();
-          }, 100);
+
+          // Si un callback est fourni, l'appeler au lieu de sendRecordedAudio
+          if (onAudioRecorded) {
+            setTimeout(() => {
+              onAudioRecorded(audioBlob);
+            }, 100);
+          } else {
+            // Comportement par défaut (compatibilité arrière)
+            setTimeout(() => {
+              sendRecordedAudio();
+            }, 100);
+          }
         } else {
           console.error('No audio data captured');
           toast({
@@ -315,18 +322,18 @@ export const useAudioRecording = (onResult?: (text: string) => void): UseAudioRe
             variant: "destructive",
           });
         }
-        
+
         // Nettoyer les ressources
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
           streamRef.current = null;
         }
-        
+
         if (audioContextRef.current) {
           audioContextRef.current.close();
           audioContextRef.current = null;
         }
-        
+
         mediaRecorderRef.current = null;
         audioChunksRef.current = [];
       };
