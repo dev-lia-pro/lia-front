@@ -4,6 +4,7 @@ export { MainTitle } from './MainTitle';
 export { UpcomingMeetings } from './UpcomingMeetings';
 export { BottomNavigation } from './BottomNavigation';
 export { VoiceInput } from './VoiceInput';
+export { FloatingChatButton } from './FloatingChatButton';
 export { AudioPlayer } from './AudioPlayer';
 export { AssistantHistory } from './AssistantHistory';
 export { DeleteConfirmModal } from './DeleteConfirmModal';

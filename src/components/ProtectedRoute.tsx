@@ -1,8 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { VoiceInput } from './VoiceInput';
-import { ChatButton } from './ChatButton';
+import { FloatingChatButton } from './FloatingChatButton';
 import { ChatDrawer } from './ChatDrawer';
 
 interface ProtectedRouteProps {
@@ -12,12 +11,6 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
 
-
-  const handleVoiceResult = (text: string) => {
-    console.log('Résultat vocal:', text);
-    // Traitement du résultat vocal
-  };
-
   if (!isAuthenticated) {
     return <Navigate to="/auth/step1" replace />;
   }
@@ -25,10 +18,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   return (
     <>
       {children}
-      {/* Assistant vocal flottant */}
-      <VoiceInput onResult={handleVoiceResult} />
-      {/* Bouton chat flottant */}
-      <ChatButton />
+      {/* Bouton Chat flottant en bas à droite */}
+      <FloatingChatButton />
       {/* Drawer de chat */}
       <ChatDrawer />
     </>

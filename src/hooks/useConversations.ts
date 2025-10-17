@@ -5,6 +5,9 @@ export interface ConversationMessage {
   id: number;
   message_type: 'user_request' | 'assistant_response';
   content: string;
+  is_audio?: boolean;
+  audio_file?: string;
+  audio_url?: string;
   created_at: string;
   metadata: Record<string, any>;
 }
@@ -95,6 +98,38 @@ export const useSendMessage = (conversationId: number) => {
       const response = await axios.post(`/conversations/${conversationId}/send_message/`, {
         message,
       });
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalider la conversation pour rafraîchir les messages
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      // Invalider la liste des conversations pour mettre à jour le dernier message
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+};
+
+// Hook pour envoyer un message audio dans une conversation
+export const useSendAudioMessage = (conversationId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { audioBlob: Blob; timezone?: string }) => {
+      const formData = new FormData();
+      formData.append('audio_file', data.audioBlob, 'recording.webm');
+      if (data.timezone) {
+        formData.append('timezone', data.timezone);
+      }
+
+      const response = await axios.post(
+        `/conversations/${conversationId}/send_audio_message/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       return response.data;
     },
     onSuccess: () => {
