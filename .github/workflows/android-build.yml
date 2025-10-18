@@ -85,6 +85,8 @@ jobs:
           retention-days: 30
 
       # Publish to Google Play Store (Internal Testing)
+      # NOTE: Use status "draft" only for the FIRST release when app is in draft mode
+      # After first publication, change to status "completed" for automatic rollout
       - name: Upload to Play Store
         if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
         uses: r0adkll/upload-google-play@v1
@@ -93,4 +95,4 @@ jobs:
           packageName: pro.lia.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
-          status: completed
+          status: draft  # Change to "completed" after first manual publication

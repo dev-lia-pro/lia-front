@@ -95,7 +95,14 @@ play {
     track.set(System.getenv("PLAY_TRACK") ?: "internal")
 
     // Release status: completed, draft, halted, inProgress
-    releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED)
+    // Use "draft" for apps in draft mode, "completed" for published apps
+    def status = System.getenv("PLAY_RELEASE_STATUS") ?: "draft"
+    releaseStatus.set(
+        status == "completed" ? com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED :
+        status == "halted" ? com.github.triplet.gradle.androidpublisher.ReleaseStatus.HALTED :
+        status == "inProgress" ? com.github.triplet.gradle.androidpublisher.ReleaseStatus.IN_PROGRESS :
+        com.github.triplet.gradle.androidpublisher.ReleaseStatus.DRAFT
+    )
 
     // Use App Bundle format (required by Play Store)
     defaultToAppBundles.set(true)
