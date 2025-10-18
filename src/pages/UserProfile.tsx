@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/FormField';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Globe } from 'lucide-react';
+import { Loader2, Globe, Edit2, Trash2, Plus } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { BottomNavigation } from '@/components/BottomNavigation';
@@ -19,6 +19,13 @@ const UserProfile = () => {
   const [timezone, setTimezone] = useState('Europe/Paris');
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
+  
+  // Memory management state
+  const [memoryData, setMemoryData] = useState<string[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newMemoryText, setNewMemoryText] = useState('');
 
   // Mettre à jour les champs quand les données utilisateur sont chargées
   useEffect(() => {
@@ -26,6 +33,7 @@ const UserProfile = () => {
       setFirstName(user.first_name || '');
       setLastName(user.last_name || '');
       setTimezone(user.timezone || 'Europe/Paris');
+      setMemoryData(user.memory_data || []);
     }
   }, [user]);
 
@@ -62,6 +70,79 @@ const UserProfile = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Memory management functions
+  const handleEditMemory = (index: number) => {
+    setEditingIndex(index);
+    setEditingText(memoryData[index]);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingText.trim()) return;
+    
+    const updatedMemory = [...memoryData];
+    updatedMemory[editingIndex!] = editingText.trim();
+    
+    const success = await updateUser({
+      memory_data: updatedMemory,
+    });
+    
+    if (success) {
+      setMemoryData(updatedMemory);
+      setEditingIndex(null);
+      setEditingText('');
+      toast({
+        title: "Mémoire mise à jour",
+        description: "Votre mémoire a été modifiée avec succès.",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditingText('');
+  };
+
+  const handleDeleteMemory = async (index: number) => {
+    const updatedMemory = memoryData.filter((_, i) => i !== index);
+    
+    const success = await updateUser({
+      memory_data: updatedMemory,
+    });
+    
+    if (success) {
+      setMemoryData(updatedMemory);
+      toast({
+        title: "Mémoire supprimée",
+        description: "Votre mémoire a été supprimée avec succès.",
+      });
+    }
+  };
+
+  const handleAddNewMemory = async () => {
+    if (!newMemoryText.trim()) return;
+    
+    const updatedMemory = [...memoryData, newMemoryText.trim()];
+    
+    const success = await updateUser({
+      memory_data: updatedMemory,
+    });
+    
+    if (success) {
+      setMemoryData(updatedMemory);
+      setNewMemoryText('');
+      setIsAddingNew(false);
+      toast({
+        title: "Mémoire ajoutée",
+        description: "Votre nouvelle mémoire a été ajoutée avec succès.",
+      });
+    }
+  };
+
+  const handleCancelAdd = () => {
+    setIsAddingNew(false);
+    setNewMemoryText('');
   };
 
   if (loading) {
@@ -206,6 +287,129 @@ const UserProfile = () => {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Memory Data Card */}
+          <Card className="bg-card border-border mt-6">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-foreground">
+                Mémoires sauvegardées
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {memoryData.length === 0 && !isAddingNew ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Aucune mémoire sauvegardée</p>
+                  <Button
+                    onClick={() => setIsAddingNew(true)}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter une mémoire
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  {memoryData.map((memory, index) => (
+                    <div key={index} className="group">
+                      {editingIndex === index ? (
+                        <div className="flex items-center gap-2 py-3">
+                          <input
+                            type="text"
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            className="flex-1 bg-navy-muted border border-border rounded px-3 py-2 text-foreground"
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            disabled={!editingText.trim()}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            ✓
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleCancelEdit}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between py-3 group-hover:bg-navy-muted/50 transition-colors">
+                          <p className="flex-1 text-foreground pr-4">{memory}</p>
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditMemory(index)}
+                              className="h-8 w-8 p-0 hover:bg-navy-muted"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteMemory(index)}
+                              className="h-8 w-8 p-0 hover:bg-red-500/20 text-red-400"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {index < memoryData.length - 1 && (
+                        <div className="border-b border-border/50" />
+                      )}
+                    </div>
+                  ))}
+                  
+                  {isAddingNew && (
+                    <div className="flex items-center gap-2 py-3 border-t border-border/50">
+                      <input
+                        type="text"
+                        value={newMemoryText}
+                        onChange={(e) => setNewMemoryText(e.target.value)}
+                        placeholder="Ajouter une nouvelle mémoire..."
+                        className="flex-1 bg-navy-muted border border-border rounded px-3 py-2 text-foreground"
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleAddNewMemory}
+                        disabled={!newMemoryText.trim()}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        ✓
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCancelAdd}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {!isAddingNew && memoryData.length > 0 && (
+                    <div className="pt-4 border-t border-border/50">
+                      <Button
+                        onClick={() => setIsAddingNew(true)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Ajouter une mémoire
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

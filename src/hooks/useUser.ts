@@ -19,6 +19,7 @@ interface User {
   has_security_code: boolean;
   has_full_profile: boolean;
   timezone?: string;
+  memory_data?: string[];
 }
 
 interface UpdateUserData {
@@ -31,6 +32,7 @@ interface UpdateUserData {
   city?: string;
   country?: string;
   timezone?: string;
+  memory_data?: string[];
 }
 
 export const useUser = () => {
