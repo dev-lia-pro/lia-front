@@ -91,12 +91,12 @@ play {
     }
 
     // Deployment track: internal, alpha, beta, or production
-    // Use "internal" for automatic CI/CD deployments (no Google review required)
-    track.set(System.getenv("PLAY_TRACK") ?: "internal")
+    // Use "alpha" for closed testing (light Google review, unlimited testers)
+    track.set(System.getenv("PLAY_TRACK") ?: "alpha")
 
     // Release status: completed, draft, halted, inProgress
-    // Use "draft" for apps in draft mode, "completed" for published apps
-    def status = System.getenv("PLAY_RELEASE_STATUS") ?: "draft"
+    // Use "completed" for automatic full rollout
+    def status = System.getenv("PLAY_RELEASE_STATUS") ?: "completed"
     releaseStatus.set(
         status == "completed" ? com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED :
         status == "halted" ? com.github.triplet.gradle.androidpublisher.ReleaseStatus.HALTED :
