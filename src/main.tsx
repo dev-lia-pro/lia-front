@@ -5,6 +5,7 @@ import './index.css'
 import './styles/drag.css'
 import { QueryProvider } from './providers/QueryProvider'
 import { PostHogProvider } from 'posthog-js/react'
+import { Capacitor } from '@capacitor/core'
 // TEMPORARILY DISABLED: VitePWA conflict with firebase-messaging-sw.js
 // import { registerSW } from 'virtual:pwa-register'
 
@@ -12,16 +13,19 @@ import { PostHogProvider } from 'posthog-js/react'
 // TEMPORARILY DISABLED: Firebase service worker is registered in usePushNotifications hook
 // registerSW({ immediate: true })
 
-const isPostHogEnabled = import.meta.env.VITE_ENABLE_POSTHOG === 'true';
+// IMPORTANT: Disable PostHog on native platforms (iOS/Android)
+// PostHog Web SDK doesn't work properly on Capacitor native apps
+const isNativePlatform = Capacitor.isNativePlatform();
+const isPostHogEnabled = !isNativePlatform && import.meta.env.VITE_ENABLE_POSTHOG === 'true';
 
 if (isPostHogEnabled) {
+  console.log('✅ PostHog enabled for web platform');
   createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <PostHogProvider
         apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
         options={{
           api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-          defaults: '2025-05-24',
           capture_exceptions: true,
           debug: import.meta.env.MODE === "development",
           disable_session_recording: false,
@@ -35,6 +39,9 @@ if (isPostHogEnabled) {
     </React.StrictMode>
   );
 } else {
+  if (isNativePlatform) {
+    console.log('ℹ️ PostHog disabled on native platform');
+  }
   createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <QueryProvider>

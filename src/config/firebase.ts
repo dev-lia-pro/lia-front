@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
+import { Capacitor } from '@capacitor/core';
 
 // Firebase configuration from Firebase Console
 const firebaseConfig = {
@@ -17,13 +18,17 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Cloud Messaging
 let messaging: Messaging | null = null;
 
-// Only initialize messaging if running in browser and service workers are supported
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+// IMPORTANT: Only initialize messaging on web platform (NOT on native iOS/Android)
+// On native platforms, use Capacitor PushNotifications plugin instead
+if (!Capacitor.isNativePlatform() && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   try {
     messaging = getMessaging(app);
+    console.log('✅ Firebase Messaging initialized for web platform');
   } catch (error) {
-    console.error('Error initializing Firebase Messaging:', error);
+    console.error('❌ Error initializing Firebase Messaging:', error);
   }
+} else if (Capacitor.isNativePlatform()) {
+  console.log('ℹ️ Native platform detected - using Capacitor PushNotifications instead of Firebase Web Messaging');
 }
 
 export { app, messaging, getToken, onMessage };
