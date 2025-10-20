@@ -261,8 +261,7 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
         onClose={() => setDeletingTask(null)}
         onConfirm={handleDeleteTask}
         title="Supprimer la tâche"
-        message={`Êtes-vous sûr de vouloir supprimer la tâche "${deletingTask?.title}" ? Cette action est irréversible.`}
-        loading={deleteTask.isPending}
+        description={`Êtes-vous sûr de vouloir supprimer la tâche "${deletingTask?.title}" ? Cette action est irréversible.`}
       />
     </section>
   );

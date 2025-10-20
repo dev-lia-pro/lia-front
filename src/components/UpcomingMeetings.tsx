@@ -391,8 +391,7 @@ export const UpcomingMeetings: React.FC<UpcomingMeetingsProps> = ({ eventIdFromU
         onClose={() => setDeletingEvent(null)}
         onConfirm={handleDeleteEvent}
         title="Supprimer l'événement"
-        message={`Êtes-vous sûr de vouloir supprimer l'événement "${deletingEvent?.title}" ? Cette action est irréversible.`}
-        loading={deleteEvent.isPending}
+        description={`Êtes-vous sûr de vouloir supprimer l'événement "${deletingEvent?.title}" ? Cette action est irréversible.`}
       />
     </section>
   );
