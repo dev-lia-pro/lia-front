@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DashboardHeader } from './DashboardHeader';
-import { MainTitle } from './MainTitle';
+import { ProjectOverview } from './ProjectOverview';
 import { TasksGrid } from './TasksGrid';
 import { UpcomingMeetings } from './UpcomingMeetings';
 import { BottomNavigation } from './BottomNavigation';
@@ -19,7 +19,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className = '' }) => {
 
       <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height)', paddingBottom: 'var(--bottom-nav-height)' }}>
         <div className="px-4 space-y-6">
-          <MainTitle />
+          <ProjectOverview />
           <UpcomingMeetings />
           <TasksGrid 
             urgentOnlyFilter={true} 

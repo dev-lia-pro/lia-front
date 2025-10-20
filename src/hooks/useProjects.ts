@@ -8,6 +8,7 @@ export interface Project {
   icon: string;
   user: number;
   is_archived: boolean;
+  overview?: string;
 }
 
 export interface PaginatedResponse<T> {

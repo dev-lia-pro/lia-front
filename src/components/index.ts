@@ -1,6 +1,5 @@
 export { Dashboard } from './Dashboard';
 export { DashboardHeader } from './DashboardHeader';
-export { MainTitle } from './MainTitle';
 export { UpcomingMeetings } from './UpcomingMeetings';
 export { BottomNavigation } from './BottomNavigation';
 export { VoiceInput } from './VoiceInput';
@@ -23,6 +22,7 @@ export { ProjectActions } from './ProjectActions';
 export { ProjectDetailsModal } from './ProjectDetailsModal';
 export { ProjectIcon } from './ProjectIcon';
 export { ProjectModal } from './ProjectModal';
+export { ProjectOverview } from './ProjectOverview';
 export { ProjectsGrid } from './ProjectsGrid';
 export { ProtectedRoute } from './ProtectedRoute';
 export { default as PublicRoute } from './PublicRoute';
