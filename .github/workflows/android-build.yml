@@ -2,11 +2,13 @@ name: Android Build
 
 on:
   push:
+    tags:
+      - 'v*'
     branches:
-      - staging
+      - main
   pull_request:
     branches:
-      - staging
+      - main
   workflow_dispatch:
 
 jobs:
@@ -52,13 +54,30 @@ jobs:
         working-directory: android
         run: chmod +x gradlew
 
+      # For development/debug builds
+      - name: Build Android Debug
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Upload Debug APK
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      # For release builds with signing
       - name: Decode keystore
+        if: startsWith(github.ref, 'refs/tags/v')
         working-directory: android
         run: |
           # Decode keystore from base64 and save to app directory
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > app/lia-release.keystore
 
       - name: Build Release APK/AAB
+        if: startsWith(github.ref, 'refs/tags/v')
         working-directory: android
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/android/app/lia-release.keystore
@@ -72,6 +91,7 @@ jobs:
           ./gradlew assembleRelease bundleRelease
 
       - name: Upload Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
@@ -79,6 +99,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Release AAB
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
@@ -89,7 +110,7 @@ jobs:
       # Automatic rollout to 100% of alpha testers
       # Requires light Google review (usually a few hours)
       - name: Upload to Play Store - Alpha Testing
-        if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
