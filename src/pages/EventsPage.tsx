@@ -15,7 +15,7 @@ const EventsPage = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <DashboardHeader />
 
-      <div className="flex-1 overflow-y-auto pb-20">
+      <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height)', paddingBottom: 'var(--bottom-nav-height)' }}>
         <div className="px-4 py-6">
           {/* Section des événements du jour et à venir */}
           <UpcomingMeetings eventIdFromUrl={searchParams.get('event')} />

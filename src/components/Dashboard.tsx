@@ -16,8 +16,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ className = '' }) => {
   return (
     <div className={`min-h-screen bg-background text-foreground flex flex-col ${className}`}>
       <DashboardHeader />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
+
+      <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height)', paddingBottom: 'var(--bottom-nav-height)' }}>
         <div className="px-4 space-y-6">
           <MainTitle />
           <UpcomingMeetings />

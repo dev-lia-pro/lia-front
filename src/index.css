@@ -55,6 +55,12 @@ All colors MUST be HSL.
 
   /* Default to dark theme */
   :root {
+    /* Safe area insets for mobile devices (iOS notch, Android status bar, etc.) */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --header-height: calc(4rem + var(--safe-area-inset-top)); /* 64px + safe area */
+    --bottom-nav-height: calc(4rem + var(--safe-area-inset-bottom)); /* 64px + safe area */
+
     /* L-IA Dark Theme - Deep Navy & Gold */
     --background: 216 52% 11%; /* #0B1B2B deep navy blue */
     --foreground: 0 0% 100%; /* white text */
@@ -234,6 +240,12 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground font-sans text-base;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Roboto', sans-serif;
+
+    /* Safe area insets pour Android/iOS - empêche le contenu de passer sous les barres système */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   
   /* Mobile font size reduction - 80-85% of desktop */

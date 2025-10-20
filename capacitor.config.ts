@@ -23,6 +23,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'dark',
       backgroundColor: '#000000',
+      overlay: false,
     },
     Keyboard: {
       resize: 'native',

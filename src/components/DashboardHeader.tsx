@@ -52,7 +52,7 @@ export const DashboardHeader = () => {
 
   return (
     <>
-    <header className="flex items-center justify-between py-3 px-2 sm:py-4 sm:px-4 bg-navy-card border-b border-border gap-2">
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between py-3 px-2 sm:py-4 sm:px-4 bg-navy-card border-b border-border gap-2" style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}>
       {/* Logo */}
       <button 
         onClick={() => navigate('/')}

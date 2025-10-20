@@ -46,7 +46,7 @@ export const BottomNavigation = ({ activeTab, onTabChange }: BottomNavigationPro
   const currentTab = navItems.find(item => item.path === location.pathname)?.id || activeTab || 'accueil';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => {
           const IconComponent = item.icon;
