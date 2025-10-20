@@ -73,7 +73,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ conversationId }) => {
             queryClient.invalidateQueries({ queryKey: ['conversation', newConversation.id] });
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-            setWaitingForResponse(false);
           } catch (error: any) {
             setWaitingForResponse(false);
             toast({
@@ -124,7 +123,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ conversationId }) => {
         queryClient.invalidateQueries({ queryKey: ['conversation', activeConversationId] });
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
 
-        setWaitingForResponse(false);
       } catch (error: any) {
         setWaitingForResponse(false);
         toast({
@@ -171,7 +169,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ conversationId }) => {
 
               setMessage('');
               setIsProcessing(false);
-              setWaitingForResponse(false);
               textareaRef.current?.focus();
             } catch (error: any) {
               setIsProcessing(false);
@@ -199,7 +196,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({ conversationId }) => {
           onSuccess: () => {
             setMessage('');
             setIsProcessing(false);
-            setWaitingForResponse(false);
             textareaRef.current?.focus();
           },
           onError: (error: any) => {

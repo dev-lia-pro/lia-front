@@ -15,10 +15,11 @@ interface ChatMessagesProps {
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({ conversationId }) => {
   const { conversation, isLoading } = useConversation(conversationId);
-  const { isWaitingForResponse } = useChatStore();
+  const { isWaitingForResponse, setWaitingForResponse } = useChatStore();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previousMessageCountRef = useRef<number>(0);
 
   console.log('[ChatMessages] Render - conversationId:', conversationId, 'isWaitingForResponse:', isWaitingForResponse);
 
@@ -28,6 +29,25 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ conversationId }) =>
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [conversation?.messages]);
+
+  // Detect when assistant response arrives and turn off loading state
+  useEffect(() => {
+    const messages = conversation?.messages || [];
+    const currentMessageCount = messages.length;
+    
+    // If we're waiting for response and new messages arrived
+    if (isWaitingForResponse && currentMessageCount > previousMessageCountRef.current) {
+      // Check if the last message is from assistant
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.message_type === 'assistant_response') {
+        console.log('[ChatMessages] Assistant response detected, turning off loading state');
+        setWaitingForResponse(false);
+      }
+    }
+    
+    // Update the previous count
+    previousMessageCountRef.current = currentMessageCount;
+  }, [conversation?.messages, isWaitingForResponse, setWaitingForResponse]);
 
   const handlePlayAudio = (messageId: number, audioUrl: string) => {
     // Si déjà en lecture, mettre en pause
