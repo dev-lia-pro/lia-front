@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,8 @@ export const ProvidersPanel: React.FC = () => {
     isStartingOAuth,
     isAppleAuth,
     isUpdating,
+    isStartOAuthSuccess,
+    isAppleAuthSuccess,
   } = useMetaProviders();
 
   const {
@@ -44,6 +46,13 @@ export const ProvidersPanel: React.FC = () => {
     updateProvider,
     fetchProviders: refetchProviders,
   } = useProviders();
+
+  // Fermer la dialog après un ajout réussi (Apple, Google, Microsoft)
+  useEffect(() => {
+    if (isAppleAuthSuccess || isStartOAuthSuccess) {
+      setShowAddDialog(false);
+    }
+  }, [isAppleAuthSuccess, isStartOAuthSuccess]);
 
   // Enrichir les metaProviders avec leurs providers
   const enrichedMetaProviders = metaProviders.map((mp) => ({

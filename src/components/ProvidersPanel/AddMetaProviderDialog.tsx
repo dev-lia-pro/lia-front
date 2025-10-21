@@ -343,7 +343,7 @@ export const AddMetaProviderDialog: React.FC<AddMetaProviderDialogProps> = ({
             Annuler
           </Button>
 
-          {step !== 'auth' && category !== 'APPLE' && (
+          {step !== 'auth' && (
             <Button onClick={handleNext} disabled={!canProceed() || isLoading}>
               {step === 'options' ? 'Autoriser' : 'Suivant'}
               {step !== 'options' && <ChevronRight className="w-4 h-4 ml-1" />}

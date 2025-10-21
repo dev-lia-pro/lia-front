@@ -238,5 +238,7 @@ export const useMetaProviders = (params?: { category?: CategoryType; active?: bo
     isAppleAuth: appleAuthMutation.isPending,
     isUpdating: updateMutation.isPending || updatePermissionsMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isStartOAuthSuccess: startOAuthMutation.isSuccess,
+    isAppleAuthSuccess: appleAuthMutation.isSuccess,
   };
 };

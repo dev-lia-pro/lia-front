@@ -33,7 +33,9 @@ const UserProfile = () => {
       setFirstName(user.first_name || '');
       setLastName(user.last_name || '');
       setTimezone(user.timezone || 'Europe/Paris');
-      setMemoryData(user.memory_data || []);
+      // Ensure memory_data is always an array
+      const memoryArray = Array.isArray(user.memory_data) ? user.memory_data : [];
+      setMemoryData(memoryArray);
     }
   }, [user]);
 
