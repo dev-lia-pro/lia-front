@@ -18,12 +18,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ className = '' }) => {
       <DashboardHeader />
 
       <main className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height)', paddingBottom: 'var(--bottom-nav-height)' }}>
-        <div className="px-4 space-y-6">
+        <div className="px-4 py-6 space-y-6">
           <ProjectOverview />
           <UpcomingMeetings />
-          <TasksGrid 
-            urgentOnlyFilter={true} 
-            showToggles={false} 
+          <TasksGrid
+            urgentOnlyFilter={true}
+            showToggles={true}
             includeUrgent={true}
             disableUrgentBackground={true}
           />

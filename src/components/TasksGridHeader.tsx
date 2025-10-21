@@ -57,20 +57,22 @@ export const TasksGridHeader: React.FC<TasksGridHeaderProps> = ({
               title={manualOnly ? 'Afficher toutes les tâches' : 'Afficher uniquement les tâches manuelles'}
             >
               <Hand className={`w-4 h-4 ${manualOnly ? 'text-primary' : ''}`} />
-              <span className="hidden sm:inline">Manuel</span>
+              <span className="hidden sm:inline">Manuelles</span>
             </button>
 
-            <button
-              type="button"
-              onClick={onToggleUrgentOnly}
-              className={`px-2 py-1 rounded border border-border text-xs inline-flex items-center gap-1 ${
-                urgentOnly ? 'bg-red-500/10 hover:bg-red-500/20' : 'bg-card hover:bg-card/80'
-              } text-foreground`}
-              title={urgentOnly ? 'Afficher toutes les tâches' : 'Afficher uniquement les urgentes'}
-            >
-              <AlertTriangle className={`w-4 h-4 ${urgentOnly ? 'text-red-500' : ''}`} />
-              <span className="hidden sm:inline">Urgentes</span>
-            </button>
+            {!urgentOnlyFilter && (
+              <button
+                type="button"
+                onClick={onToggleUrgentOnly}
+                className={`px-2 py-1 rounded border border-border text-xs inline-flex items-center gap-1 ${
+                  urgentOnly ? 'bg-red-500/10 hover:bg-red-500/20' : 'bg-card hover:bg-card/80'
+                } text-foreground`}
+                title={urgentOnly ? 'Afficher toutes les tâches' : 'Afficher uniquement les urgentes'}
+              >
+                <AlertTriangle className={`w-4 h-4 ${urgentOnly ? 'text-red-500' : ''}`} />
+                <span className="hidden sm:inline">Urgentes</span>
+              </button>
+            )}
 
             <button
               type="button"

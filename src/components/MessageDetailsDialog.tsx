@@ -348,10 +348,10 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                 />
               </div>
 
-              {message.recipient_contacts && message.recipient_contacts.length > 0 && (
-                <>
-                  <span className="text-muted-foreground font-medium sm:text-right">À :</span>
-                  <div className="space-y-1">
+              <span className="text-muted-foreground font-medium sm:text-right">À :</span>
+              <div className="space-y-1">
+                {message.recipient_contacts && message.recipient_contacts.length > 0 ? (
+                  <>
                     {(message.recipient_contacts as ContactInfo[]).slice(0, 3).map(contact => (
                       <div key={contact.id}>
                         <ContactDisplay
@@ -376,9 +376,17 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                         }
                       </div>
                     )}
+                  </>
+                ) : message.recipients && message.recipients.length > 0 ? (
+                  <div>
+                    {message.recipients.map(email => (
+                      <div key={email} className="text-foreground">{email}</div>
+                    ))}
                   </div>
-                </>
-              )}
+                ) : (
+                  <span className="text-foreground">Inconnu</span>
+                )}
+              </div>
 
               {ccRecipients && (
                 <>

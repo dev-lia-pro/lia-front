@@ -202,8 +202,8 @@ const UserProfile = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSave} className="space-y-6">
-                {/* Prénom, Nom et Timezone sur une ligne responsive */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Prénom et Nom sur une ligne responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     id="firstName"
                     label="Prénom"
@@ -226,38 +226,38 @@ const UserProfile = () => {
                       placeholder: "Votre nom"
                     }}
                   />
+                </div>
 
-                  {/* Timezone selector */}
-                  <div className="space-y-2">
-                    <label htmlFor="timezone" className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      Fuseau horaire
-                    </label>
-                    <Select value={timezone} onValueChange={setTimezone}>
-                      <SelectTrigger className="w-full bg-navy-muted border-border text-foreground">
-                        <SelectValue placeholder="Sélectionnez votre fuseau horaire" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-navy-card border-border max-h-[400px]">
-                        {Object.entries(GROUPED_TIMEZONES).map(([region, timezones]) => (
-                          <SelectGroup key={region}>
-                            <SelectLabel className="text-muted-foreground font-semibold">{region}</SelectLabel>
-                            {timezones.map((tz) => (
-                              <SelectItem
-                                key={tz.value}
-                                value={tz.value}
-                                className="text-foreground hover:bg-navy-muted cursor-pointer"
-                              >
-                                <div className="flex justify-between items-center w-full">
-                                  <span>{tz.label}</span>
-                                  <span className="text-xs text-muted-foreground ml-4">{tz.offset}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Timezone selector */}
+                <div className="space-y-2">
+                  <label htmlFor="timezone" className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Fuseau horaire
+                  </label>
+                  <Select value={timezone} onValueChange={setTimezone}>
+                    <SelectTrigger className="w-full h-12 bg-navy-muted border-border text-foreground">
+                      <SelectValue placeholder="Sélectionnez votre fuseau horaire" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-navy-card border-border max-h-[400px]">
+                      {Object.entries(GROUPED_TIMEZONES).map(([region, timezones]) => (
+                        <SelectGroup key={region}>
+                          <SelectLabel className="text-muted-foreground font-semibold">{region}</SelectLabel>
+                          {timezones.map((tz) => (
+                            <SelectItem
+                              key={tz.value}
+                              value={tz.value}
+                              className="text-foreground hover:bg-navy-muted cursor-pointer"
+                            >
+                              <div className="flex justify-between items-center w-full">
+                                <span>{tz.label}</span>
+                                <span className="text-xs text-muted-foreground ml-4">{tz.offset}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
@@ -295,22 +295,26 @@ const UserProfile = () => {
           {/* Memory Data Card */}
           <Card className="bg-card border-border mt-6">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold text-foreground">
-                Mémoires sauvegardées
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  Mémoires sauvegardées
+                </CardTitle>
+                <Button
+                  size="sm"
+                  onClick={() => setIsAddingNew(true)}
+                  className="h-9 w-9 p-0 border border-gold bg-gold hover:bg-gold/90 text-primary-foreground"
+                  aria-label="Ajouter une mémoire"
+                  title="Ajouter une mémoire"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {memoryData.length === 0 && !isAddingNew ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>Aucune mémoire sauvegardée</p>
-                  <Button
-                    onClick={() => setIsAddingNew(true)}
-                    variant="outline"
-                    className="mt-4"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Ajouter une mémoire
-                  </Button>
+                  <p className="text-sm mt-2">Cliquez sur le bouton + pour ajouter une mémoire</p>
                 </div>
               ) : (
                 <div className="space-y-0">
@@ -329,7 +333,7 @@ const UserProfile = () => {
                             size="sm"
                             onClick={handleSaveEdit}
                             disabled={!editingText.trim()}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-gold hover:bg-gold/90 text-primary-foreground"
                           >
                             ✓
                           </Button>
@@ -384,7 +388,7 @@ const UserProfile = () => {
                         size="sm"
                         onClick={handleAddNewMemory}
                         disabled={!newMemoryText.trim()}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-gold hover:bg-gold/90 text-primary-foreground"
                       >
                         ✓
                       </Button>
@@ -394,19 +398,6 @@ const UserProfile = () => {
                         onClick={handleCancelAdd}
                       >
                         ✕
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {!isAddingNew && memoryData.length > 0 && (
-                    <div className="pt-4 border-t border-border/50">
-                      <Button
-                        onClick={() => setIsAddingNew(true)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Ajouter une mémoire
                       </Button>
                     </div>
                   )}
