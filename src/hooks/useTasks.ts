@@ -55,6 +55,7 @@ export interface TaskFilters {
   status?: string;
   priority?: string;
   exclude_urgent?: boolean;
+  manual_only?: boolean;
 }
 
 const TASKS_QUERY_KEY = 'tasks';
@@ -70,7 +71,8 @@ export const useTasks = (filters?: TaskFilters, options?: { enabled?: boolean })
       if (filters?.status) params.append('status', filters.status);
       if (filters?.priority) params.append('priority', filters.priority);
       if (filters?.exclude_urgent) params.append('exclude_urgent', 'true');
-      
+      if (filters?.manual_only) params.append('manual_only', 'true');
+
       const response = await axios.get(`/tasks/?${params.toString()}`);
       return response.data;
     },

@@ -43,18 +43,51 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
 
   const [showDone, setShowDone] = useState(true);
   const [urgentOnly, setUrgentOnly] = useState(urgentOnlyFilter);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [manualOnly, setManualOnly] = useState(false);
 
-  const todo = useTasks({ status: 'TODO', project: selected.id ?? undefined, exclude_urgent: !includeUrgent });
-  const inProgress = useTasks({ status: 'IN_PROGRESS', project: selected.id ?? undefined, exclude_urgent: !includeUrgent });
-  const done = useTasks({ status: 'DONE', project: selected.id ?? undefined, exclude_urgent: !includeUrgent }, { enabled: showDone });
+  const todo = useTasks({
+    status: 'TODO',
+    project: selected.id ?? undefined,
+    exclude_urgent: !includeUrgent,
+    manual_only: manualOnly || undefined
+  });
+  const inProgress = useTasks({
+    status: 'IN_PROGRESS',
+    project: selected.id ?? undefined,
+    exclude_urgent: !includeUrgent,
+    manual_only: manualOnly || undefined
+  });
+  const done = useTasks({
+    status: 'DONE',
+    project: selected.id ?? undefined,
+    exclude_urgent: !includeUrgent,
+    manual_only: manualOnly || undefined
+  }, { enabled: showDone });
 
-  const filterTasksByPriority = useCallback((tasks: Task[]) => {
-    return urgentOnly ? tasks.filter(t => t.priority === 'URGENT') : tasks;
-  }, [urgentOnly]);
+  const filterTasks = useCallback((tasks: Task[]) => {
+    let filtered = tasks;
 
-  const tasksTodo = filterTasksByPriority(todo.tasks);
-  const tasksInProgress = filterTasksByPriority(inProgress.tasks);
-  const tasksDone = filterTasksByPriority(done.tasks);
+    // Filtre par priorité urgente
+    if (urgentOnly) {
+      filtered = filtered.filter(t => t.priority === 'URGENT');
+    }
+
+    // Filtre par recherche locale (titre et description)
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.title.toLowerCase().includes(keyword) ||
+        (t.description && t.description.toLowerCase().includes(keyword))
+      );
+    }
+
+    return filtered;
+  }, [urgentOnly, searchKeyword]);
+
+  const tasksTodo = filterTasks(todo.tasks);
+  const tasksInProgress = filterTasks(inProgress.tasks);
+  const tasksDone = filterTasks(done.tasks);
   const isLoading = todo.isLoading || inProgress.isLoading || done.isLoading;
   const totalCount = tasksTodo.length + tasksInProgress.length + (showDone ? tasksDone.length : 0);
 
@@ -196,8 +229,12 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
         showToggles={showToggles}
         urgentOnly={urgentOnly}
         showDone={showDone}
+        searchKeyword={searchKeyword}
+        manualOnly={manualOnly}
         onToggleUrgentOnly={() => setUrgentOnly((v) => !v)}
         onToggleShowDone={() => setShowDone((v) => !v)}
+        onSearchChange={setSearchKeyword}
+        onToggleManualOnly={() => setManualOnly((v) => !v)}
       />
 
       <div className={`${isMobile ? 'flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 -mx-4 px-4' : `grid grid-cols-1 ${showDone ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}`}>

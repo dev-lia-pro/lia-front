@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,6 +79,13 @@ export const AddMetaProviderDialog: React.FC<AddMetaProviderDialogProps> = ({
     setAppleId('');
     setAppPassword('');
   };
+
+  // Réinitialiser le formulaire quand la dialog se ferme
+  useEffect(() => {
+    if (!open) {
+      reset();
+    }
+  }, [open]);
 
   const handleClose = () => {
     reset();
