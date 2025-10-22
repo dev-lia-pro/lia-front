@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Lia</string>
-    <string name="title_activity_main">Lia</string>
+    <string name="app_name">L-ia</string>
+    <string name="title_activity_main">L-ia</string>
     <string name="package_name">pro.lia.app</string>
     <string name="custom_url_scheme">pro.lia.app</string>
 </resources>

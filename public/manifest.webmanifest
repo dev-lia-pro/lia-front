@@ -1,6 +1,6 @@
 {
-  "name": "Lia - Assistant Personnel IA",
-  "short_name": "Lia",
+  "name": "L-IA - Assistant Personnel IA",
+  "short_name": "L-IA",
   "description": "Votre assistant personnel alimenté par l'IA pour gérer vos emails, SMS, tâches et calendriers",
   "start_url": "./index.html",
   "display": "standalone",
