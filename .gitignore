@@ -51,4 +51,4 @@ ios/App/App.xcodeproj/xcuserdata/
 *.mobileprovision
 *.p12
 *.cer
-ExportOptions.plist
+# ExportOptions.plist should be tracked (contains build config, no secrets)
