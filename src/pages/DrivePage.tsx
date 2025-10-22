@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination } from '@/components/Pagination';
 import { PAGE_SIZE } from '@/config/pagination';
+import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
+import type { Message } from '@/hooks/useMessages';
 
 interface Attachment {
   id: number;
@@ -48,6 +50,7 @@ const DrivePage = () => {
   const [hoveredAttachment, setHoveredAttachment] = useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = useState<Record<number, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMessageDialog, setSelectedMessageDialog] = useState<Message | null>(null);
   const { selected } = useProjectStore();
   const { projects } = useProjects();
   const { toast } = useToast();
@@ -120,6 +123,12 @@ const DrivePage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const decodeHtmlEntities = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+    return textArea.value;
+  };
+
   const handleOpenFile = async (attachment: Attachment) => {
     if (attachment.url) {
       try {
@@ -170,7 +179,7 @@ const DrivePage = () => {
       const response = await axios.post(`/messages/${messageId}/attachments/${attachmentId}/save_in_drive/`, {
         google_drive_backup: !isCurrentlyInDrive
       });
-      
+
       if (response.data.success) {
         toast({
           title: isCurrentlyInDrive ? "Fichier supprimé de Google Drive" : "Fichier stocké dans Google Drive",
@@ -191,11 +200,45 @@ const DrivePage = () => {
         ...prev,
         [attachmentId]: isCurrentlyInDrive
       }));
-      
+
       const errorMessage = error.response?.data?.error || "Une erreur est survenue";
       toast({
         title: "Erreur",
         description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenMessageDialog = async (messageId: number) => {
+    try {
+      const response = await axios.get(`/messages/${messageId}/`);
+      setSelectedMessageDialog(response.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement du message:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger le message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAssignProject = async (messageId: number, projectId: number | '') => {
+    const newProjectId = projectId === '' ? null : projectId;
+
+    if (selectedMessageDialog?.id === messageId) {
+      setSelectedMessageDialog(prev => prev ? { ...prev, project: newProjectId } : null);
+    }
+
+    try {
+      await axios.patch(`/messages/${messageId}/`, { project: newProjectId });
+      fetchAttachments();
+    } catch (e) {
+      fetchAttachments();
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le projet",
         variant: "destructive",
       });
     }
@@ -211,8 +254,7 @@ const DrivePage = () => {
         <div className="px-4 py-6">
           {/* En-tête */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Google Drive</h1>
-            <p className="text-foreground/70">Gérez vos fichiers stockés dans Google Drive</p>
+            <h3 className="text-lg font-semibold text-foreground">Google Drive</h3>
           </div>
 
           {/* Filtres */}
@@ -259,26 +301,26 @@ const DrivePage = () => {
                   <p className="text-sm text-foreground/70">Total fichiers</p>
                   <p className="text-2xl font-bold text-foreground">{attachments.length}</p>
                 </div>
-                <div className="p-3 bg-blue-500/20 rounded-lg">
-                  <FolderOpen className="w-6 h-6 text-blue-400" />
+                <div className="p-3 bg-muted rounded-lg">
+                  <FolderOpen className="w-6 h-6 text-foreground/70" />
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground/70">Dans Google Drive</p>
-                  <p className="text-2xl font-bold text-blue-400">
+                  <p className="text-2xl font-bold text-foreground">
                     {attachments.filter(a => a.google_drive_backup).length}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-500/20 rounded-lg">
-                  <Cloud className="w-6 h-6 text-blue-400" />
+                <div className="p-3 bg-muted rounded-lg">
+                  <Cloud className="w-6 h-6 text-foreground/70" />
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -287,8 +329,8 @@ const DrivePage = () => {
                     {formatFileSize(attachments.filter(a => a.google_drive_backup).reduce((sum, a) => sum + a.size_bytes, 0))}
                   </p>
                 </div>
-                <div className="p-3 bg-green-500/20 rounded-lg">
-                  <HardDrive className="w-6 h-6 text-green-400" />
+                <div className="p-3 bg-muted rounded-lg">
+                  <HardDrive className="w-6 h-6 text-foreground/70" />
                 </div>
               </div>
             </div>
@@ -319,102 +361,90 @@ const DrivePage = () => {
                   key={attachment.id}
                   className="bg-card border border-border rounded-lg p-4 hover:bg-muted transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      {/* En-tête du fichier */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border">
-                          {attachment.message.channel}
-                        </span>
-                        {attachment.project && (() => {
-                          const IconComponent = getIconByValue(attachment.project.icon);
-                          return (
-                            <span className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1">
-                              {IconComponent && <IconComponent className="w-4 h-4" />}
-                              <span className="truncate max-w-[120px]">
-                                {attachment.project.title}
-                              </span>
-                            </span>
-                          );
-                        })()}
-                        <span className="text-xs text-foreground/50 ml-auto">
-                          {new Date(attachment.created_at).toLocaleDateString('fr-FR')}
-                        </span>
-                      </div>
-
-                      {/* Nom du fichier et informations */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <button
-                          onClick={() => handleOpenFile(attachment)}
-                          className="text-left flex-1 min-w-0"
-                        >
-                          <div className="font-medium truncate text-foreground hover:text-blue-400 transition-colors">
-                            {attachment.filename}
-                          </div>
-                        </button>
-                        
-                        {/* Statut Google Drive */}
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleSaveInDrive(attachment.id, attachment.message.id, attachmentStates[attachment.id] ?? false)}
-                            onMouseEnter={() => setHoveredAttachment(attachment.id)}
-                            onMouseLeave={() => setHoveredAttachment(null)}
-                            className={`p-1 rounded hover:bg-muted/20 transition-colors ${
-                              (attachmentStates[attachment.id] ?? false) ? 'text-blue-400' : 'text-gray-400'
-                            }`}
-                            title={(attachmentStates[attachment.id] ?? false) ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive'}
-                          >
-                            {(() => {
-                              const isInDrive = attachmentStates[attachment.id] ?? false;
-                              if (isInDrive) {
-                                // Fichier stocké : afficher Cloud, au hover afficher CloudOff
-                                return hoveredAttachment === attachment.id ? <CloudOff className="w-4 h-4" /> : <Cloud className="w-4 h-4" />;
-                              } else {
-                                // Fichier non stocké : afficher CloudOff, au hover afficher Cloud
-                                return hoveredAttachment === attachment.id ? <Cloud className="w-4 h-4" /> : <CloudOff className="w-4 h-4" />;
-                              }
-                            })()}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Métadonnées */}
-                      <div className="flex items-center gap-4 text-xs text-foreground/60">
-                        <span>{formatFileSize(attachment.size_bytes)}</span>
-                        {attachment.content_type && (
-                          <span>{attachment.content_type}</span>
-                        )}
-                        <span>De: {attachment.message.sender}</span>
-                        {attachment.message.subject && (
-                          <span className="truncate max-w-[200px]">
-                            Objet: {attachment.message.subject}
+                  <button
+                    onClick={() => handleOpenMessageDialog(attachment.message.id)}
+                    className="w-full text-left hover:opacity-80 transition-opacity"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        {/* En-tête du fichier */}
+                        <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
+                          <span className="px-2 py-0.5 rounded bg-muted/10 border border-border">
+                            {attachment.message.channel}
                           </span>
+                          {attachment.project && (() => {
+                            const IconComponent = getIconByValue(attachment.project.icon);
+                            return (
+                              <span className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1">
+                                {IconComponent && <IconComponent className="w-4 h-4" />}
+                                <span className="truncate max-w-[120px]">
+                                  {attachment.project.title}
+                                </span>
+                              </span>
+                            );
+                          })()}
+                          <span className="ml-auto">{new Date(attachment.created_at).toLocaleString()}</span>
+                        </div>
+
+                        {/* Nom du fichier */}
+                        <div className="font-medium truncate text-foreground mb-2">
+                          {decodeHtmlEntities(attachment.filename)}
+                        </div>
+
+                        {/* Métadonnées avec actions */}
+                        <div className="flex items-center gap-3 text-sm text-foreground/60" onClick={(e) => e.stopPropagation()}>
+                          <span>{formatFileSize(attachment.size_bytes)}</span>
+                          {attachment.content_type && (
+                            <span>{attachment.content_type}</span>
+                          )}
+                          <div className="flex gap-1 ml-auto">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenFile(attachment);
+                              }}
+                              className="p-2 rounded hover:bg-muted/20 transition-colors"
+                              title="Ouvrir le fichier"
+                            >
+                              <Download className="w-4 h-4 text-foreground/70" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveInDrive(attachment.id, attachment.message.id, attachmentStates[attachment.id] ?? false);
+                              }}
+                              onMouseEnter={() => setHoveredAttachment(attachment.id)}
+                              onMouseLeave={() => setHoveredAttachment(null)}
+                              className="p-2 rounded hover:bg-muted/20 transition-colors"
+                              title={(attachmentStates[attachment.id] ?? false) ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive'}
+                            >
+                              {(() => {
+                                const isInDrive = attachmentStates[attachment.id] ?? false;
+                                if (isInDrive) {
+                                  // Fichier stocké : afficher Cloud, au hover afficher CloudOff
+                                  return hoveredAttachment === attachment.id ? <CloudOff className="w-4 h-4" /> : <Cloud className="w-4 h-4" />;
+                                } else {
+                                  // Fichier non stocké : afficher CloudOff, au hover afficher Cloud
+                                  return hoveredAttachment === attachment.id ? <Cloud className="w-4 h-4" /> : <CloudOff className="w-4 h-4" />;
+                                }
+                              })()}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Tags */}
+                        {attachment.message.tags && attachment.message.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {attachment.message.tags.map((tag) => (
+                              <span key={tag} className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
-
-                      {/* Tags */}
-                      {attachment.message.tags && attachment.message.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {attachment.message.tags.map((tag) => (
-                            <span key={tag} className="text-xs px-2 py-0.5 rounded bg-muted/10 border border-border">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleOpenFile(attachment)}
-                        className="p-2 rounded hover:bg-muted/20 transition-colors"
-                        title="Ouvrir le fichier"
-                      >
-                        <Download className="w-4 h-4 text-foreground/70" />
-                      </button>
-                    </div>
-                  </div>
+                  </button>
                 </div>
               ))}
             </div>
@@ -434,6 +464,16 @@ const DrivePage = () => {
           )}
         </div>
       </div>
+
+      <MessageDetailsDialog
+        message={selectedMessageDialog}
+        projects={projects}
+        onClose={() => setSelectedMessageDialog(null)}
+        onSaveInDrive={handleSaveInDrive}
+        attachmentStates={attachmentStates}
+        onContactClick={() => {}}
+        onAssignProject={handleAssignProject}
+      />
 
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>

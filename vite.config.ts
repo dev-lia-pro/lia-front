@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
     //   registerType: 'autoUpdate',
     //   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
     //   manifest: {
-    //     name: 'Lia - Assistant Personnel IA',
+    //     name: 'L-ia - Assistant Personnel IA',
     //     short_name: 'Lia',
     //     description: 'Votre assistant personnel alimenté par l\'IA pour gérer vos emails, SMS, tâches et calendriers',
     //     theme_color: '#ffffff',

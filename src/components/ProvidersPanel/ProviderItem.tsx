@@ -76,7 +76,7 @@ export const ProviderItem: React.FC<ProviderItemProps> = ({
             )}
 
             {provider.read_only && supportsReadWrite(provider.provider_type) && (
-              <Badge variant="outline" className="bg-orange-500/10 text-orange-400 border-orange-500/30 text-xs">
+              <Badge variant="outline" className="bg-muted/50 text-foreground/70 border-border text-xs">
                 Lecture seule
               </Badge>
             )}
@@ -127,7 +127,7 @@ export const ProviderItem: React.FC<ProviderItemProps> = ({
             size="sm"
             variant="ghost"
             onClick={() => onToggleReadOnly(provider.id)}
-            className={`h-8 w-8 p-0 ${provider.read_only ? 'text-orange-400' : 'text-blue-400'}`}
+            className="h-8 w-8 p-0"
             title={provider.read_only ? 'Activer écriture' : 'Désactiver écriture'}
           >
             {provider.read_only ? <ArrowRight className="w-4 h-4" /> : <ArrowLeftRight className="w-4 h-4" />}

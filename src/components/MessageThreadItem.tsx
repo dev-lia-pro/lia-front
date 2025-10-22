@@ -117,24 +117,43 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="text-sm text-foreground/70 flex items-start gap-1">
-                  <span className="text-xs text-foreground/50 shrink-0">De:</span>
-                  {lastMessage.sender_contact ? (
-                    <span
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onContactClick(lastMessage.sender_contact!.id);
-                      }}
-                      className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer truncate"
-                    >
-                      <User className="w-3 h-3" />
-                      <span className="font-medium">{lastMessage.sender_contact.display_name}</span>
-                      <span className="text-xs ml-1">({lastMessage.sender})</span>
-                    </span>
-                  ) : (
-                    <span className="truncate">{lastMessage.sender}</span>
-                  )}
-                </div>
+                <>
+                  <div className="text-sm text-foreground/70 flex items-start gap-1">
+                    <span className="text-xs text-foreground/50 shrink-0">De:</span>
+                    {lastMessage.sender_contact ? (
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onContactClick(lastMessage.sender_contact!.id);
+                        }}
+                        className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer truncate"
+                      >
+                        <User className="w-3 h-3" />
+                        <span className="font-medium">{lastMessage.sender_contact.display_name}</span>
+                        <span className="text-xs ml-1">({lastMessage.sender})</span>
+                      </span>
+                    ) : (
+                      <span className="truncate">{lastMessage.sender}</span>
+                    )}
+                  </div>
+                  {(lastMessage.recipient_contacts && lastMessage.recipient_contacts.length > 0) || lastMessage.recipients.length > 0 ? (
+                    <div className="text-sm text-foreground/70 mt-1 flex items-start gap-1">
+                      <span className="text-xs text-foreground/50 shrink-0">À:</span>
+                      <span className="truncate">
+                        {lastMessage.recipient_contacts && lastMessage.recipient_contacts.length > 0 ? (
+                          <>
+                            {lastMessage.recipient_contacts.map(c => c.display_name).join(', ')}
+                            {lastMessage.recipients.length > lastMessage.recipient_contacts.length &&
+                              ` +${lastMessage.recipients.length - lastMessage.recipient_contacts.length} autre(s)`
+                            }
+                          </>
+                        ) : (
+                          lastMessage.recipients.join(', ')
+                        )}
+                      </span>
+                    </div>
+                  ) : null}
+                </>
               )}
 
               {/* Aperçu du contenu */}

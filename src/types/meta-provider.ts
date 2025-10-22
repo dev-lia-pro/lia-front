@@ -88,36 +88,13 @@ export const getCategoryIcon = (category: CategoryType): string => {
 
 // Helper pour obtenir les couleurs d'une catégorie
 export const getCategoryColors = (category: CategoryType) => {
-  switch (category) {
-    case 'GOOGLE':
-      return {
-        bg: 'from-blue-500 to-blue-600',
-        border: 'border-blue-500/30',
-        text: 'text-blue-400',
-        hover: 'hover:bg-blue-500/10',
-      };
-    case 'MICROSOFT':
-      return {
-        bg: 'from-orange-500 to-orange-600',
-        border: 'border-orange-500/30',
-        text: 'text-orange-400',
-        hover: 'hover:bg-orange-500/10',
-      };
-    case 'APPLE':
-      return {
-        bg: 'from-gray-400 to-gray-500',
-        border: 'border-gray-500/30',
-        text: 'text-gray-400',
-        hover: 'hover:bg-gray-500/10',
-      };
-    default:
-      return {
-        bg: 'from-gray-400 to-gray-500',
-        border: 'border-gray-500/30',
-        text: 'text-gray-400',
-        hover: 'hover:bg-gray-500/10',
-      };
-  }
+  // Couleurs neutres uniformes pour toutes les catégories
+  return {
+    bg: 'from-muted to-muted',
+    border: 'border-border',
+    text: 'text-foreground',
+    hover: 'hover:bg-muted',
+  };
 };
 
 // Services disponibles par catégorie

@@ -576,8 +576,8 @@ const MessagesPage = () => {
                             )}
                           </div>
                           {(msg.recipient_contacts && msg.recipient_contacts.length > 0) || msg.recipients.length > 0 ? (
-                            <div className="text-xs text-foreground/60 mt-1 flex items-start gap-1">
-                              <span className="text-foreground/50 shrink-0">À:</span>
+                            <div className="text-sm text-foreground/70 mt-1 flex items-start gap-1">
+                              <span className="text-xs text-foreground/50 shrink-0">À:</span>
                               <span className="truncate">
                                 {msg.recipient_contacts && msg.recipient_contacts.length > 0 ? (
                                   <>
@@ -592,6 +592,10 @@ const MessagesPage = () => {
                               </span>
                             </div>
                           ) : null}
+                          {/* Aperçu du contenu */}
+                          <div className="text-sm text-foreground/50 truncate mt-1">
+                            {msg.body_text || '(Message vide)'}
+                          </div>
                         </>
                       )}
 

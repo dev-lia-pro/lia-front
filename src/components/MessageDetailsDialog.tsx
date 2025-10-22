@@ -84,6 +84,12 @@ const ChannelIcon: React.FC<{ channel: string }> = ({ channel }) => {
   }
 };
 
+const decodeHtmlEntities = (text: string) => {
+  const textArea = document.createElement('textarea');
+  textArea.innerHTML = text;
+  return textArea.value;
+};
+
 const ContactDisplay: React.FC<{
   contact?: ContactInfo | null;
   email?: string;
@@ -176,7 +182,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-border shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg sm:text-xl font-semibold mb-2">
+              <DialogTitle className="text-lg sm:text-xl font-semibold mb-2 text-foreground">
                 {message.subject || '(Sans objet)'}
               </DialogTitle>
               <div className="flex flex-wrap items-center gap-2">
@@ -450,7 +456,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                       <FileIcon className="w-5 h-5 text-muted-foreground shrink-0" />
 
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">{att.filename}</div>
+                        <div className="font-medium text-sm truncate">{decodeHtmlEntities(att.filename)}</div>
                         <div className="text-xs text-muted-foreground">
                           {formatFileSize(att.size_bytes)}
                         </div>
