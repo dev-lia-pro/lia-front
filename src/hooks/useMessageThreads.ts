@@ -13,6 +13,8 @@ export interface MessageThread {
 
 export interface ThreadsResponse {
   count: number;
+  next?: string | null;
+  previous?: string | null;
   results: MessageThread[];
 }
 
@@ -27,6 +29,8 @@ export const useMessageThreads = (filters?: MessageFilters, options?: { enabled?
       if (filters?.channel) params.append('channel', filters.channel);
       if (filters?.tag) params.append('tag', filters.tag);
       if (filters?.ids) params.append('ids', filters.ids);
+      if (filters?.page) params.append('page', String(filters.page));
+      if (filters?.pageSize) params.append('page_size', String(filters.pageSize));
       const res = await axios.get(`/messages/threads/?${params.toString()}`);
       return res.data;
     },
@@ -35,8 +39,10 @@ export const useMessageThreads = (filters?: MessageFilters, options?: { enabled?
 
   const threads = data?.results ?? [];
   const totalCount = data?.count ?? 0;
+  const nextPage = data?.next;
+  const previousPage = data?.previous;
 
-  return { threads, totalCount, isLoading, isFetching, error, refetch };
+  return { threads, totalCount, nextPage, previousPage, isLoading, isFetching, error, refetch };
 };
 
 // Hook pour récupérer tous les messages d'un thread spécifique

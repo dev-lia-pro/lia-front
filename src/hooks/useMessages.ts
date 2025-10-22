@@ -62,6 +62,8 @@ export interface MessageFilters {
   tag?: string;
   search?: string;
   ids?: string; // Comma-separated message IDs for filtering
+  page?: number;
+  pageSize?: number;
 }
 
 const MESSAGES_KEY = 'messages';
@@ -76,6 +78,8 @@ export const useMessages = (filters?: MessageFilters, options?: { enabled?: bool
       if (filters?.tag) params.append('tag', filters.tag);
       if (filters?.search) params.append('search', filters.search);
       if (filters?.ids) params.append('ids', filters.ids);
+      if (filters?.page) params.append('page', String(filters.page));
+      if (filters?.pageSize) params.append('page_size', String(filters.pageSize));
       const res = await axios.get(`/messages/?${params.toString()}`);
       return res.data;
     },
@@ -84,8 +88,10 @@ export const useMessages = (filters?: MessageFilters, options?: { enabled?: bool
 
   const messages = data?.results ?? [];
   const totalCount = data?.count ?? 0;
+  const nextPage = data?.next;
+  const previousPage = data?.previous;
 
-  return { messages, totalCount, isLoading, isFetching, error, refetch };
+  return { messages, totalCount, nextPage, previousPage, isLoading, isFetching, error, refetch };
 };
 
 export const useMessage = (id?: number | null) => {

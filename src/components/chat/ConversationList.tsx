@@ -16,9 +16,12 @@ import { useChatStore } from '@/stores/chatStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Conversation } from '@/hooks/useConversations';
+import { PaginationCompact } from '@/components/PaginationCompact';
+import { PAGE_SIZE } from '@/config/pagination';
 
 export const ConversationList: React.FC = () => {
-  const { conversations, isLoading, isFetching } = useConversations();
+  const [currentPage, setCurrentPage] = useState(1);
+  const { conversations, totalCount, isLoading, isFetching } = useConversations(currentPage, PAGE_SIZE);
   const { mutate: createConversation, isPending: isCreating } = useCreateConversation();
   const { mutate: deleteConversation, isPending: isDeleting } = useDeleteConversation();
   const { activeConversationId, setActiveConversation } = useChatStore();
@@ -169,6 +172,19 @@ export const ConversationList: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Pagination compacte */}
+        {!isLoading && totalCount > PAGE_SIZE && (
+          <div className="px-3 py-3 border-t border-border flex-shrink-0">
+            <PaginationCompact
+              currentPage={currentPage}
+              totalPages={Math.ceil(totalCount / PAGE_SIZE)}
+              totalCount={totalCount}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
       {/* Dialog de confirmation de suppression */}

@@ -10,6 +10,8 @@ import { getIconByValue } from '@/config/icons';
 import { Cloud, CloudOff, Download, Search, FolderOpen, HardDrive, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination } from '@/components/Pagination';
+import { PAGE_SIZE } from '@/config/pagination';
 
 interface Attachment {
   id: number;
@@ -38,12 +40,14 @@ interface Attachment {
 const DrivePage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('drive');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState<number | ''>('');
   const [driveFilter, setDriveFilter] = useState<'all' | 'in_drive' | 'not_in_drive'>('all');
   const [hoveredAttachment, setHoveredAttachment] = useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = useState<Record<number, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
   const { selected } = useProjectStore();
   const { projects } = useProjects();
   const { toast } = useToast();
@@ -52,30 +56,35 @@ const DrivePage = () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      
+
       if (searchTerm) {
         params.append('search', searchTerm);
       }
-      
+
       // Toujours filtrer par le projet courant
       if (selected.id) {
         params.append('project', selected.id.toString());
       }
-      
+
       if (projectFilter) {
         params.append('project', projectFilter.toString());
       }
-      
+
       if (driveFilter === 'in_drive') {
         params.append('in_drive', 'true');
       } else if (driveFilter === 'not_in_drive') {
         params.append('in_drive', 'false');
       }
-      
+
+      // Ajouter la pagination
+      params.append('page', currentPage.toString());
+      params.append('page_size', PAGE_SIZE.toString());
+
       const response = await axios.get(`/attachments/?${params.toString()}`);
       const fetchedAttachments = response.data.results || response.data || [];
       setAttachments(fetchedAttachments);
-      
+      setTotalCount(response.data.count || 0);
+
       // Initialiser l'état des attachments
       const newAttachmentStates: Record<number, boolean> = {};
       fetchedAttachments.forEach((att: Attachment) => {
@@ -96,6 +105,11 @@ const DrivePage = () => {
 
   useEffect(() => {
     fetchAttachments();
+  }, [searchTerm, projectFilter, driveFilter, selected.id, currentPage]);
+
+  // Réinitialiser la page à 1 quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
   }, [searchTerm, projectFilter, driveFilter, selected.id]);
 
   const formatFileSize = (bytes: number) => {
@@ -405,9 +419,22 @@ const DrivePage = () => {
               ))}
             </div>
           )}
+
+          {/* Pagination */}
+          {!loading && totalCount > PAGE_SIZE && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalCount / PAGE_SIZE)}
+                totalCount={totalCount}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </div>
       </div>
-      
+
       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );

@@ -5,15 +5,25 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Pagination } from './Pagination';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { PAGE_SIZE } from '@/config/pagination';
 
 export const AssistantHistory: React.FC = () => {
   const [methodFilter, setMethodFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { assistants, isLoading, error } = useAssistants({
+  const { assistants, totalCount, isLoading, error } = useAssistants({
     method: methodFilter === 'all' ? undefined : methodFilter,
+    page: currentPage,
+    pageSize: PAGE_SIZE,
   });
+
+  // Réinitialiser la page à 1 quand le filtre change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [methodFilter]);
 
   const getMethodLabel = (method: string) => {
     const labels: Record<string, string> = {
@@ -45,7 +55,7 @@ export const AssistantHistory: React.FC = () => {
       {/* En-tête avec titre et filtre */}
       <div className="flex items-center justify-between">
         <CardTitle className="text-lg font-semibold text-foreground">
-          Historique de l'assistant ({assistants.length})
+          Historique de l'assistant ({totalCount})
         </CardTitle>
         
         <Select
@@ -132,6 +142,17 @@ export const AssistantHistory: React.FC = () => {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {totalCount > PAGE_SIZE && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(totalCount / PAGE_SIZE)}
+          totalCount={totalCount}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       )}
     </div>
   );

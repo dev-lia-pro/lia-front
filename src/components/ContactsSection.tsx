@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Plus, 
-  Search, 
-  User, 
-  Mail, 
-  Phone, 
+import {
+  Plus,
+  Search,
+  User,
+  Mail,
+  Phone,
   Building2,
   Download,
   Upload,
@@ -32,22 +32,31 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Pagination } from './Pagination';
+import { PAGE_SIZE } from '@/config/pagination';
 
 export const ContactsSection: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [editingContact, setEditingContact] = useState<ContactList | null>(null);
   const [deletingContact, setDeletingContact] = useState<ContactList | null>(null);
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
-  
+
   const { toast } = useToast();
-  
+
   // Hooks pour les données
   const { data: contactsData, isLoading, refetch } = useContacts({
     search: searchQuery || undefined,
-    page_size: 50
+    page: currentPage,
+    page_size: PAGE_SIZE
   });
+
+  // Réinitialiser la page à 1 quand la recherche change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
   
   const { data: statistics, refetch: refetchStatistics } = useContactStatistics();
   const extractMutation = useExtractContactsFromMessages();
@@ -430,28 +439,14 @@ export const ContactsSection: React.FC = () => {
       </div>
       
       {/* Pagination */}
-      {contactsData && contactsData.count > 50 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            {contactsData.count} contacts au total
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!contactsData.previous}
-            >
-              Précédent
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!contactsData.next}
-            >
-              Suivant
-            </Button>
-          </div>
-        </div>
+      {contactsData && contactsData.count > PAGE_SIZE && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(contactsData.count / PAGE_SIZE)}
+          totalCount={contactsData.count}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       )}
       
       {/* Modals */}

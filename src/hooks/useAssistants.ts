@@ -17,6 +17,15 @@ export interface AssistantFilters {
   method?: string;
   has_audio_input?: boolean;
   has_audio_output?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+interface PaginatedResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Assistant[];
 }
 
 export const useAssistants = (filters: AssistantFilters = {}) => {
@@ -25,15 +34,17 @@ export const useAssistants = (filters: AssistantFilters = {}) => {
   if (filters.method) queryParams.append('method', filters.method);
   if (filters.has_audio_input !== undefined) queryParams.append('has_audio_input', filters.has_audio_input.toString());
   if (filters.has_audio_output !== undefined) queryParams.append('has_audio_output', filters.has_audio_output.toString());
+  if (filters.page) queryParams.append('page', String(filters.page));
+  if (filters.pageSize) queryParams.append('page_size', String(filters.pageSize));
 
   const queryString = queryParams.toString();
   const url = `/assistant-run/${queryString ? `?${queryString}` : ''}`;
 
-  const { data: assistants = [], isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<PaginatedResponse>({
     queryKey: ['assistants', filters],
     queryFn: async () => {
       const response = await axios.get(url);
-      return response.data.results || response.data;
+      return response.data;
     },
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -42,8 +53,16 @@ export const useAssistants = (filters: AssistantFilters = {}) => {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
+  const assistants = data?.results || [];
+  const totalCount = data?.count || 0;
+  const nextPage = data?.next;
+  const previousPage = data?.previous;
+
   return {
     assistants,
+    totalCount,
+    nextPage,
+    previousPage,
     isLoading,
     error,
   };

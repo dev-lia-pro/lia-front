@@ -31,19 +31,22 @@ export interface ConversationDetail extends Conversation {
 }
 
 // Hook pour récupérer la liste des conversations
-export const useConversations = () => {
-  const { data: conversations = [], isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ['conversations'],
+export const useConversations = (page: number = 1, pageSize: number = 20) => {
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ['conversations', page, pageSize],
     queryFn: async () => {
-      const response = await axios.get('/conversations/');
-      return response.data.results || response.data;
+      const response = await axios.get('/conversations/', {
+        params: { page, page_size: pageSize }
+      });
+      return response.data;
     },
     refetchOnWindowFocus: false,
     staleTime: 30 * 1000, // 30 seconds
   });
 
   return {
-    conversations,
+    conversations: data?.results || [],
+    totalCount: data?.count || 0,
     isLoading,
     isFetching,
     error,

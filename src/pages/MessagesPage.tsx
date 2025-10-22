@@ -19,6 +19,8 @@ import { ContactDetailsModal } from '@/components/ContactDetailsModal';
 import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
 import { MessageThreadItem } from '@/components/MessageThreadItem';
 import { useQueryClient } from '@tanstack/react-query';
+import { Pagination } from '@/components/Pagination';
+import { PAGE_SIZE } from '@/config/pagination';
 
 type ViewMode = 'list' | 'threads';
 
@@ -38,6 +40,10 @@ const MessagesPage = () => {
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
 
+  // States pour la pagination
+  const [currentPageList, setCurrentPageList] = React.useState(1);
+  const [currentPageThreads, setCurrentPageThreads] = React.useState(1);
+
   // Filter by IDs from notification
   const idsParam = searchParams.get('ids');
   const [filteredIds, setFilteredIds] = React.useState<string | undefined>(idsParam || undefined);
@@ -53,14 +59,18 @@ const MessagesPage = () => {
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined,
     ids: filteredIds,
+    page: currentPageList,
+    pageSize: PAGE_SIZE,
   }, { enabled: viewMode === 'list' });
 
   // Hook pour la vue conversations - seulement si en mode 'threads'
-  const { threads, isLoading: isLoadingThreads, refetch: refetchThreads } = useMessageThreads({
+  const { threads, isLoading: isLoadingThreads, totalCount: totalCountThreads, refetch: refetchThreads } = useMessageThreads({
     channel: channelFilter,
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
     ids: filteredIds,
+    page: currentPageThreads,
+    pageSize: PAGE_SIZE,
   }, { enabled: viewMode === 'threads' });
 
   // Hook pour charger les messages d'un thread quand la dialog est ouverte
@@ -101,7 +111,10 @@ const MessagesPage = () => {
   React.useEffect(() => {
     initializedRef.current = false;
     setAttachmentStates({});
-  }, [channelFilter, searchTag, selected.id]);
+    // Réinitialiser les pages à 1 quand les filtres changent
+    setCurrentPageList(1);
+    setCurrentPageThreads(1);
+  }, [channelFilter, searchTag, selected.id, debouncedSearchKeyword]);
 
   // Gérer les query params (ids pour filtrer, message pour ouvrir un message spécifique)
   React.useEffect(() => {
@@ -425,23 +438,37 @@ const MessagesPage = () => {
               <p className="text-sm text-foreground/50">Vos messages apparaîtront ici</p>
             </div>
           ) : viewMode === 'threads' ? (
-            // Vue conversations
-            <div className="grid grid-cols-1 gap-3">
-              {threads.map((thread) => (
-                <MessageThreadItem
-                  key={thread.thread_id}
-                  thread={thread}
-                  onThreadClick={handleThreadClick}
-                  onContactClick={setSelectedContactId}
-                  onAssignProject={handleAssignProject}
-                  projects={projects}
+            <>
+              {/* Vue conversations */}
+              <div className="grid grid-cols-1 gap-3">
+                {threads.map((thread) => (
+                  <MessageThreadItem
+                    key={thread.thread_id}
+                    thread={thread}
+                    onThreadClick={handleThreadClick}
+                    onContactClick={setSelectedContactId}
+                    onAssignProject={handleAssignProject}
+                    projects={projects}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination pour les threads */}
+              {totalCountThreads > PAGE_SIZE && (
+                <Pagination
+                  currentPage={currentPageThreads}
+                  totalPages={Math.ceil(totalCountThreads / PAGE_SIZE)}
+                  totalCount={totalCountThreads}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setCurrentPageThreads}
                 />
-              ))}
-            </div>
+              )}
+            </>
           ) : (
-            // Vue liste classique
-            <div className="grid grid-cols-1 gap-3">
-              {messages.map((msg) => (
+            <>
+              {/* Vue liste classique */}
+              <div className="grid grid-cols-1 gap-3">
+                {messages.map((msg) => (
                 <div key={msg.id} className="bg-card border border-border rounded p-3">
                   <button
                     onClick={() => {
@@ -636,7 +663,19 @@ const MessagesPage = () => {
 
                 </div>
               ))}
-            </div>
+              </div>
+
+              {/* Pagination pour la vue liste */}
+              {totalCount > PAGE_SIZE && (
+                <Pagination
+                  currentPage={currentPageList}
+                  totalPages={Math.ceil(totalCount / PAGE_SIZE)}
+                  totalCount={totalCount}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setCurrentPageList}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
