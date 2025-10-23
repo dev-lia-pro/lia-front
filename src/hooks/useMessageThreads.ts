@@ -7,6 +7,7 @@ export interface MessageThread {
   thread_subject: string;
   channel: Channel;
   message_count: number;
+  hidden_count?: number;
   last_message_date: string;
   last_message: Message;
 }
@@ -29,6 +30,7 @@ export const useMessageThreads = (filters?: MessageFilters, options?: { enabled?
       if (filters?.channel) params.append('channel', filters.channel);
       if (filters?.tag) params.append('tag', filters.tag);
       if (filters?.ids) params.append('ids', filters.ids);
+      if (filters?.showHidden) params.append('show_hidden', 'true');
       if (filters?.page) params.append('page', String(filters.page));
       if (filters?.pageSize) params.append('page_size', String(filters.pageSize));
       const res = await axios.get(`/messages/threads/?${params.toString()}`);

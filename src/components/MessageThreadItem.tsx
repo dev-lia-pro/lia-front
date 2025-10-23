@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MessageCircle } from 'lucide-react';
+import { User, MessageCircle, EyeOff } from 'lucide-react';
 import type { MessageThread } from '@/hooks/useMessageThreads';
 import type { Message } from '@/hooks/useMessages';
 import { getIconByValue } from '@/config/icons';
@@ -46,6 +46,12 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                 {thread.message_count > 1 && (
                   <span className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
                     {thread.message_count} messages
+                  </span>
+                )}
+                {thread.hidden_count && thread.hidden_count > 0 && (
+                  <span className="px-2 py-0.5 rounded bg-muted/20 border border-border flex items-center gap-1 text-foreground/60">
+                    <EyeOff className="w-3 h-3" />
+                    {thread.hidden_count} masqué{thread.hidden_count > 1 ? 's' : ''}
                   </span>
                 )}
                 <DropdownMenu>

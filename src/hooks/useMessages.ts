@@ -34,6 +34,7 @@ export interface Message {
   attachments?: Attachment[];
   raw_headers?: Record<string, string>;
   ingestion_source?: string;
+  hidden?: boolean;
   created_at: string;
   updated_at: string;
   // Relations avec les contacts
@@ -62,6 +63,7 @@ export interface MessageFilters {
   tag?: string;
   search?: string;
   ids?: string; // Comma-separated message IDs for filtering
+  showHidden?: boolean; // Show hidden messages
   page?: number;
   pageSize?: number;
 }
@@ -78,6 +80,7 @@ export const useMessages = (filters?: MessageFilters, options?: { enabled?: bool
       if (filters?.tag) params.append('tag', filters.tag);
       if (filters?.search) params.append('search', filters.search);
       if (filters?.ids) params.append('ids', filters.ids);
+      if (filters?.showHidden) params.append('show_hidden', 'true');
       if (filters?.page) params.append('page', String(filters.page));
       if (filters?.pageSize) params.append('page_size', String(filters.pageSize));
       const res = await axios.get(`/messages/?${params.toString()}`);

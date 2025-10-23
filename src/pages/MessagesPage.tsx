@@ -13,7 +13,7 @@ import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Cloud, CloudOff, User, Loader2, List, Layers } from 'lucide-react';
+import { Cloud, CloudOff, User, Loader2, List, Layers, EyeOff, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ContactDetailsModal } from '@/components/ContactDetailsModal';
 import { MessageDetailsDialog } from '@/components/MessageDetailsDialog';
@@ -37,6 +37,7 @@ const MessagesPage = () => {
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
+  const [showHidden, setShowHidden] = React.useState<boolean>(false);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
 
@@ -59,6 +60,7 @@ const MessagesPage = () => {
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined,
     ids: filteredIds,
+    showHidden: showHidden,
     page: currentPageList,
     pageSize: PAGE_SIZE,
   }, { enabled: viewMode === 'list' });
@@ -69,6 +71,7 @@ const MessagesPage = () => {
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
     ids: filteredIds,
+    showHidden: showHidden,
     page: currentPageThreads,
     pageSize: PAGE_SIZE,
   }, { enabled: viewMode === 'threads' });
@@ -265,6 +268,46 @@ const MessagesPage = () => {
     }
   };
 
+  const handleToggleHidden = async (messageId: number, currentHidden: boolean) => {
+    const newHidden = !currentHidden;
+
+    // Optimistic update dans React Query
+    queryClient.setQueryData(['messages', { channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, search: debouncedSearchKeyword || undefined, showHidden, page: currentPageList, pageSize: PAGE_SIZE }], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        results: oldData.results.map((msg: Message) =>
+          msg.id === messageId ? { ...msg, hidden: newHidden } : msg
+        )
+      };
+    });
+
+    // Also update selectedMessageDialog if it's the same message
+    if (selectedMessageDialog?.id === messageId) {
+      setSelectedMessageDialog(prev => prev ? { ...prev, hidden: newHidden } : null);
+    }
+
+    try {
+      await axios.patch(`/messages/${messageId}/`, { hidden: newHidden });
+      toast({
+        title: newHidden ? "Message masqué" : "Message affiché",
+        description: newHidden ? "Le message a été masqué" : "Le message est maintenant visible",
+      });
+      // Rafraîchir les listes
+      refetch();
+      refetchThreads();
+    } catch (e) {
+      // Revert on error
+      refetch();
+      refetchThreads();
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le message",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSaveInDrive = async (attachmentId: number, messageId: number, isCurrentlyInDrive: boolean) => {
     // Mettre à jour l'état local immédiatement pour un feedback visuel instantané
     setAttachmentStates(prev => ({
@@ -276,7 +319,7 @@ const MessagesPage = () => {
       const response = await axios.post(`/messages/${messageId}/attachments/${attachmentId}/save_in_drive/`, {
         google_drive_backup: !isCurrentlyInDrive
       });
-      
+
       if (response.data.success) {
         toast({
           title: isCurrentlyInDrive ? "Fichier supprimé de Google Drive" : "Fichier stocké dans Google Drive",
@@ -297,7 +340,7 @@ const MessagesPage = () => {
         ...prev,
         [attachmentId]: isCurrentlyInDrive
       }));
-      
+
       const errorMessage = error.response?.data?.error || "Une erreur est survenue";
       toast({
         title: "Erreur",
@@ -350,6 +393,18 @@ const MessagesPage = () => {
                   className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80"
                 >
                   Rafraîchir
+                </button>
+                <button
+                  onClick={() => setShowHidden(!showHidden)}
+                  className={`border border-border px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors ${
+                    showHidden
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-card text-foreground/80 hover:bg-muted'
+                  }`}
+                  title={showHidden ? "Masquer les messages masqués" : "Afficher les messages masqués"}
+                >
+                  {showHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  <span className="hidden sm:inline">{showHidden ? "Tout afficher" : "Afficher masqués"}</span>
                 </button>
               </div>
             </div>
@@ -469,7 +524,18 @@ const MessagesPage = () => {
               {/* Vue liste classique */}
               <div className="grid grid-cols-1 gap-3">
                 {messages.map((msg) => (
-                <div key={msg.id} className="bg-card border border-border rounded p-3">
+                <div key={msg.id} className="bg-card border border-border rounded p-3 relative">
+                  {/* Bouton pour masquer/afficher */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleHidden(msg.id, msg.hidden || false);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+                    title={msg.hidden ? "Afficher ce message" : "Masquer ce message"}
+                  >
+                    {msg.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
                   <button
                     onClick={() => {
                       setSelectedMessageDialog(msg);
@@ -482,7 +548,7 @@ const MessagesPage = () => {
                         setCurrentMessageIndex(0);
                       }
                     }}
-                    className="w-full text-left hover:opacity-80 transition-opacity"
+                    className="w-full text-left hover:opacity-80 transition-opacity pr-10"
                   >
                     <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -692,6 +758,7 @@ const MessagesPage = () => {
         attachmentStates={attachmentStates}
         onContactClick={setSelectedContactId}
         onAssignProject={handleAssignProject}
+        onToggleHidden={handleToggleHidden}
         threadId={currentThreadId}
         threadMessageCount={currentThreadId ? (threadMessages.length || threads.find(t => t.thread_id === currentThreadId)?.message_count || 1) : 1}
         threadMessages={threadMessages}
