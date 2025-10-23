@@ -51,9 +51,7 @@ const LoginEmailPage1 = () => {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 md:p-0">
       <div className="w-full max-w-md rounded-lg bg-card p-8 shadow-card border border-border">
         <div className="mb-4 flex justify-center">
-          <div className="w-20 h-20 rounded-full border-2 border-primary flex items-center justify-center bg-background">
-            <span className="text-primary font-bold text-2xl">L</span>
-          </div>
+          <img src="/logo.png" alt="Logo" className="w-2/5 h-auto" />
         </div>
 
         <h1 className="mb-8 text-center text-3xl font-bold text-foreground">

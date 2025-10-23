@@ -56,15 +56,14 @@ export const DashboardHeader = () => {
       {/* Logo */}
       <button 
         onClick={() => navigate('/')}
-        className="w-10 h-10 min-w-[40px] max-w-[40px] rounded-full border-2 border-gold flex items-center justify-center bg-navy-deep hover:bg-navy-muted transition-smooth cursor-pointer flex-shrink-0 aspect-square overflow-hidden"
-        style={{ width: '40px', height: '40px', minWidth: '40px', maxWidth: '40px' }}
+        className="h-10 rounded-lg flex items-center justify-center hover:bg-navy-muted transition-smooth cursor-pointer flex-shrink-0 overflow-hidden"
+        style={{ height: '40px' }}
       >
-        <span className="text-gold font-bold text-lg">L</span>
+        <img src="/logo.png" alt="Logo" className="h-full w-auto" />
       </button>
       
       {/* App Name + Project Picker */}
       <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-center">
-        <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center">L-IA</h1>
         <div className="flex items-center gap-1 sm:gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
