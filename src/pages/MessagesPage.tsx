@@ -77,7 +77,8 @@ const MessagesPage = () => {
   }, { enabled: viewMode === 'threads' });
 
   // Hook pour charger les messages d'un thread quand la dialog est ouverte
-  const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(currentThreadId);
+  // On utilise le même état showHidden que pour la liste globale
+  const { messages: threadMessages, isLoading: isLoadingThreadMessages } = useThreadMessages(currentThreadId, showHidden);
 
   // Trouver l'index du message sélectionné dans le thread une fois chargé
   React.useEffect(() => {
@@ -271,35 +272,42 @@ const MessagesPage = () => {
   const handleToggleHidden = async (messageId: number, currentHidden: boolean) => {
     const newHidden = !currentHidden;
 
-    // Optimistic update dans React Query
-    queryClient.setQueryData(['messages', { channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, search: debouncedSearchKeyword || undefined, showHidden, page: currentPageList, pageSize: PAGE_SIZE }], (oldData: any) => {
-      if (!oldData) return oldData;
-      return {
-        ...oldData,
-        results: oldData.results.map((msg: Message) =>
-          msg.id === messageId ? { ...msg, hidden: newHidden } : msg
-        )
-      };
-    });
-
-    // Also update selectedMessageDialog if it's the same message
-    if (selectedMessageDialog?.id === messageId) {
-      setSelectedMessageDialog(prev => prev ? { ...prev, hidden: newHidden } : null);
-    }
-
     try {
-      await axios.patch(`/messages/${messageId}/`, { hidden: newHidden });
-      toast({
-        title: newHidden ? "Message masqué" : "Message affiché",
-        description: newHidden ? "Le message a été masqué" : "Le message est maintenant visible",
-      });
+      // Chercher le message dans la liste des messages ou dans les threads
+      const message = messages.find(m => m.id === messageId)
+        || threads.find(t => t.last_message.id === messageId)?.last_message
+        || selectedMessageDialog;
+
+      if (message?.thread_id) {
+        // Masquer/afficher tout le thread
+        await axios.post(`/messages/${messageId}/hide-thread/`, { hidden: newHidden });
+        toast({
+          title: newHidden ? "Conversation masquée" : "Conversation affichée",
+          description: newHidden ? "Tous les messages de cette conversation ont été masqués" : "Tous les messages de cette conversation sont maintenant visibles",
+        });
+      } else {
+        // Message unique sans thread
+        await axios.patch(`/messages/${messageId}/`, { hidden: newHidden });
+        toast({
+          title: newHidden ? "Message masqué" : "Message affiché",
+          description: newHidden ? "Le message a été masqué" : "Le message est maintenant visible",
+        });
+      }
+
+      // Mettre à jour l'état local du message dans la dialog pour que l'icône change
+      if (selectedMessageDialog) {
+        setSelectedMessageDialog(prev => prev ? { ...prev, hidden: newHidden } : null);
+      }
+
+      // Si on masque ET qu'on n'est PAS en mode "Afficher masqués", fermer la dialog
+      if (newHidden && !showHidden && selectedMessageDialog?.id === messageId) {
+        handleCloseDialog();
+      }
+
       // Rafraîchir les listes
-      refetch();
-      refetchThreads();
+      await refetch();
+      await refetchThreads();
     } catch (e) {
-      // Revert on error
-      refetch();
-      refetchThreads();
       toast({
         title: "Erreur",
         description: "Impossible de modifier le message",
@@ -389,22 +397,18 @@ const MessagesPage = () => {
                   </button>
                 </div>
                 <button
+                  onClick={() => setShowHidden(!showHidden)}
+                  className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm flex items-center gap-1 text-foreground/80 transition-colors"
+                  title={showHidden ? "Masquer les messages masqués" : "Afficher les messages masqués"}
+                >
+                  {showHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Masqués</span>
+                </button>
+                <button
                   onClick={() => viewMode === 'list' ? refetch() : refetchThreads()}
                   className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80"
                 >
                   Rafraîchir
-                </button>
-                <button
-                  onClick={() => setShowHidden(!showHidden)}
-                  className={`border border-border px-3 py-1 rounded text-sm flex items-center gap-1 transition-colors ${
-                    showHidden
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-foreground/80 hover:bg-muted'
-                  }`}
-                  title={showHidden ? "Masquer les messages masqués" : "Afficher les messages masqués"}
-                >
-                  {showHidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                  <span className="hidden sm:inline">{showHidden ? "Tout afficher" : "Afficher masqués"}</span>
                 </button>
               </div>
             </div>
@@ -503,6 +507,7 @@ const MessagesPage = () => {
                     onThreadClick={handleThreadClick}
                     onContactClick={setSelectedContactId}
                     onAssignProject={handleAssignProject}
+                    onToggleHidden={handleToggleHidden}
                     projects={projects}
                   />
                 ))}
@@ -524,18 +529,7 @@ const MessagesPage = () => {
               {/* Vue liste classique */}
               <div className="grid grid-cols-1 gap-3">
                 {messages.map((msg) => (
-                <div key={msg.id} className="bg-card border border-border rounded p-3 relative">
-                  {/* Bouton pour masquer/afficher */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleHidden(msg.id, msg.hidden || false);
-                    }}
-                    className="absolute top-2 right-2 p-1.5 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
-                    title={msg.hidden ? "Afficher ce message" : "Masquer ce message"}
-                  >
-                    {msg.hidden ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                  </button>
+                <div key={msg.id} className="bg-card border border-border rounded p-3">
                   <button
                     onClick={() => {
                       setSelectedMessageDialog(msg);
@@ -548,7 +542,7 @@ const MessagesPage = () => {
                         setCurrentMessageIndex(0);
                       }
                     }}
-                    className="w-full text-left hover:opacity-80 transition-opacity pr-10"
+                    className="w-full text-left hover:opacity-80 transition-opacity"
                   >
                     <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -592,6 +586,17 @@ const MessagesPage = () => {
                             })}
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        {/* Bouton toggle masquer/afficher */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleHidden(msg.id, msg.hidden || false);
+                          }}
+                          className="p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+                          title={msg.hidden ? "Afficher ce message" : "Masquer ce message"}
+                        >
+                          {msg.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                         {Array.isArray(msg.tags) && msg.tags.map((t) => (
                           <span key={t} className="px-2 py-0.5 rounded bg-muted/10 border border-border">#{t}</span>
                         ))}

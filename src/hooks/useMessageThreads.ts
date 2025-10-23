@@ -54,13 +54,14 @@ export interface ThreadMessagesResponse {
   messages: Message[];
 }
 
-export const useThreadMessages = (threadId: string | null) => {
+export const useThreadMessages = (threadId: string | null, showHidden: boolean = false) => {
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: [THREADS_KEY, 'messages', threadId],
+    queryKey: [THREADS_KEY, 'messages', threadId, showHidden],
     queryFn: async (): Promise<ThreadMessagesResponse> => {
       if (!threadId) throw new Error('Thread ID is required');
       const params = new URLSearchParams();
       params.append('thread_id', threadId);
+      if (showHidden) params.append('show_hidden', 'true');
       const res = await axios.get(`/messages/thread-details/?${params.toString()}`);
       return res.data;
     },

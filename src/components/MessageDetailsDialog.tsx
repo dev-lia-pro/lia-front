@@ -233,6 +233,22 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                     })}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {onToggleHidden && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleHidden(message.id, message.hidden || false);
+                    }}
+                    className="inline-flex items-center p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+                    title={
+                      hasMultipleMessages
+                        ? (message.hidden ? "Afficher cette conversation" : "Masquer cette conversation")
+                        : (message.hidden ? "Afficher ce message" : "Masquer ce message")
+                    }
+                  >
+                    {message.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                )}
                 {Array.isArray(message.tags) && message.tags.map((tag) => (
                   <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/10 text-muted-foreground border border-border">
                     <Tag className="w-3 h-3" />
@@ -242,15 +258,6 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {onToggleHidden && (
-                <button
-                  onClick={() => onToggleHidden(message.id, message.hidden || false)}
-                  className="p-1.5 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
-                  title={message.hidden ? "Afficher ce message" : "Masquer ce message"}
-                >
-                  {message.hidden ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                </button>
-              )}
               <DialogClose className="rounded-sm opacity-70 hover:opacity-100 transition-opacity">
                 <X className="h-5 w-5" />
                 <span className="sr-only">Fermer</span>

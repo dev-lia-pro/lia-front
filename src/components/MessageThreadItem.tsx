@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MessageCircle, EyeOff } from 'lucide-react';
+import { User, MessageCircle, EyeOff, Eye } from 'lucide-react';
 import type { MessageThread } from '@/hooks/useMessageThreads';
 import type { Message } from '@/hooks/useMessages';
 import { getIconByValue } from '@/config/icons';
@@ -10,6 +10,7 @@ interface MessageThreadItemProps {
   onThreadClick: (thread: MessageThread) => void;
   onContactClick: (contactId: number) => void;
   onAssignProject: (messageId: number, projectId: number | '') => void;
+  onToggleHidden: (messageId: number, currentHidden: boolean) => void;
   projects: Array<{ id: number; title: string; icon: string }>;
 }
 
@@ -18,6 +19,7 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
   onThreadClick,
   onContactClick,
   onAssignProject,
+  onToggleHidden,
   projects,
 }) => {
   const lastMessage = thread.last_message;
@@ -44,14 +46,8 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                   {thread.channel}
                 </span>
                 {thread.message_count > 1 && (
-                  <span className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
-                    {thread.message_count} messages
-                  </span>
-                )}
-                {thread.hidden_count && thread.hidden_count > 0 && (
-                  <span className="px-2 py-0.5 rounded bg-muted/20 border border-border flex items-center gap-1 text-foreground/60">
-                    <EyeOff className="w-3 h-3" />
-                    {thread.hidden_count} masqué{thread.hidden_count > 1 ? 's' : ''}
+                  <span className="px-2 py-0.5 rounded bg-primary/10 border border-primary/20 flex items-center gap-1">
+                    {thread.message_count} message{thread.message_count > 1 ? 's' : ''} {(thread.hidden_count ?? 0) > 0 ? 'masqués' : ''}
                   </span>
                 )}
                 <DropdownMenu>
@@ -92,6 +88,17 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                     })}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {/* Bouton toggle masquer/afficher */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleHidden(lastMessage.id, lastMessage.hidden || false);
+                  }}
+                  className="p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+                  title={lastMessage.hidden ? "Afficher cette conversation" : "Masquer cette conversation"}
+                >
+                  {lastMessage.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
                 <span className="ml-auto">
                   {new Date(thread.last_message_date).toLocaleString()}
                 </span>
