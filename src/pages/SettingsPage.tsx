@@ -1,13 +1,13 @@
 import React from 'react';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { BottomNavigation } from '@/components/BottomNavigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { NavigationTab } from '@/types/navigation';
 import { ProjectsGrid } from '@/components/ProjectsGrid';
 import { AssistantHistory } from '@/components/AssistantHistory';
 import { ContactsSection } from '@/components/ContactsSection';
 import { ProvidersPanel } from '@/components/ProvidersPanel';
+import { NotificationPreferences } from '@/components/NotificationPreferences';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('accueil');
@@ -56,25 +56,15 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
 
-          {/* Section des préférences (mock) */}
+          {/* Section des préférences de notifications */}
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-foreground">
-                Préférences générales
+                Préférences de notifications
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-foreground font-medium">Notifications push</span>
-                    <p className="text-sm text-foreground/70">Recevoir des notifications sur votre appareil</p>
-                  </div>
-                  <Button variant="outline" disabled className="border-border text-foreground/50">
-                    Bientôt disponible
-                  </Button>
-                </div>
-              </div>
+              <NotificationPreferences />
             </CardContent>
           </Card>
         </div>
