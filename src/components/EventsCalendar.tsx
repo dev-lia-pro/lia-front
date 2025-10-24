@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useProjects } from '@/hooks/useProjects';
 import { getIconByValue } from '@/config/icons';
 import { EventModal } from '@/components/EventModal';
+import { useSearchParams } from 'react-router-dom';
 
 type CalendarView = 'month' | 'week' | 'list';
 
@@ -101,9 +102,48 @@ function formatMonthYearTitle(date: Date): string {
   return txt.charAt(0).toUpperCase() + txt.slice(1);
 }
 
+// Helper functions for date serialization
+function dateToString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function stringToDate(str: string): Date {
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export const EventsCalendar: React.FC = () => {
-  const [view, setView] = React.useState<CalendarView>('month');
-  const [currentDate, setCurrentDate] = React.useState<Date>(new Date());
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize from URL or defaults
+  const viewFromUrl = searchParams.get('view') as CalendarView | null;
+  const dateFromUrl = searchParams.get('date');
+
+  const [view, setViewState] = React.useState<CalendarView>(viewFromUrl || 'month');
+  const [currentDate, setCurrentDateState] = React.useState<Date>(() => {
+    return dateFromUrl ? stringToDate(dateFromUrl) : new Date();
+  });
+
+  // Update URL when state changes
+  React.useEffect(() => {
+    setSearchParams({
+      view: view,
+      date: dateToString(currentDate)
+    }, { replace: true });
+  }, [view, currentDate, setSearchParams]);
+
+  // Wrapper functions to update state
+  const setView = (newView: CalendarView) => {
+    setViewState(newView);
+  };
+
+  const setCurrentDate = (newDate: Date) => {
+    setCurrentDateState(newDate);
+  };
+
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = React.useState<Event | null>(null);
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
@@ -178,7 +218,7 @@ export const EventsCalendar: React.FC = () => {
     if (view === 'week') d.setDate(d.getDate() - 7);
     else if (view === 'list') d.setDate(d.getDate() - 30);
     else d.setMonth(d.getMonth() - 1);
-    setCurrentDate(d);
+    setCurrentDate(new Date(d)); // Create new Date instance
   };
 
   const goNext = () => {
@@ -186,7 +226,7 @@ export const EventsCalendar: React.FC = () => {
     if (view === 'week') d.setDate(d.getDate() + 7);
     else if (view === 'list') d.setDate(d.getDate() + 30);
     else d.setMonth(d.getMonth() + 1);
-    setCurrentDate(d);
+    setCurrentDate(new Date(d)); // Create new Date instance
   };
 
   const goToday = () => setCurrentDate(new Date());

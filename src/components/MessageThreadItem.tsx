@@ -28,9 +28,9 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
     <div className="bg-card border border-border rounded">
       {/* Thread header */}
       <div className="p-3">
-        <button
+        <div
           onClick={() => onThreadClick(thread)}
-          className="w-full text-left hover:opacity-80 transition-opacity"
+          className="w-full text-left hover:opacity-80 transition-opacity cursor-pointer"
         >
           <div className="flex items-start gap-3">
             {thread.message_count > 1 && (
@@ -175,7 +175,7 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
               </div>
             </div>
           </div>
-        </button>
+        </div>
       </div>
     </div>
   );

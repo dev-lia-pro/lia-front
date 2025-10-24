@@ -4,6 +4,7 @@ import { BottomNavigation } from '@/components/BottomNavigation';
 import type { NavigationTab } from '@/types/navigation';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUrlState } from '@/hooks/useUrlState';
 import axios from '@/api/axios';
 import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
@@ -44,12 +45,15 @@ const DrivePage = () => {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // URL-synced state
+  const [searchTerm, setSearchTerm] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
+  const [driveFilter, setDriveFilter] = useUrlState<'all' | 'in_drive' | 'not_in_drive'>({ paramName: 'drive_filter', defaultValue: 'all' });
+  const [currentPage, setCurrentPage] = useUrlState<number>({ paramName: 'page', defaultValue: 1 });
+
   const [projectFilter, setProjectFilter] = useState<number | ''>('');
-  const [driveFilter, setDriveFilter] = useState<'all' | 'in_drive' | 'not_in_drive'>('all');
   const [hoveredAttachment, setHoveredAttachment] = useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = useState<Record<number, boolean>>({});
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedMessageDialog, setSelectedMessageDialog] = useState<Message | null>(null);
   const { selected } = useProjectStore();
   const { projects } = useProjects();

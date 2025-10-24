@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 import { useSearchParams } from 'react-router-dom';
+import { useUrlState } from '@/hooks/useUrlState';
 
 
 interface TasksGridProps {
@@ -41,10 +42,11 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [showDone, setShowDone] = useState(true);
-  const [urgentOnly, setUrgentOnly] = useState(urgentOnlyFilter);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [manualOnly, setManualOnly] = useState(false);
+  // URL-synced state
+  const [showDone, setShowDone] = useUrlState<boolean>({ paramName: 'show_done', defaultValue: true });
+  const [urgentOnly, setUrgentOnly] = useUrlState<boolean>({ paramName: 'urgent_only', defaultValue: urgentOnlyFilter });
+  const [searchKeyword, setSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
+  const [manualOnly, setManualOnly] = useUrlState<boolean>({ paramName: 'manual_only', defaultValue: false });
 
   const todo = useTasks({
     status: 'TODO',

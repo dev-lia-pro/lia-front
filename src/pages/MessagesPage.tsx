@@ -6,8 +6,8 @@ import { useMessages, type Message, type Channel } from '@/hooks/useMessages';
 import { useMessageThreads, useThreadMessages } from '@/hooks/useMessageThreads';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectStore } from '@/stores/projectStore';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useSearchParams } from 'react-router-dom';
+import { useUrlState } from '@/hooks/useUrlState';
 import axios from '@/api/axios';
 import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
@@ -27,23 +27,24 @@ type ViewMode = 'list' | 'threads';
 const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = React.useState<NavigationTab>('boite');
-  const [viewMode, setViewMode] = React.useState<ViewMode>('threads'); // Par défaut: vue conversations
-  const [channelFilter, setChannelFilter] = React.useState<Channel | undefined>(undefined);
-  const [searchTag, setSearchTag] = React.useState<string>('');
-  const [searchKeyword, setSearchKeyword] = React.useState<string>('');
-  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
+
+  // URL-synced state
+  const [viewMode, setViewMode] = useUrlState<ViewMode>({ paramName: 'view', defaultValue: 'threads', omitDefault: false });
+  const [channelFilter, setChannelFilter] = useUrlState<string>({ paramName: 'channel', defaultValue: 'ALL' });
+  const [searchTag, setSearchTag] = useUrlState<string>({ paramName: 'tag', defaultValue: '', debounce: 500 });
+  const [searchKeyword, setSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
+  const [showHidden, setShowHidden] = useUrlState<boolean>({ paramName: 'show_hidden', defaultValue: false });
+  const [currentPage, setCurrentPage] = useUrlState<number>({ paramName: 'page', defaultValue: 1 });
+
+  // Convert channelFilter string back to Channel type or undefined for API
+  const apiChannelFilter: Channel | undefined = channelFilter === 'ALL' ? undefined : (channelFilter as Channel);
   const [selectedMessageDialog, setSelectedMessageDialog] = React.useState<Message | null>(null);
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
-  const [showHidden, setShowHidden] = React.useState<boolean>(false);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
-
-  // States pour la pagination
-  const [currentPageList, setCurrentPageList] = React.useState(1);
-  const [currentPageThreads, setCurrentPageThreads] = React.useState(1);
 
   // Filter by IDs from notification
   const idsParam = searchParams.get('ids');
@@ -55,24 +56,24 @@ const MessagesPage = () => {
 
   // Hook pour la vue liste (classique) - seulement si en mode 'list'
   const { messages, isLoading: isLoadingMessages, isFetching, totalCount, refetch } = useMessages({
-    channel: channelFilter,
+    channel: apiChannelFilter,
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
-    search: debouncedSearchKeyword || undefined,
+    search: searchKeyword || undefined,
     ids: filteredIds,
     showHidden: showHidden,
-    page: currentPageList,
+    page: currentPage,
     pageSize: PAGE_SIZE,
   }, { enabled: viewMode === 'list' });
 
   // Hook pour la vue conversations - seulement si en mode 'threads'
   const { threads, isLoading: isLoadingThreads, totalCount: totalCountThreads, refetch: refetchThreads } = useMessageThreads({
-    channel: channelFilter,
+    channel: apiChannelFilter,
     tag: searchTag || undefined,
     project: selected.id ?? undefined,
     ids: filteredIds,
     showHidden: showHidden,
-    page: currentPageThreads,
+    page: currentPage,
     pageSize: PAGE_SIZE,
   }, { enabled: viewMode === 'threads' });
 
@@ -115,10 +116,14 @@ const MessagesPage = () => {
   React.useEffect(() => {
     initializedRef.current = false;
     setAttachmentStates({});
-    // Réinitialiser les pages à 1 quand les filtres changent
-    setCurrentPageList(1);
-    setCurrentPageThreads(1);
-  }, [channelFilter, searchTag, selected.id, debouncedSearchKeyword]);
+    // Réinitialiser la page à 1 quand les filtres changent
+    setCurrentPage(1);
+  }, [apiChannelFilter, searchTag, selected.id, searchKeyword]);
+
+  // Réinitialiser la page quand on change de mode d'affichage
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [viewMode]);
 
   // Gérer les query params (ids pour filtrer, message pour ouvrir un message spécifique)
   React.useEffect(() => {
@@ -192,7 +197,7 @@ const MessagesPage = () => {
     const newProjectId = projectId === '' ? null : projectId;
 
     // Update local state immediately for instant feedback
-    queryClient.setQueryData(['messages', { channel: channelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, search: debouncedSearchKeyword || undefined }], (oldData: any) => {
+    queryClient.setQueryData(['messages', { channel: apiChannelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, search: searchKeyword || undefined }], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
@@ -420,8 +425,8 @@ const MessagesPage = () => {
                 className="bg-card border border-border rounded px-3 py-1.5 text-sm w-full"
               />
               <Select
-                value={channelFilter ?? 'ALL'}
-                onValueChange={(value) => setChannelFilter(value === 'ALL' ? undefined : value as Channel)}
+                value={channelFilter}
+                onValueChange={(value) => setChannelFilter(value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Tous les canaux" />
@@ -516,11 +521,11 @@ const MessagesPage = () => {
               {/* Pagination pour les threads */}
               {totalCountThreads > PAGE_SIZE && (
                 <Pagination
-                  currentPage={currentPageThreads}
+                  currentPage={currentPage}
                   totalPages={Math.ceil(totalCountThreads / PAGE_SIZE)}
                   totalCount={totalCountThreads}
                   pageSize={PAGE_SIZE}
-                  onPageChange={setCurrentPageThreads}
+                  onPageChange={setCurrentPage}
                 />
               )}
             </>
@@ -530,7 +535,7 @@ const MessagesPage = () => {
               <div className="grid grid-cols-1 gap-3">
                 {messages.map((msg) => (
                 <div key={msg.id} className="bg-card border border-border rounded p-3">
-                  <button
+                  <div
                     onClick={() => {
                       setSelectedMessageDialog(msg);
                       // Charger le thread si disponible
@@ -542,7 +547,7 @@ const MessagesPage = () => {
                         setCurrentMessageIndex(0);
                       }
                     }}
-                    className="w-full text-left hover:opacity-80 transition-opacity"
+                    className="w-full text-left hover:opacity-80 transition-opacity cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -734,7 +739,7 @@ const MessagesPage = () => {
                       
                     </div>
                   </div>
-                </button>
+                </div>
 
                 </div>
               ))}
@@ -743,11 +748,11 @@ const MessagesPage = () => {
               {/* Pagination pour la vue liste */}
               {totalCount > PAGE_SIZE && (
                 <Pagination
-                  currentPage={currentPageList}
+                  currentPage={currentPage}
                   totalPages={Math.ceil(totalCount / PAGE_SIZE)}
                   totalCount={totalCount}
                   pageSize={PAGE_SIZE}
-                  onPageChange={setCurrentPageList}
+                  onPageChange={setCurrentPage}
                 />
               )}
             </>
