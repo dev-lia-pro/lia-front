@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Loader2 } from 'lucide-react';
+import { Bell, Loader2, X } from 'lucide-react';
 import { useNotifications as useNotificationContext } from '@/contexts/NotificationContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import {
@@ -35,6 +35,7 @@ export const NotificationBell: React.FC = () => {
     isFetching,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
     isMarkingAllAsRead,
   } = useNotifications({
     is_read: readFilter === 'unread' ? false : undefined,
@@ -86,6 +87,11 @@ export const NotificationBell: React.FC = () => {
   const handleFilterChange = (filter: 'all' | 'unread') => {
     setReadFilter(filter);
     setPage(0); // Reset pagination
+  };
+
+  const handleDeleteNotification = (e: React.MouseEvent, notificationId: number) => {
+    e.stopPropagation(); // Prevent notification click
+    deleteNotification(notificationId);
   };
 
   const getNotificationIcon = (icon?: string): string => {
@@ -198,7 +204,7 @@ export const NotificationBell: React.FC = () => {
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={cn(
-                    "flex items-start gap-3 p-4 cursor-pointer transition-colors",
+                    "flex items-start gap-3 p-4 pr-2 cursor-pointer transition-colors relative group",
                     !notification.is_read
                       ? "bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 border-l-4 border-blue-500"
                       : "hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -227,9 +233,20 @@ export const NotificationBell: React.FC = () => {
                       })}
                     </p>
                   </div>
-                  {!notification.is_read && (
-                    <div className="h-2 w-2 bg-blue-500 rounded-full mt-2 animate-pulse shadow-sm shadow-blue-500" />
-                  )}
+                  <div className="flex flex-col items-center gap-2 mt-1">
+                    {!notification.is_read && (
+                      <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse shadow-sm shadow-blue-500" />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
+                      onClick={(e) => handleDeleteNotification(e, notification.id)}
+                      aria-label="Supprimer la notification"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </DropdownMenuItem>
               ))}
 

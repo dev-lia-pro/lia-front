@@ -13,6 +13,7 @@ export interface NotificationItem {
   icon?: string;
   priority?: string;
   is_read: boolean;
+  is_deleted: boolean;
   created_at: string;
   grouped_items?: number[];
   count?: number;
@@ -77,6 +78,16 @@ export function useNotifications(filters: UseNotificationsFilters = {}) {
     },
   });
 
+  // Delete notification (soft delete)
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (notificationId: number) => {
+      await axios.delete(`/notifications/${notificationId}/delete/`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
   return {
     notifications: data?.results || [],
     totalCount: data?.count || 0,
@@ -87,7 +98,9 @@ export function useNotifications(filters: UseNotificationsFilters = {}) {
     refetch,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
+    deleteNotification: deleteNotificationMutation.mutate,
     isMarkingAsRead: markAsReadMutation.isPending,
     isMarkingAllAsRead: markAllAsReadMutation.isPending,
+    isDeletingNotification: deleteNotificationMutation.isPending,
   };
 }
