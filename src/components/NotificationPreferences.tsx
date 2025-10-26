@@ -5,7 +5,7 @@ import axios from '@/api/axios';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type NotificationMode = 'none' | 'push_only' | 'push_and_in_app';
+type NotificationMode = 'none' | 'in_app_only' | 'in_app_and_push';
 
 interface NotificationPreference {
   label: string;
@@ -71,12 +71,12 @@ export const NotificationPreferences: React.FC = () => {
     switch (mode) {
       case 'none':
         return 'Aucune';
-      case 'push_only':
-        return 'Push uniquement';
-      case 'push_and_in_app':
-        return 'Push + Notification';
+      case 'in_app_only':
+        return 'In-app uniquement';
+      case 'in_app_and_push':
+        return 'In-app + Push';
       default:
-        return 'Push + Notification';
+        return 'In-app + Push';
     }
   };
 
@@ -102,8 +102,8 @@ export const NotificationPreferences: React.FC = () => {
         Pour chaque type de notification, choisissez comment vous souhaitez être notifié :
         <ul className="mt-2 ml-4 space-y-1">
           <li><strong>Aucune :</strong> Désactivé</li>
-          <li><strong>Push uniquement :</strong> Notification push mobile seulement</li>
-          <li><strong>Push + Notification :</strong> Push mobile + notification in-app (cloche 🔔)</li>
+          <li><strong>In-app uniquement :</strong> Notification dans l'application (cloche 🔔)</li>
+          <li><strong>In-app + Push :</strong> Notification in-app + push mobile</li>
         </ul>
       </div>
 
@@ -122,8 +122,8 @@ export const NotificationPreferences: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Aucune</SelectItem>
-              <SelectItem value="push_only">Push uniquement</SelectItem>
-              <SelectItem value="push_and_in_app">Push + Notification</SelectItem>
+              <SelectItem value="in_app_only">In-app uniquement</SelectItem>
+              <SelectItem value="in_app_and_push">In-app + Push</SelectItem>
             </SelectContent>
           </Select>
         </div>
