@@ -38,6 +38,7 @@ interface MessageDetailsDialogProps {
   onAssignProject: (messageId: number, projectId: number | '') => Promise<void>;
   onToggleHidden?: (messageId: number, currentHidden: boolean) => Promise<void>;
   updatingProject?: boolean;
+  togglingHidden?: boolean;
   // Thread navigation props
   threadId?: string | null;
   threadMessageCount?: number;
@@ -149,6 +150,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
   onAssignProject,
   onToggleHidden,
   updatingProject = false,
+  togglingHidden = false,
   threadId,
   threadMessageCount = 1,
   threadMessages = [],
@@ -249,14 +251,22 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                       e.stopPropagation();
                       onToggleHidden(message.id, message.hidden || false);
                     }}
-                    className="inline-flex items-center p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+                    disabled={togglingHidden}
+                    className="inline-flex items-center p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
+                      togglingHidden ? "Mise à jour..." :
                       hasMultipleMessages
                         ? (message.hidden ? "Afficher cette conversation" : "Masquer cette conversation")
                         : (message.hidden ? "Afficher ce message" : "Masquer ce message")
                     }
                   >
-                    {message.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {togglingHidden ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : message.hidden ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 )}
                 {Array.isArray(message.tags) && message.tags.map((tag) => (

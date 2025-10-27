@@ -13,6 +13,7 @@ interface MessageThreadItemProps {
   onToggleHidden: (messageId: number, currentHidden: boolean) => void;
   projects: Array<{ id: number; title: string; icon: string }>;
   updatingProject?: boolean;
+  togglingHidden?: boolean;
 }
 
 export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
@@ -23,6 +24,7 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
   onToggleHidden,
   projects,
   updatingProject = false,
+  togglingHidden = false,
 }) => {
   const lastMessage = thread.last_message;
 
@@ -102,10 +104,17 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                     e.stopPropagation();
                     onToggleHidden(lastMessage.id, lastMessage.hidden || false);
                   }}
-                  className="p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
-                  title={lastMessage.hidden ? "Afficher cette conversation" : "Masquer cette conversation"}
+                  disabled={togglingHidden}
+                  className="p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={togglingHidden ? "Mise à jour..." : (lastMessage.hidden ? "Afficher cette conversation" : "Masquer cette conversation")}
                 >
-                  {lastMessage.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {togglingHidden ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : lastMessage.hidden ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
                 <span className="ml-auto">
                   {new Date(thread.last_message_date).toLocaleString()}

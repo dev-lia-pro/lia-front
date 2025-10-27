@@ -44,6 +44,7 @@ const MessagesPage = () => {
   const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
   const [savingAttachments, setSavingAttachments] = React.useState<Set<number>>(new Set());
   const [updatingProjectForMessage, setUpdatingProjectForMessage] = React.useState<Set<number>>(new Set());
+  const [togglingHiddenForMessage, setTogglingHiddenForMessage] = React.useState<Set<number>>(new Set());
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
@@ -315,6 +316,14 @@ const MessagesPage = () => {
   const handleToggleHidden = async (messageId: number, currentHidden: boolean) => {
     const newHidden = !currentHidden;
 
+    // Add message to toggling state
+    setTogglingHiddenForMessage(prev => new Set(prev).add(messageId));
+
+    // Update selectedMessageDialog immediately for visual feedback
+    if (selectedMessageDialog?.id === messageId) {
+      setSelectedMessageDialog(prev => prev ? { ...prev, hidden: newHidden } : null);
+    }
+
     try {
       // Chercher le message dans la liste des messages ou dans les threads
       const message = messages.find(m => m.id === messageId)
@@ -337,24 +346,31 @@ const MessagesPage = () => {
         });
       }
 
-      // Mettre à jour l'état local du message dans la dialog pour que l'icône change
-      if (selectedMessageDialog) {
-        setSelectedMessageDialog(prev => prev ? { ...prev, hidden: newHidden } : null);
-      }
+      // Invalider tous les caches de messages et threads pour forcer un refetch
+      // Ceci garantit que tous les caches (showHidden=true ET showHidden=false) sont synchronisés
+      await queryClient.invalidateQueries({ queryKey: ['messages'] });
+      await queryClient.invalidateQueries({ queryKey: ['message-threads'] });
 
       // Si on masque ET qu'on n'est PAS en mode "Afficher masqués", fermer la dialog
       if (newHidden && !showHidden && selectedMessageDialog?.id === messageId) {
         handleCloseDialog();
       }
-
-      // Rafraîchir les listes
-      await refetch();
-      await refetchThreads();
     } catch (e) {
+      // Revert selectedMessageDialog on error
+      if (selectedMessageDialog?.id === messageId) {
+        setSelectedMessageDialog(prev => prev ? { ...prev, hidden: currentHidden } : null);
+      }
       toast({
         title: "Erreur",
         description: "Impossible de modifier le message",
         variant: "destructive",
+      });
+    } finally {
+      // Remove message from toggling state
+      setTogglingHiddenForMessage(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(messageId);
+        return newSet;
       });
     }
   };
@@ -563,6 +579,7 @@ const MessagesPage = () => {
                     onToggleHidden={handleToggleHidden}
                     projects={projects}
                     updatingProject={updatingProjectForMessage.has(thread.last_message.id)}
+                    togglingHidden={togglingHiddenForMessage.has(thread.last_message.id)}
                   />
                 ))}
               </div>
@@ -652,10 +669,17 @@ const MessagesPage = () => {
                             e.stopPropagation();
                             handleToggleHidden(msg.id, msg.hidden || false);
                           }}
-                          className="p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
-                          title={msg.hidden ? "Afficher ce message" : "Masquer ce message"}
+                          disabled={togglingHiddenForMessage.has(msg.id)}
+                          className="p-1 rounded hover:bg-muted transition-colors text-foreground/60 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={togglingHiddenForMessage.has(msg.id) ? "Mise à jour..." : (msg.hidden ? "Afficher ce message" : "Masquer ce message")}
                         >
-                          {msg.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {togglingHiddenForMessage.has(msg.id) ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : msg.hidden ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </button>
                         {Array.isArray(msg.tags) && msg.tags.map((t) => (
                           <span key={t} className="px-2 py-0.5 rounded bg-muted/10 border border-border">#{t}</span>
@@ -832,6 +856,7 @@ const MessagesPage = () => {
         onAssignProject={handleAssignProject}
         onToggleHidden={handleToggleHidden}
         updatingProject={selectedMessageDialog ? updatingProjectForMessage.has(selectedMessageDialog.id) : false}
+        togglingHidden={selectedMessageDialog ? togglingHiddenForMessage.has(selectedMessageDialog.id) : false}
         threadId={currentThreadId}
         threadMessageCount={currentThreadId ? (threadMessages.length || threads.find(t => t.thread_id === currentThreadId)?.message_count || 1) : 1}
         threadMessages={threadMessages}
