@@ -55,7 +55,7 @@ export const useConversations = (page: number = 1, pageSize: number = 20) => {
 };
 
 // Hook pour récupérer une conversation spécifique avec ses messages
-export const useConversation = (conversationId: number | null) => {
+export const useConversation = (conversationId: number | null, isWaitingForResponse: boolean = false) => {
   const { data: conversation, isLoading, error, refetch } = useQuery({
     queryKey: ['conversation', conversationId],
     queryFn: async () => {
@@ -66,6 +66,8 @@ export const useConversation = (conversationId: number | null) => {
     enabled: !!conversationId,
     refetchOnWindowFocus: false,
     staleTime: 10 * 1000, // 10 seconds
+    // Poll every 2 seconds when waiting for assistant response
+    refetchInterval: isWaitingForResponse ? 2000 : false,
   });
 
   return {

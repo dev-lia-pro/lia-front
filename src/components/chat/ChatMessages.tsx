@@ -14,8 +14,8 @@ interface ChatMessagesProps {
 }
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({ conversationId }) => {
-  const { conversation, isLoading } = useConversation(conversationId);
   const { isWaitingForResponse, setWaitingForResponse } = useChatStore();
+  const { conversation, isLoading } = useConversation(conversationId, isWaitingForResponse);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
