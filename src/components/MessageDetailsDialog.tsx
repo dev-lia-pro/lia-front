@@ -37,6 +37,7 @@ interface MessageDetailsDialogProps {
   onContactClick: (contactId: number) => void;
   onAssignProject: (messageId: number, projectId: number | '') => Promise<void>;
   onToggleHidden?: (messageId: number, currentHidden: boolean) => Promise<void>;
+  updatingProject?: boolean;
   // Thread navigation props
   threadId?: string | null;
   threadMessageCount?: number;
@@ -147,6 +148,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
   onContactClick,
   onAssignProject,
   onToggleHidden,
+  updatingProject = false,
   threadId,
   threadMessageCount = 1,
   threadMessages = [],
@@ -204,9 +206,15 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                   <DropdownMenuTrigger asChild>
                     <button
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/10 text-muted-foreground border border-border hover:bg-muted/20 transition-colors"
+                      disabled={updatingProject}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/10 text-muted-foreground border border-border hover:bg-muted/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {project ? (
+                      {updatingProject ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Mise à jour...</span>
+                        </>
+                      ) : project ? (
                         <>
                           {(() => {
                             const IconComponent = getIconByValue(project.icon || '');
@@ -217,7 +225,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                       ) : (
                         <span>Aucun projet</span>
                       )}
-                      <ChevronDown className="w-3 h-3" />
+                      {!updatingProject && <ChevronDown className="w-3 h-3" />}
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="bg-card border-border text-foreground">

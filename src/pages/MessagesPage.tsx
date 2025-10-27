@@ -43,6 +43,7 @@ const MessagesPage = () => {
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
   const [savingAttachments, setSavingAttachments] = React.useState<Set<number>>(new Set());
+  const [updatingProjectForMessage, setUpdatingProjectForMessage] = React.useState<Set<number>>(new Set());
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
@@ -197,13 +198,41 @@ const MessagesPage = () => {
   const handleAssignProject = async (messageId: number, projectId: number | '') => {
     const newProjectId = projectId === '' ? null : projectId;
 
-    // Update local state immediately for instant feedback
-    queryClient.setQueryData(['messages', { channel: apiChannelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, search: searchKeyword || undefined }], (oldData: any) => {
+    // Add message to updating state
+    setUpdatingProjectForMessage(prev => new Set(prev).add(messageId));
+
+    // Build the exact filter object used by useMessages
+    const messageFilters = {
+      channel: apiChannelFilter,
+      tag: searchTag || undefined,
+      project: selected.id ?? undefined,
+      search: searchKeyword || undefined,
+      ids: filteredIds,
+      showHidden: showHidden,
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+    };
+
+    // Update local state immediately for instant feedback - Messages cache
+    queryClient.setQueryData(['messages', messageFilters], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
         results: oldData.results.map((msg: Message) =>
           msg.id === messageId ? { ...msg, project: newProjectId } : msg
+        )
+      };
+    });
+
+    // Update threads cache
+    queryClient.setQueryData(['message-threads', { channel: apiChannelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, ids: filteredIds, showHidden: showHidden, page: currentPage, pageSize: PAGE_SIZE }], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        results: oldData.results.map((thread: any) =>
+          thread.last_message.id === messageId
+            ? { ...thread, last_message: { ...thread.last_message, project: newProjectId } }
+            : thread
         )
       };
     });
@@ -218,10 +247,18 @@ const MessagesPage = () => {
     } catch (e) {
       // Revert on error
       refetch();
+      refetchThreads();
       toast({
         title: "Erreur",
         description: "Impossible de modifier le projet",
         variant: "destructive",
+      });
+    } finally {
+      // Remove message from updating state
+      setUpdatingProjectForMessage(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(messageId);
+        return newSet;
       });
     }
   };
@@ -525,6 +562,7 @@ const MessagesPage = () => {
                     onAssignProject={handleAssignProject}
                     onToggleHidden={handleToggleHidden}
                     projects={projects}
+                    updatingProject={updatingProjectForMessage.has(thread.last_message.id)}
                   />
                 ))}
               </div>
@@ -568,11 +606,17 @@ const MessagesPage = () => {
                           <DropdownMenuTrigger asChild>
                             <button
                               onClick={(e) => e.stopPropagation()}
-                              className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs"
+                              disabled={updatingProjectForMessage.has(msg.id)}
+                              className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                               aria-label="Changer le projet"
                               title="Changer le projet"
                             >
-                              {msg.project ? (
+                              {updatingProjectForMessage.has(msg.id) ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span>Mise à jour...</span>
+                                </>
+                              ) : msg.project ? (
                                 <>
                                   {(() => {
                                     const IconComponent = getIconByValue((projects.find(p => p.id === msg.project)?.icon) || '');
@@ -787,6 +831,7 @@ const MessagesPage = () => {
         onContactClick={setSelectedContactId}
         onAssignProject={handleAssignProject}
         onToggleHidden={handleToggleHidden}
+        updatingProject={selectedMessageDialog ? updatingProjectForMessage.has(selectedMessageDialog.id) : false}
         threadId={currentThreadId}
         threadMessageCount={currentThreadId ? (threadMessages.length || threads.find(t => t.thread_id === currentThreadId)?.message_count || 1) : 1}
         threadMessages={threadMessages}

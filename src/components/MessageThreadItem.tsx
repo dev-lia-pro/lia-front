@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, MessageCircle, EyeOff, Eye } from 'lucide-react';
+import { User, MessageCircle, EyeOff, Eye, Loader2 } from 'lucide-react';
 import type { MessageThread } from '@/hooks/useMessageThreads';
 import type { Message } from '@/hooks/useMessages';
 import { getIconByValue } from '@/config/icons';
@@ -12,6 +12,7 @@ interface MessageThreadItemProps {
   onAssignProject: (messageId: number, projectId: number | '') => void;
   onToggleHidden: (messageId: number, currentHidden: boolean) => void;
   projects: Array<{ id: number; title: string; icon: string }>;
+  updatingProject?: boolean;
 }
 
 export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
@@ -21,6 +22,7 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
   onAssignProject,
   onToggleHidden,
   projects,
+  updatingProject = false,
 }) => {
   const lastMessage = thread.last_message;
 
@@ -54,11 +56,17 @@ export const MessageThreadItem: React.FC<MessageThreadItemProps> = ({
                   <DropdownMenuTrigger asChild>
                     <button
                       onClick={(e) => e.stopPropagation()}
-                      className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs"
+                      disabled={updatingProject}
+                      className="px-2 py-0.5 rounded bg-muted/10 border border-border flex items-center gap-1 hover:bg-muted/20 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label="Changer le projet"
                       title="Changer le projet"
                     >
-                      {lastMessage.project ? (
+                      {updatingProject ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Mise à jour...</span>
+                        </>
+                      ) : lastMessage.project ? (
                         <>
                           {(() => {
                             const IconComponent = getIconByValue((projects.find(p => p.id === lastMessage.project)?.icon) || '');
