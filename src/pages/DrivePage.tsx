@@ -8,7 +8,7 @@ import { useUrlState } from '@/hooks/useUrlState';
 import axios from '@/api/axios';
 import { API_BASE_URL } from '@/config/env';
 import { getIconByValue } from '@/config/icons';
-import { Cloud, CloudOff, Download, Search, FolderOpen, HardDrive, FileText } from 'lucide-react';
+import { Cloud, CloudOff, Download, Search, FolderOpen, HardDrive, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination } from '@/components/Pagination';
@@ -343,8 +343,11 @@ const DrivePage = () => {
           {/* Liste des fichiers */}
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto mb-4"></div>
-              <p className="text-foreground/70">Chargement des fichiers...</p>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-foreground/50 animate-spin" />
+              </div>
+              <p className="text-foreground/70 mb-2">Chargement en cours...</p>
+              <p className="text-sm text-foreground/50">Récupération de vos fichiers</p>
             </div>
           ) : attachments.length === 0 ? (
             <div className="text-center py-8">
