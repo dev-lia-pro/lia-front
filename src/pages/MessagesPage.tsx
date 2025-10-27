@@ -68,7 +68,7 @@ const MessagesPage = () => {
   }, { enabled: viewMode === 'list' });
 
   // Hook pour la vue conversations - seulement si en mode 'threads'
-  const { threads, isLoading: isLoadingThreads, totalCount: totalCountThreads, refetch: refetchThreads } = useMessageThreads({
+  const { threads, isLoading: isLoadingThreads, isFetching: isFetchingThreads, totalCount: totalCountThreads, refetch: refetchThreads } = useMessageThreads({
     channel: apiChannelFilter,
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined,
@@ -472,7 +472,8 @@ const MessagesPage = () => {
                 </button>
                 <button
                   onClick={() => viewMode === 'list' ? refetch() : refetchThreads()}
-                  className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80"
+                  disabled={viewMode === 'list' ? isFetching : isFetchingThreads}
+                  className="border border-border bg-card hover:bg-muted px-3 py-1 rounded text-sm text-foreground/80 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Rafraîchir
                 </button>
@@ -536,8 +537,14 @@ const MessagesPage = () => {
           </div>
 
           {/* Liste des messages ou conversations */}
-          {isLoading ? (
-            <div className="text-foreground/70">Chargement…</div>
+          {isLoading || (viewMode === 'list' ? isFetching : isFetchingThreads) ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-foreground/50 animate-spin" />
+              </div>
+              <p className="text-foreground/70 mb-2">Chargement en cours...</p>
+              <p className="text-sm text-foreground/50">Récupération de vos messages</p>
+            </div>
           ) : viewMode === 'threads' && threads.length === 0 ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-card border border-border flex items-center justify-center">
