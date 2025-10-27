@@ -29,6 +29,7 @@ export const useMessageThreads = (filters?: MessageFilters, options?: { enabled?
       if (filters?.project) params.append('project', String(filters.project));
       if (filters?.channel) params.append('channel', filters.channel);
       if (filters?.tag) params.append('tag', filters.tag);
+      if (filters?.search) params.append('search', filters.search);
       if (filters?.ids) params.append('ids', filters.ids);
       if (filters?.showHidden) params.append('show_hidden', 'true');
       if (filters?.page) params.append('page', String(filters.page));

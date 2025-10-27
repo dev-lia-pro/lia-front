@@ -47,9 +47,9 @@ const DrivePage = () => {
   const [loading, setLoading] = useState(true);
 
   // URL-synced state
-  const [searchTerm, setSearchTerm] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
-  const [driveFilter, setDriveFilter] = useUrlState<'all' | 'in_drive' | 'not_in_drive'>({ paramName: 'drive_filter', defaultValue: 'all' });
-  const [currentPage, setCurrentPage] = useUrlState<number>({ paramName: 'page', defaultValue: 1 });
+  const [searchTerm, setSearchTerm, debouncedSearchTerm] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
+  const [driveFilter, setDriveFilter, debouncedDriveFilter] = useUrlState<'all' | 'in_drive' | 'not_in_drive'>({ paramName: 'drive_filter', defaultValue: 'all' });
+  const [currentPage, setCurrentPage, debouncedCurrentPage] = useUrlState<number>({ paramName: 'page', defaultValue: 1 });
 
   const [projectFilter, setProjectFilter] = useState<number | ''>('');
   const [hoveredAttachment, setHoveredAttachment] = useState<number | null>(null);
@@ -64,8 +64,8 @@ const DrivePage = () => {
       setLoading(true);
       const params = new URLSearchParams();
 
-      if (searchTerm) {
-        params.append('search', searchTerm);
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
       }
 
       // Toujours filtrer par le projet courant
@@ -77,14 +77,14 @@ const DrivePage = () => {
         params.append('project', projectFilter.toString());
       }
 
-      if (driveFilter === 'in_drive') {
+      if (debouncedDriveFilter === 'in_drive') {
         params.append('in_drive', 'true');
-      } else if (driveFilter === 'not_in_drive') {
+      } else if (debouncedDriveFilter === 'not_in_drive') {
         params.append('in_drive', 'false');
       }
 
       // Ajouter la pagination
-      params.append('page', currentPage.toString());
+      params.append('page', debouncedCurrentPage.toString());
       params.append('page_size', PAGE_SIZE.toString());
 
       const response = await axios.get(`/attachments/?${params.toString()}`);
@@ -112,12 +112,12 @@ const DrivePage = () => {
 
   useEffect(() => {
     fetchAttachments();
-  }, [searchTerm, projectFilter, driveFilter, selected.id, currentPage]);
+  }, [debouncedSearchTerm, projectFilter, debouncedDriveFilter, selected.id, debouncedCurrentPage]);
 
   // Réinitialiser la page à 1 quand les filtres changent
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, projectFilter, driveFilter, selected.id]);
+  }, [debouncedSearchTerm, projectFilter, debouncedDriveFilter, selected.id]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 B';

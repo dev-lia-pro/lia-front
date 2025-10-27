@@ -43,29 +43,29 @@ export const TasksGrid: React.FC<TasksGridProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL-synced state
-  const [showDone, setShowDone] = useUrlState<boolean>({ paramName: 'show_done', defaultValue: true });
-  const [urgentOnly, setUrgentOnly] = useUrlState<boolean>({ paramName: 'urgent_only', defaultValue: urgentOnlyFilter });
-  const [searchKeyword, setSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
-  const [manualOnly, setManualOnly] = useUrlState<boolean>({ paramName: 'manual_only', defaultValue: false });
+  const [showDone, setShowDone, debouncedShowDone] = useUrlState<boolean>({ paramName: 'show_done', defaultValue: true });
+  const [urgentOnly, setUrgentOnly, debouncedUrgentOnly] = useUrlState<boolean>({ paramName: 'urgent_only', defaultValue: urgentOnlyFilter });
+  const [searchKeyword, setSearchKeyword, debouncedSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
+  const [manualOnly, setManualOnly, debouncedManualOnly] = useUrlState<boolean>({ paramName: 'manual_only', defaultValue: false });
 
   const todo = useTasks({
     status: 'TODO',
     project: selected.id ?? undefined,
     exclude_urgent: !includeUrgent,
-    manual_only: manualOnly || undefined
+    manual_only: debouncedManualOnly || undefined
   });
   const inProgress = useTasks({
     status: 'IN_PROGRESS',
     project: selected.id ?? undefined,
     exclude_urgent: !includeUrgent,
-    manual_only: manualOnly || undefined
+    manual_only: debouncedManualOnly || undefined
   });
   const done = useTasks({
     status: 'DONE',
     project: selected.id ?? undefined,
     exclude_urgent: !includeUrgent,
-    manual_only: manualOnly || undefined
-  }, { enabled: showDone });
+    manual_only: debouncedManualOnly || undefined
+  }, { enabled: debouncedShowDone });
 
   const filterTasks = useCallback((tasks: Task[]) => {
     let filtered = tasks;

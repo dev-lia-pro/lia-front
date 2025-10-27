@@ -31,8 +31,8 @@ const MessagesPage = () => {
   // URL-synced state
   const [viewMode, setViewMode] = useUrlState<ViewMode>({ paramName: 'view', defaultValue: 'threads', omitDefault: false });
   const [channelFilter, setChannelFilter] = useUrlState<string>({ paramName: 'channel', defaultValue: 'ALL' });
-  const [searchTag, setSearchTag] = useUrlState<string>({ paramName: 'tag', defaultValue: '', debounce: 500 });
-  const [searchKeyword, setSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
+  const [searchTag, setSearchTag, debouncedSearchTag] = useUrlState<string>({ paramName: 'tag', defaultValue: '', debounce: 500 });
+  const [searchKeyword, setSearchKeyword, debouncedSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
   const [showHidden, setShowHidden] = useUrlState<boolean>({ paramName: 'show_hidden', defaultValue: false });
   const [currentPage, setCurrentPage] = useUrlState<number>({ paramName: 'page', defaultValue: 1 });
 
@@ -60,9 +60,9 @@ const MessagesPage = () => {
   // Hook pour la vue liste (classique) - seulement si en mode 'list'
   const { messages, isLoading: isLoadingMessages, isFetching, totalCount, refetch } = useMessages({
     channel: apiChannelFilter,
-    tag: searchTag || undefined,
+    tag: debouncedSearchTag || undefined,
     project: selected.id ?? undefined,
-    search: searchKeyword || undefined,
+    search: debouncedSearchKeyword || undefined,
     ids: filteredIds,
     showHidden: showHidden,
     page: currentPage,
@@ -72,8 +72,9 @@ const MessagesPage = () => {
   // Hook pour la vue conversations - seulement si en mode 'threads'
   const { threads, isLoading: isLoadingThreads, totalCount: totalCountThreads, refetch: refetchThreads } = useMessageThreads({
     channel: apiChannelFilter,
-    tag: searchTag || undefined,
+    tag: debouncedSearchTag || undefined,
     project: selected.id ?? undefined,
+    search: debouncedSearchKeyword || undefined,
     ids: filteredIds,
     showHidden: showHidden,
     page: currentPage,
@@ -121,7 +122,7 @@ const MessagesPage = () => {
     setAttachmentStates({});
     // Réinitialiser la page à 1 quand les filtres changent
     setCurrentPage(1);
-  }, [apiChannelFilter, searchTag, selected.id, searchKeyword]);
+  }, [apiChannelFilter, debouncedSearchTag, selected.id, debouncedSearchKeyword]);
 
   // Réinitialiser la page quand on change de mode d'affichage
   React.useEffect(() => {

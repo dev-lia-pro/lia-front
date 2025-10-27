@@ -29,8 +29,12 @@ export interface UseUrlStateOptions<T> {
 /**
  * Custom hook to synchronize state with URL query parameters
  * Simple approach: state is the source of truth, URL follows state
+ *
+ * When debounce is enabled:
+ * - The first returned value is the immediate state (for input binding)
+ * - Use the debouncedValue separately for queries
  */
-export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) => void] {
+export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) => void, T] {
   const { defaultValue, paramName, debounce = 0, omitDefault = true } = options;
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -39,9 +43,37 @@ export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) =
     return parseValue(searchParams.get(paramName), defaultValue);
   });
 
+  // Debounced state for triggering effects
+  const [debouncedState, setDebouncedState] = useState<T>(state);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const stateDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update URL when state changes (state → URL)
+  // Debounce the state itself when debounce is enabled
+  useEffect(() => {
+    if (debounce > 0) {
+      // Clear any existing state debounce timer
+      if (stateDebounceTimerRef.current) {
+        clearTimeout(stateDebounceTimerRef.current);
+      }
+
+      // Set new timer
+      stateDebounceTimerRef.current = setTimeout(() => {
+        setDebouncedState(state);
+      }, debounce);
+
+      // Cleanup
+      return () => {
+        if (stateDebounceTimerRef.current) {
+          clearTimeout(stateDebounceTimerRef.current);
+        }
+      };
+    } else {
+      // No debounce: update immediately
+      setDebouncedState(state);
+    }
+  }, [state, debounce]);
+
+  // Update URL when debounced state changes (state → URL)
   useEffect(() => {
     // Clear any existing debounce timer
     if (debounceTimerRef.current) {
@@ -53,10 +85,10 @@ export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) =
         const newParams = new URLSearchParams(prev);
 
         // Check if we should omit this param (matches default)
-        if (omitDefault && shouldOmitDefault(state, defaultValue)) {
+        if (omitDefault && shouldOmitDefault(debouncedState, defaultValue)) {
           newParams.delete(paramName);
         } else {
-          const serialized = serializeValue(state);
+          const serialized = serializeValue(debouncedState);
           if (serialized !== null) {
             newParams.set(paramName, serialized);
           } else {
@@ -68,12 +100,7 @@ export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) =
       }, { replace: true }); // Use replace to avoid polluting history
     };
 
-    // Apply debounce if specified
-    if (debounce > 0) {
-      debounceTimerRef.current = setTimeout(updateUrl, debounce);
-    } else {
-      updateUrl();
-    }
+    updateUrl();
 
     // Cleanup
     return () => {
@@ -81,7 +108,7 @@ export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) =
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [state, paramName, defaultValue, omitDefault, debounce, setSearchParams]);
+  }, [debouncedState, paramName, defaultValue, omitDefault, setSearchParams]);
 
   // Listen to browser back/forward navigation (URL → state)
   useEffect(() => {
@@ -99,5 +126,6 @@ export function useUrlState<T>(options: UseUrlStateOptions<T>): [T, (value: T) =
     setState(value);
   }, []);
 
-  return [state, setUrlState];
+  // Return: [immediateValue, setter, debouncedValue]
+  return [state, setUrlState, debouncedState];
 }
