@@ -45,7 +45,7 @@ export interface CreateEventData {
   starts_at: string;
   ends_at: string;
   is_all_day?: boolean;
-  provider: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
+  provider?: number;  // ID du provider (optionnel)
   external_id?: string;
   attendees?: string[];
   project?: number;
@@ -58,7 +58,7 @@ export interface UpdateEventData {
   starts_at?: string;
   ends_at?: string;
   is_all_day?: boolean;
-  provider?: 'GOOGLE' | 'OUTLOOK' | 'ICAL';
+  // provider n'est PAS dans UpdateEventData car il est verrouillé après création
   external_id?: string;
   attendees?: string[];
   project?: number | null;

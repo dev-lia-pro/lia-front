@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ModalActions } from './ModalActions';
 import { Event, CreateEventData, UpdateEventData } from '@/hooks/useEvents';
 import { useProjects } from '@/hooks/useProjects';
+import { useProviders } from '@/hooks/useProviders';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
     starts_at: '',
     ends_at: '',
     is_all_day: false,
-    provider: 'GOOGLE',
+    provider: undefined,
     external_id: '',
     attendees: [],
     project: undefined,
@@ -33,7 +34,16 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
 
   const [attendeesInput, setAttendeesInput] = useState('');
   const { projects } = useProjects();
+  const { providers } = useProviders();
   const [selectedProject, setSelectedProject] = useState<string>('none');
+  const [selectedProvider, setSelectedProvider] = useState<string>('none');
+
+  // Filtrer les providers de type calendrier
+  const calendarProviders = providers.filter((p) =>
+    p.provider_type === 'GOOGLE_CALENDAR' ||
+    p.provider_type === 'OUTLOOK_CALENDAR' ||
+    p.provider_type === 'ICLOUD_CALENDAR'
+  );
 
   const formatLocalDateInput = (d: Date, dateOnly: boolean = false) => {
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -57,13 +67,14 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
         starts_at: formatLocalDateInput(new Date(event.starts_at), event.is_all_day),
         ends_at: formatLocalDateInput(new Date(event.ends_at), event.is_all_day),
         is_all_day: event.is_all_day || false,
-        provider: 'GOOGLE',  // Default to GOOGLE for now, as we don't edit provider
+        provider: event.provider || undefined,
         external_id: event.external_id || '',
         attendees: event.attendees || [],
         project: event.project,
       });
       setAttendeesInput(event.attendees?.join(', ') || '');
       setSelectedProject(event.project ? String(event.project) : 'none');
+      setSelectedProvider(event.provider ? String(event.provider) : 'none');
     } else {
       // Réinitialiser le formulaire pour un nouvel événement
       const base = initialStart ? new Date(initialStart) : new Date();
@@ -77,11 +88,13 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
         starts_at: formatLocalDateInput(base),
         ends_at: formatLocalDateInput(end),
         is_all_day: false,
+        provider: undefined,
         attendees: [],
         project: undefined,
       } as CreateEventData);
       setAttendeesInput('');
       setSelectedProject('none');
+      setSelectedProvider('none');
     }
   }, [event, isOpen, initialStart]);
 
@@ -144,7 +157,7 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
     // Le backend gérera la conversion vers UTC selon le timezone de l'utilisateur
     const submitData = event
       ? ({
-          // Pour l'update, n'envoyer que les champs modifiables
+          // Pour l'update, n'envoyer que les champs modifiables (provider n'est PAS inclus)
           id: event.id,
           title: formData.title,
           location: formData.location,
@@ -155,13 +168,14 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
           project: selectedProject !== 'none' ? parseInt(selectedProject) : undefined,
         } as UpdateEventData)
       : ({
-          // Pour la création, n'envoyer que les champs nécessaires
+          // Pour la création, inclure le provider si sélectionné
           title: formData.title,
           location: formData.location,
           starts_at: formData.starts_at,
           ends_at: formData.ends_at,
           is_all_day: formData.is_all_day,
           attendees: formData.attendees,
+          provider: selectedProvider !== 'none' ? parseInt(selectedProvider) : undefined,
           project: selectedProject !== 'none' ? parseInt(selectedProject) : undefined,
         } as CreateEventData);
 
@@ -273,25 +287,35 @@ export const EventModal = ({ isOpen, onClose, event, onSubmit, isLoading, initia
           </div>
 
           {/* Fournisseur */}
-          <div>
-            <label htmlFor="provider" className="block text-sm font-medium text-foreground mb-2">
-              Fournisseur
-            </label>
-            <Select
-              value={formData.provider}
-              onValueChange={(value) => handleInputChange('provider', value)}
-              disabled={true}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="GOOGLE">Google</SelectItem>
-                <SelectItem value="OUTLOOK">Outlook</SelectItem>
-                <SelectItem value="ICAL">iCal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {calendarProviders.length > 0 && (
+            <div>
+              <label htmlFor="provider" className="block text-sm font-medium text-foreground mb-2">
+                Calendrier {!isEditMode && '(optionnel)'}
+              </label>
+              <Select
+                value={selectedProvider}
+                onValueChange={setSelectedProvider}
+                disabled={isEditMode || isLoading}
+              >
+                <SelectTrigger className={isEditMode ? 'opacity-60 cursor-not-allowed' : ''}>
+                  <SelectValue placeholder="Sélectionner un calendrier (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun calendrier</SelectItem>
+                  {calendarProviders.map((provider) => (
+                    <SelectItem key={provider.id} value={provider.id.toString()}>
+                      {provider.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {isEditMode && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Le calendrier ne peut pas être modifié après création
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Participants */}
           <div>
