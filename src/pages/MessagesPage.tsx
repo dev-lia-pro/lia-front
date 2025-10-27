@@ -31,7 +31,6 @@ const MessagesPage = () => {
   // URL-synced state
   const [viewMode, setViewMode] = useUrlState<ViewMode>({ paramName: 'view', defaultValue: 'threads', omitDefault: false });
   const [channelFilter, setChannelFilter] = useUrlState<string>({ paramName: 'channel', defaultValue: 'ALL' });
-  const [searchTag, setSearchTag, debouncedSearchTag] = useUrlState<string>({ paramName: 'tag', defaultValue: '', debounce: 500 });
   const [searchKeyword, setSearchKeyword, debouncedSearchKeyword] = useUrlState<string>({ paramName: 'search', defaultValue: '', debounce: 500 });
   const [showHidden, setShowHidden] = useUrlState<boolean>({ paramName: 'show_hidden', defaultValue: false });
   const [currentPage, setCurrentPage] = useUrlState<number>({ paramName: 'page', defaultValue: 1 });
@@ -60,7 +59,6 @@ const MessagesPage = () => {
   // Hook pour la vue liste (classique) - seulement si en mode 'list'
   const { messages, isLoading: isLoadingMessages, isFetching, totalCount, refetch } = useMessages({
     channel: apiChannelFilter,
-    tag: debouncedSearchTag || undefined,
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined,
     ids: filteredIds,
@@ -72,7 +70,6 @@ const MessagesPage = () => {
   // Hook pour la vue conversations - seulement si en mode 'threads'
   const { threads, isLoading: isLoadingThreads, totalCount: totalCountThreads, refetch: refetchThreads } = useMessageThreads({
     channel: apiChannelFilter,
-    tag: debouncedSearchTag || undefined,
     project: selected.id ?? undefined,
     search: debouncedSearchKeyword || undefined,
     ids: filteredIds,
@@ -122,7 +119,7 @@ const MessagesPage = () => {
     setAttachmentStates({});
     // Réinitialiser la page à 1 quand les filtres changent
     setCurrentPage(1);
-  }, [apiChannelFilter, debouncedSearchTag, selected.id, debouncedSearchKeyword]);
+  }, [apiChannelFilter, selected.id, debouncedSearchKeyword]);
 
   // Réinitialiser la page quand on change de mode d'affichage
   React.useEffect(() => {
@@ -206,7 +203,6 @@ const MessagesPage = () => {
     // Build the exact filter object used by useMessages
     const messageFilters = {
       channel: apiChannelFilter,
-      tag: searchTag || undefined,
       project: selected.id ?? undefined,
       search: searchKeyword || undefined,
       ids: filteredIds,
@@ -227,7 +223,7 @@ const MessagesPage = () => {
     });
 
     // Update threads cache
-    queryClient.setQueryData(['message-threads', { channel: apiChannelFilter, tag: searchTag || undefined, project: selected.id ?? undefined, ids: filteredIds, showHidden: showHidden, page: currentPage, pageSize: PAGE_SIZE }], (oldData: any) => {
+    queryClient.setQueryData(['message-threads', { channel: apiChannelFilter, project: selected.id ?? undefined, ids: filteredIds, showHidden: showHidden, page: currentPage, pageSize: PAGE_SIZE }], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
@@ -482,7 +478,7 @@ const MessagesPage = () => {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
@@ -503,12 +499,6 @@ const MessagesPage = () => {
                   <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
                 </SelectContent>
               </Select>
-              <input
-                value={searchTag}
-                onChange={(e) => setSearchTag(e.target.value)}
-                placeholder="Filtrer par tag"
-                className="bg-card border border-border rounded px-3 py-1.5 text-sm w-full sm:col-span-2 lg:col-span-1"
-              />
             </div>
 
             {/* Indicateur de filtre actif */}
