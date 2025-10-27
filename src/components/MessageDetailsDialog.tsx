@@ -19,7 +19,7 @@ import {
   AlertCircle, Clock, CheckCircle, Flag, Info, Edit,
   Download, Eye, Cloud, CloudOff, ChevronDown, ChevronUp,
   Building, Briefcase, ExternalLink, Code, Copy, Check,
-  ChevronLeft, ChevronRight, List, EyeOff
+  ChevronLeft, ChevronRight, List, EyeOff, Loader2
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getIconByValue } from '@/config/icons';
@@ -33,6 +33,7 @@ interface MessageDetailsDialogProps {
   onClose: () => void;
   onSaveInDrive: (attachmentId: number, messageId: number, isCurrentlyInDrive: boolean) => Promise<void>;
   attachmentStates: Record<number, boolean>;
+  savingAttachments?: Set<number>;
   onContactClick: (contactId: number) => void;
   onAssignProject: (messageId: number, projectId: number | '') => Promise<void>;
   onToggleHidden?: (messageId: number, currentHidden: boolean) => Promise<void>;
@@ -142,6 +143,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
   onClose,
   onSaveInDrive,
   attachmentStates,
+  savingAttachments = new Set(),
   onContactClick,
   onAssignProject,
   onToggleHidden,
@@ -469,6 +471,7 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
               <div className="space-y-2">
                 {Array.isArray(message.attachments) && message.attachments.map((att) => {
                   const isInDrive = attachmentStates[att.id] ?? att.google_drive_backup ?? false;
+                  const isSaving = savingAttachments.has(att.id);
                   const FileIcon = getFileIcon(att.content_type, att.filename);
 
                   return (
@@ -511,18 +514,23 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                           onClick={() => onSaveInDrive(att.id, message.id, !!isInDrive)}
                           onMouseEnter={() => setHoveredAttachment(att.id)}
                           onMouseLeave={() => setHoveredAttachment(null)}
+                          disabled={isSaving}
                           className={`p-1.5 rounded hover:bg-muted transition-colors ${
                             isInDrive ? 'text-blue-500' : 'text-muted-foreground'
-                          }`}
-                          title={isInDrive ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive'}
+                          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title={isSaving ? 'Sauvegarde en cours...' : (isInDrive ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive')}
                         >
-                          {(() => {
-                            if (isInDrive) {
-                              return hoveredAttachment === att.id ? <CloudOff className="w-4 h-4" /> : <Cloud className="w-4 h-4" />;
-                            } else {
-                              return hoveredAttachment === att.id ? <Cloud className="w-4 h-4" /> : <CloudOff className="w-4 h-4" />;
-                            }
-                          })()}
+                          {isSaving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            (() => {
+                              if (isInDrive) {
+                                return hoveredAttachment === att.id ? <CloudOff className="w-4 h-4" /> : <Cloud className="w-4 h-4" />;
+                              } else {
+                                return hoveredAttachment === att.id ? <Cloud className="w-4 h-4" /> : <CloudOff className="w-4 h-4" />;
+                              }
+                            })()
+                          )}
                         </button>
                       </div>
                     </div>

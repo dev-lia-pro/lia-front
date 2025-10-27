@@ -42,6 +42,7 @@ const MessagesPage = () => {
   const [hoveredAttachment, setHoveredAttachment] = React.useState<number | null>(null);
   const [attachmentStates, setAttachmentStates] = React.useState<Record<number, boolean>>({});
   const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
+  const [savingAttachments, setSavingAttachments] = React.useState<Set<number>>(new Set());
   const [selectedContactId, setSelectedContactId] = React.useState<number | null>(null);
   const initializedRef = React.useRef(false);
   const { selected } = useProjectStore();
@@ -322,6 +323,9 @@ const MessagesPage = () => {
   };
 
   const handleSaveInDrive = async (attachmentId: number, messageId: number, isCurrentlyInDrive: boolean) => {
+    // Ajouter l'attachment à l'état de sauvegarde
+    setSavingAttachments(prev => new Set(prev).add(attachmentId));
+
     // Mettre à jour l'état local immédiatement pour un feedback visuel instantané
     setAttachmentStates(prev => ({
       ...prev,
@@ -359,6 +363,13 @@ const MessagesPage = () => {
         title: "Erreur",
         description: errorMessage,
         variant: "destructive",
+      });
+    } finally {
+      // Retirer l'attachment de l'état de sauvegarde
+      setSavingAttachments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(attachmentId);
+        return newSet;
       });
     }
   };
@@ -682,6 +693,7 @@ const MessagesPage = () => {
                           <div className="flex flex-wrap gap-2">
                             {Array.isArray(msg.attachments) && msg.attachments.map((att) => {
                               const isInDrive = attachmentStates[att.id] ?? att.google_drive_backup ?? false;
+                              const isSaving = savingAttachments.has(att.id);
                               return (
                                 <div key={att.id} className="flex items-center gap-1">
                                   <button
@@ -691,20 +703,25 @@ const MessagesPage = () => {
                                     }}
                                     onMouseEnter={() => setHoveredAttachment(att.id)}
                                     onMouseLeave={() => setHoveredAttachment(null)}
+                                    disabled={isSaving}
                                     className={`p-1 rounded hover:bg-muted/20 transition-colors ${
                                       isInDrive ? 'text-blue-400' : 'text-gray-400'
-                                    }`}
-                                    title={isInDrive ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive'}
+                                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    title={isSaving ? 'Sauvegarde en cours...' : (isInDrive ? 'Supprimer de Google Drive' : 'Sauvegarder dans Google Drive')}
                                   >
-                                    {(() => {
-                                      if (isInDrive) {
-                                        // Fichier stocké : afficher Cloud, au hover afficher CloudOff
-                                        return hoveredAttachment === att.id ? <CloudOff className="w-3 h-3" /> : <Cloud className="w-3 h-3" />;
-                                      } else {
-                                        // Fichier non stocké : afficher CloudOff, au hover afficher Cloud
-                                        return hoveredAttachment === att.id ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />;
-                                      }
-                                    })()}
+                                    {isSaving ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      (() => {
+                                        if (isInDrive) {
+                                          // Fichier stocké : afficher Cloud, au hover afficher CloudOff
+                                          return hoveredAttachment === att.id ? <CloudOff className="w-3 h-3" /> : <Cloud className="w-3 h-3" />;
+                                        } else {
+                                          // Fichier non stocké : afficher CloudOff, au hover afficher Cloud
+                                          return hoveredAttachment === att.id ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />;
+                                        }
+                                      })()
+                                    )}
                                   </button>
                                   {att.url ? (
                                     <button
@@ -766,6 +783,7 @@ const MessagesPage = () => {
         onClose={handleCloseDialog}
         onSaveInDrive={handleSaveInDrive}
         attachmentStates={attachmentStates}
+        savingAttachments={savingAttachments}
         onContactClick={setSelectedContactId}
         onAssignProject={handleAssignProject}
         onToggleHidden={handleToggleHidden}
