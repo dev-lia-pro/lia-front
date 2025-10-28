@@ -26,6 +26,7 @@ export const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [readFilter, setReadFilter] = useState<'all' | 'unread'>('unread');
   const [page, setPage] = useState(0);
+  const [deletingNotificationId, setDeletingNotificationId] = useState<number | null>(null);
 
   const {
     notifications,
@@ -37,6 +38,7 @@ export const NotificationBell: React.FC = () => {
     markAllAsRead,
     deleteNotification,
     isMarkingAllAsRead,
+    isDeletingNotification,
   } = useNotifications({
     is_read: readFilter === 'unread' ? false : undefined,
     limit: ITEMS_PER_PAGE,
@@ -91,6 +93,7 @@ export const NotificationBell: React.FC = () => {
 
   const handleDeleteNotification = (e: React.MouseEvent, notificationId: number) => {
     e.stopPropagation(); // Prevent notification click
+    setDeletingNotificationId(notificationId);
     deleteNotification(notificationId);
   };
 
@@ -145,8 +148,8 @@ export const NotificationBell: React.FC = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-96">
-        <DropdownMenuLabel className="flex items-start justify-between pb-2">
+      <DropdownMenuContent align="end" className="w-[420px] max-w-[95vw] p-0">
+        <DropdownMenuLabel className="flex items-start justify-between pb-2 px-4 pt-3">
           <span className="pt-1">Notifications</span>
           {notifications.length > 0 && (
             <Button
@@ -169,7 +172,7 @@ export const NotificationBell: React.FC = () => {
         </DropdownMenuLabel>
 
         {/* Filter Toggle */}
-        <div className="px-2 pb-2">
+        <div className="px-4 pb-2">
           <div className="flex gap-1 p-0.5 bg-muted rounded-md">
             <Button
               variant={readFilter === 'unread' ? 'default' : 'ghost'}
@@ -192,7 +195,7 @@ export const NotificationBell: React.FC = () => {
 
         <DropdownMenuSeparator />
 
-        <ScrollArea className="h-96">
+        <ScrollArea className="h-96 w-full">
           {isLoading && page === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Chargement...
@@ -204,47 +207,57 @@ export const NotificationBell: React.FC = () => {
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={cn(
-                    "flex items-start gap-3 p-4 pr-2 cursor-pointer transition-colors relative group",
+                    "grid grid-cols-[auto_1fr_auto] items-start gap-3 py-3 px-4 cursor-pointer transition-colors group rounded-none",
                     !notification.is_read
-                      ? "bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 border-l-4 border-blue-500"
+                      ? "bg-blue-50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 border-l-4 border-blue-500 pl-[14px]"
                       : "hover:bg-slate-100 dark:hover:bg-slate-800"
                   )}
                 >
-                  <span className="text-2xl mt-0.5">
+                  <span className="text-xl mt-0.5">
                     {getNotificationIcon(notification.icon)}
                   </span>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 overflow-hidden">
                     <p className={cn(
-                      "font-semibold text-sm",
+                      "font-semibold text-sm truncate",
                       !notification.is_read && "text-blue-900 dark:text-blue-100",
                       getPriorityColor(notification.priority)
                     )}>
                       {notification.title}
                     </p>
                     {notification.message && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 break-words">
                         {notification.message}
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-muted-foreground mt-2 truncate">
                       {formatDistanceToNow(new Date(notification.created_at), {
                         addSuffix: true,
                         locale: fr
                       })}
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-2 mt-1">
+                  <div className="flex flex-col items-center justify-start gap-1">
                     {!notification.is_read && (
-                      <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse shadow-sm shadow-blue-500" />
+                      <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse shadow-sm shadow-blue-500 mt-1" />
                     )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400"
+                      disabled={deletingNotificationId === notification.id && isDeletingNotification}
+                      className={cn(
+                        "h-7 w-7 transition-opacity hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400",
+                        notification.is_read
+                          ? "opacity-70 group-hover:opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      )}
                       onClick={(e) => handleDeleteNotification(e, notification.id)}
                       aria-label="Supprimer la notification"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      {deletingNotificationId === notification.id && isDeletingNotification ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </DropdownMenuItem>
@@ -252,7 +265,7 @@ export const NotificationBell: React.FC = () => {
 
               {/* Load More Button */}
               {hasNext && (
-                <div className="p-2">
+                <div className="p-4 pt-2">
                   <Button
                     variant="ghost"
                     size="sm"
