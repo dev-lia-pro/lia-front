@@ -17,6 +17,7 @@ import EventsPage from "./pages/EventsPage";
 import MessagesPage from "./pages/MessagesPage";
 import DrivePage from "./pages/DrivePage";
 import SettingsPage from "./pages/SettingsPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import OAuthSuccess from "./pages/OAuthSuccess";
@@ -104,6 +105,12 @@ const App = () => {
           <Route path="/settings" element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/subscription" element={
+            <ProtectedRoute>
+              <SubscriptionPage />
             </ProtectedRoute>
           } />
 

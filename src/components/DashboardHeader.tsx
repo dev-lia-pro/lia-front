@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, LogOut, Plus, Moon, Sun, Settings } from 'lucide-react';
+import { User, LogOut, Plus, Moon, Sun, Settings, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +37,11 @@ export const DashboardHeader = () => {
 
   const handleSettingsClick = () => {
     navigate('/settings');
+    setIsOpen(false);
+  };
+
+  const handleSubscriptionClick = () => {
+    navigate('/subscription');
     setIsOpen(false);
   };
 
@@ -145,7 +150,15 @@ export const DashboardHeader = () => {
             <Settings className="mr-2 h-4 w-4" />
             Paramètres
           </DropdownMenuItem>
-          
+
+          <DropdownMenuItem
+            onClick={handleSubscriptionClick}
+            className="hover:bg-foreground/10 focus:bg-foreground/10 cursor-pointer"
+          >
+            <Crown className="mr-2 h-4 w-4 text-yellow-500" />
+            Abonnement
+          </DropdownMenuItem>
+
           <DropdownMenuItem
             className="hover:bg-foreground/10 focus:bg-foreground/10 cursor-pointer"
             onSelect={(e) => e.preventDefault()}

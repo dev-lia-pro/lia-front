@@ -16,6 +16,8 @@ interface User {
   longitude?: number;
   subscription: boolean;
   subscription_id: string;
+  subscription_ends_at?: string | null;
+  cancel_at_period_end?: boolean;
   has_security_code: boolean;
   has_full_profile: boolean;
   timezone?: string;
