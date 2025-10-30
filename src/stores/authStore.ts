@@ -13,7 +13,8 @@ interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   accessToken: string | null;
-  
+  intendedPlan: string | null; // Plan d'abonnement choisi depuis la landing
+
   // Actions
   setToken: (token: string) => void;
   setUser: (user: User) => void;
@@ -21,6 +22,8 @@ interface AuthState {
   logout: () => void;
   clearAuth: () => void;
   initializeAuth: () => void;
+  setIntendedPlan: (plan: string | null) => void;
+  clearIntendedPlan: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       user: null,
       accessToken: null,
+      intendedPlan: null,
 
       // Actions
       setToken: (token: string) => {
@@ -55,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           user: null,
           isAuthenticated: false,
+          intendedPlan: null,
         });
         // Nettoyer le localStorage
         localStorage.removeItem('access_token');
@@ -71,8 +76,29 @@ export const useAuthStore = create<AuthState>()(
       initializeAuth: () => {
         const token = localStorage.getItem('access_token');
         if (token) {
-          set({ accessToken: token, isAuthenticated: true });
+          // Récupérer l'utilisateur temporaire du sessionStorage si disponible
+          const tempUser = sessionStorage.getItem('temp_user');
+          if (tempUser) {
+            try {
+              const user = JSON.parse(tempUser);
+              set({ accessToken: token, user, isAuthenticated: true });
+              // Nettoyer le sessionStorage
+              sessionStorage.removeItem('temp_user');
+            } catch (e) {
+              set({ accessToken: token, isAuthenticated: true });
+            }
+          } else {
+            set({ accessToken: token, isAuthenticated: true });
+          }
         }
+      },
+
+      setIntendedPlan: (plan: string | null) => {
+        set({ intendedPlan: plan });
+      },
+
+      clearIntendedPlan: () => {
+        set({ intendedPlan: null });
       },
     }),
     {
@@ -81,6 +107,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        intendedPlan: state.intendedPlan,
       }),
     }
   )

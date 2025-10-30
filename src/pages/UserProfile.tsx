@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormField } from '@/components/FormField';
@@ -11,6 +12,7 @@ import { DashboardHeader } from '@/components/DashboardHeader';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { GROUPED_TIMEZONES } from '@/constants/timezones';
 import type { NavigationTab } from '@/types/navigation';
+import { useAuthStore } from '@/stores/authStore';
 
 const UserProfile = () => {
   const { user, loading, error, updating, updateUser } = useUser();
@@ -19,6 +21,9 @@ const UserProfile = () => {
   const [timezone, setTimezone] = useState('Europe/Paris');
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<NavigationTab>('accueil');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { intendedPlan, clearIntendedPlan } = useAuthStore();
   
   // Memory management state
   const [memoryData, setMemoryData] = useState<string[]>([]);
@@ -65,6 +70,16 @@ const UserProfile = () => {
         title: "Profil mis à jour",
         description: "Vos informations ont été sauvegardées avec succès.",
       });
+
+      // Si on est en onboarding et qu'un plan d'abonnement est prévu, rediriger vers subscription
+      const isOnboarding = searchParams.get('onboarding') === 'true';
+      const planFromUrl = searchParams.get('plan');
+      const targetPlan = planFromUrl || intendedPlan;
+
+      if (isOnboarding && targetPlan) {
+        clearIntendedPlan();
+        navigate(`/subscription?plan=${targetPlan}`);
+      }
     } else {
       toast({
         title: "Erreur",

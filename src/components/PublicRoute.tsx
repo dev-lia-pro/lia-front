@@ -8,7 +8,10 @@ interface PublicRouteProps {
 const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
 
-  if (isAuthenticated) {
+  // Vérifier aussi le localStorage pour éviter les problèmes de timing
+  const hasToken = localStorage.getItem('access_token');
+
+  if (isAuthenticated || hasToken) {
     return <Navigate to="/" replace />;
   }
 

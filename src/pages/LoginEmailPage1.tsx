@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import axios from '@/api/axios';
-import InstallPWA from '@/components/InstallPWA';  
+import InstallPWA from '@/components/InstallPWA';
+import { useAuthStore } from '@/stores/authStore';  
 
 const LoginEmailPage1 = () => {
   const [email, setEmail] = useState('');
@@ -13,18 +14,25 @@ const LoginEmailPage1 = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const setIntendedPlan = useAuthStore((state) => state.setIntendedPlan);
 
-  // Récupérer l'email depuis les paramètres d'URL si présent
+  // Récupérer l'email et le plan depuis les paramètres d'URL si présents
   useEffect(() => {
     const emailFromParams = searchParams.get('email');
     if (emailFromParams) {
       setEmail(decodeURIComponent(emailFromParams));
     }
-  }, [searchParams]);
+
+    const planFromParams = searchParams.get('plan');
+    if (planFromParams) {
+      // Stocker le plan d'abonnement choisi pour le rediriger après auth
+      setIntendedPlan(planFromParams);
+    }
+  }, [searchParams, setIntendedPlan]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       setErrorMessage('Veuillez saisir votre adresse email');
       return;
@@ -32,13 +40,20 @@ const LoginEmailPage1 = () => {
 
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
       const payload = { email };
       await axios.post('/auth/send_code/', payload);
-      
+
       const encodedEmail = encodeURIComponent(email);
-      navigate(`/auth/step2?email=${encodedEmail}`);
+      const planFromParams = searchParams.get('plan');
+
+      // Propager le paramètre plan s'il existe
+      if (planFromParams) {
+        navigate(`/auth/step2?email=${encodedEmail}&plan=${planFromParams}`);
+      } else {
+        navigate(`/auth/step2?email=${encodedEmail}`);
+      }
     } catch (error) {
       console.error('Erreur lors de l\'envoi du code:', error);
       setErrorMessage("Erreur lors de l'envoi du code.");

@@ -85,6 +85,7 @@ const SubscriptionPage = () => {
   const [searchParams] = useSearchParams();
   const planParam = searchParams.get('plan');
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
   const { user, loading: userLoading, fetchUser } = useUser();
   const { createSubscription, cancelSubscription, reactivateSubscription, loading: billingLoading, error: billingError } = useBilling();
@@ -93,6 +94,21 @@ const SubscriptionPage = () => {
     // Rafraîchir les données utilisateur au montage
     fetchUser();
   }, []);
+
+  // Auto-déclencher le checkout si un plan est spécifié dans l'URL
+  useEffect(() => {
+    if (!autoTriggered && planParam && !userLoading && !billingLoading) {
+      setAutoTriggered(true);
+
+      if (planParam === 'premium' && !user?.subscription) {
+        // Déclencher automatiquement l'abonnement Premium
+        handleSubscribe();
+      } else if (planParam === 'enterprise') {
+        // Ouvrir le formulaire de contact Enterprise
+        handleContactEnterprise();
+      }
+    }
+  }, [planParam, user, userLoading, billingLoading, autoTriggered]);
 
   const handleSubscribe = async () => {
     try {

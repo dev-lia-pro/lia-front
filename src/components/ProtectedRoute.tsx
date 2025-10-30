@@ -11,7 +11,10 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
 
-  if (!isAuthenticated) {
+  // Vérifier aussi le localStorage directement pour éviter les problèmes de timing
+  const hasToken = localStorage.getItem('access_token');
+
+  if (!isAuthenticated && !hasToken) {
     return <Navigate to="/auth/step1" replace />;
   }
 

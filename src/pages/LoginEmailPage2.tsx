@@ -15,15 +15,21 @@ const LoginEmailPage2 = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { login } = useAuthStore();
+  const { login, intendedPlan, setIntendedPlan } = useAuthStore();
 
-  // Récupérer l'email depuis les paramètres d'URL
+  // Récupérer l'email et le plan depuis les paramètres d'URL
   useEffect(() => {
     const emailFromParams = searchParams.get('email');
     if (emailFromParams) {
       setEmail(decodeURIComponent(emailFromParams));
     }
-  }, [searchParams]);
+
+    // Récupérer et stocker le plan s'il existe dans l'URL
+    const planFromParams = searchParams.get('plan');
+    if (planFromParams) {
+      setIntendedPlan(planFromParams);
+    }
+  }, [searchParams, setIntendedPlan]);
 
   // Focus sur le premier input au montage
   useEffect(() => {
@@ -100,23 +106,32 @@ const LoginEmailPage2 = () => {
       const payload = { email, code: codeString };
       const response = await axios.post('/auth/verify_code/', payload);
       
-      // Stocker le token et les informations utilisateur
+      // Stocker le token dans localStorage (mais PAS dans le store Zustand encore)
       localStorage.setItem('access_token', response.data.access);
-      
+
       // Récupérer les informations utilisateur
       const user = await fetchUser();
-      
-      // Connecter l'utilisateur via le store
-      login(response.data.access, user);
-      
-      // Vérifier si l'utilisateur a complété son profil
-      if (!user.first_name || !user.last_name) {
-        navigate('/profile?onboarding=true');
+
+      // Stocker temporairement l'utilisateur pour la prochaine page
+      sessionStorage.setItem('temp_user', JSON.stringify(user));
+
+      // Déterminer la destination
+      let destination = '/';
+
+      // Si un plan est choisi, toujours rediriger vers la page d'abonnement
+      if (intendedPlan) {
+        destination = `/subscription?plan=${intendedPlan}`;
+      } else if (!user.first_name || !user.last_name) {
+        // Pas de plan + profil incomplet - rediriger vers le profil
+        destination = '/profile?onboarding=true';
       } else {
-        // Rediriger vers la page appropriée selon les projets existants
-        // Pour l'instant, rediriger vers le projet overview
-        navigate('/project-overview');
+        // Pas de plan + profil complet - dashboard
+        destination = '/';
       }
+
+      // Utiliser window.location.href pour forcer un vrai rechargement
+      // Cela évite complètement le problème du PublicRoute
+      window.location.href = destination;
     } catch (error) {
       console.error('Erreur lors de la vérification du code:', error);
       setErrorMessage('Le code est erroné.');
