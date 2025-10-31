@@ -497,7 +497,6 @@ const MessagesPage = () => {
                   <SelectItem value="ALL">Tous les canaux</SelectItem>
                   <SelectItem value="EMAIL">Emails</SelectItem>
                   <SelectItem value="SMS">SMS</SelectItem>
-                  <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
                 </SelectContent>
               </Select>
             </div>

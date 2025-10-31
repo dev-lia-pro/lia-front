@@ -81,8 +81,6 @@ const ChannelIcon: React.FC<{ channel: string }> = ({ channel }) => {
       return <Mail className="w-3.5 h-3.5" />;
     case 'SMS':
       return <Phone className="w-3.5 h-3.5" />;
-    case 'WHATSAPP':
-      return <MessageSquare className="w-3.5 h-3.5" />;
     default:
       return <Mail className="w-3.5 h-3.5" />;
   }
@@ -451,11 +449,11 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
 
           {/* Corps du message */}
           <div className="px-3 sm:px-6 py-4 sm:py-6 min-h-[200px]">
-            {message.channel === 'SMS' || message.channel === 'WHATSAPP' ? (
+            {message.channel === 'SMS' ? (
               <div className="bg-muted/10 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    {message.channel === 'SMS' ? <Phone className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                    <Phone className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium mb-1">{message.sender_contact?.display_name || message.sender}</p>

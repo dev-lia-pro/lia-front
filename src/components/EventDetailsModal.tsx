@@ -40,7 +40,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       'GMAIL': { icon: <Mail className="h-4 w-4" />, label: 'Gmail' },
       'GOOGLE_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Google Calendar' },
       'SMS': { icon: <MessageSquare className="h-4 w-4" />, label: 'SMS' },
-      'WHATSAPP': { icon: <MessageSquare className="h-4 w-4" />, label: 'WhatsApp' },
       'OUTLOOK': { icon: <Mail className="h-4 w-4" />, label: 'Outlook' },
       'OUTLOOK_CALENDAR': { icon: <Calendar className="h-4 w-4" />, label: 'Outlook Calendar' },
       'ICLOUD_MAIL': { icon: <Mail className="h-4 w-4" />, label: 'iCloud Mail' },
