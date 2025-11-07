@@ -69,7 +69,6 @@ export const AssistantHistory: React.FC = () => {
             <SelectItem value="all">Toutes les méthodes</SelectItem>
             <SelectItem value="audio_user_request">Demande vocale</SelectItem>
             <SelectItem value="user_request">Demande texte</SelectItem>
-            <SelectItem value="message">Analyse de message</SelectItem>
           </SelectContent>
         </Select>
       </div>
