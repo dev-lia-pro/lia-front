@@ -26,6 +26,8 @@ import { getIconByValue } from '@/config/icons';
 import { formatFileSize, formatMessageDate, getFileIcon, getActionBadgeColor, getChannelIcon } from '@/utils/format';
 import type { Message } from '@/hooks/useMessages';
 import type { Project } from '@/hooks/useProjects';
+import axios from '@/api/axios';
+import { useToast } from '@/hooks/use-toast';
 
 interface MessageDetailsDialogProps {
   message: Message | null;
@@ -160,8 +162,81 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
   const [showTechnicalDetails, setShowTechnicalDetails] = React.useState(false);
   const [copiedId, setCopiedId] = React.useState(false);
   const [showThreadTimeline, setShowThreadTimeline] = React.useState(false);
+  const [downloadingAttachments, setDownloadingAttachments] = React.useState<Set<number>>(new Set());
+  const { toast } = useToast();
 
   if (!message) return null;
+
+  const handleDownloadAttachment = async (messageId: number, attachmentId: number, filename: string) => {
+    setDownloadingAttachments(prev => new Set(prev).add(attachmentId));
+
+    try {
+      const url = `/messages/${messageId}/attachments/${attachmentId}/download/`;
+      const response = await axios.get(url, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+      toast({
+        title: "Erreur de téléchargement",
+        description: "Impossible de télécharger le fichier",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingAttachments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(attachmentId);
+        return newSet;
+      });
+    }
+  };
+
+  const handlePreviewAttachment = async (messageId: number, attachmentId: number, filename: string) => {
+    setDownloadingAttachments(prev => new Set(prev).add(attachmentId));
+
+    try {
+      const url = `/messages/${messageId}/attachments/${attachmentId}/download/`;
+      const response = await axios.get(url, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Ouvrir dans un nouvel onglet au lieu de télécharger
+      window.open(blobUrl, '_blank');
+
+      // Nettoyer l'URL blob après un délai pour permettre l'ouverture
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+    } catch (error) {
+      console.error('Erreur lors de l\'aperçu:', error);
+      toast({
+        title: "Erreur d'aperçu",
+        description: "Impossible d'afficher le fichier",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingAttachments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(attachmentId);
+        return newSet;
+      });
+    }
+  };
 
   const hasMultipleMessages = threadMessageCount > 1;
   const canNavigatePrev = currentMessageIndex > 0;
@@ -502,28 +577,32 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">
-                        {att.url && (
-                          <a
-                            href={att.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-1.5 rounded hover:bg-muted transition-colors"
-                            title="Télécharger"
-                          >
+                        <button
+                          onClick={() => handleDownloadAttachment(message.id, att.id, att.filename)}
+                          disabled={downloadingAttachments.has(att.id)}
+                          className="p-1.5 rounded hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Télécharger"
+                        >
+                          {downloadingAttachments.has(att.id) ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
                             <Download className="w-4 h-4" />
-                          </a>
-                        )}
+                          )}
+                        </button>
 
-                        {att.content_type?.includes('image') && att.url && (
-                          <a
-                            href={att.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-1.5 rounded hover:bg-muted transition-colors"
+                        {att.content_type?.includes('image') && (
+                          <button
+                            onClick={() => handlePreviewAttachment(message.id, att.id, att.filename)}
+                            disabled={downloadingAttachments.has(att.id)}
+                            className="p-1.5 rounded hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Aperçu"
                           >
-                            <Eye className="w-4 h-4" />
-                          </a>
+                            {downloadingAttachments.has(att.id) ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
                         )}
 
                         <button
